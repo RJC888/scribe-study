@@ -20,6 +20,229 @@ const AppState = {
 // ===== MODULE DEFINITIONS =====
 // NOTE: Add your Grammar Essentials and Advanced Grammar prompts here
 const ModuleDefinitions = {
+    // ===== MODULE DEFINITIONS =====
+const ModuleDefinitions = {
+    'original-languages': {
+        name: 'Original Languages',
+        modules: {
+            'grammar-essentials': {
+                name: 'Grammar Essentials',
+                prompt: `Analyze the grammar of {passage} to help anyone understand how sentence structure reveals theological truth—accessible yet thorough.
+
+LANGUAGE AUTO-DETECTION:
+**If passage is Old Testament:**
+- Display Hebrew text with transliteration
+- Analyze Hebrew grammatical features
+- Explain Hebrew word order, construct chains, verb stems
+- Note definiteness, pronominal suffixes, particles
+- Reference Hebrew syntax and style
+
+**If passage is New Testament:**
+                - Display Greek text with transliteration
+                - Analyze Greek grammatical features
+                - Explain Greek cases, verb aspects, participles
+                - Note article usage, prepositions, conjunctions
+                - Reference Greek syntax and style
+
+Focus on making complex grammar accessible while maintaining scholarly accuracy.`,
+                icon: '📖'
+            },
+            'advanced-grammar': {
+                name: 'Advanced Grammar',
+                prompt: `Perform comprehensive syntactic analysis of {passage} combining scholarly precision with theological depth.
+
+LANGUAGE AUTO-DETECTION & SCHOLARLY TREATMENT:
+**If Old Testament:**
+                - Display Hebrew text (pointed Masoretic)
+                - Provide transliteration for accessibility
+                - Analyze ALL Hebrew grammatical features:
+                  - Verb stems (Qal, Niphal, Piel, Pual, Hithpael, Hophal, Hiphil)
+                  - Verb conjugations (Perfect, Imperfect, Imperative, Infinitive, Participle)
+                  - Noun patterns, construct chains, pronominal suffixes
+                  - Particles, prepositions, conjunctions
+                  - Word order and emphasis
+                  - Poetic structures if applicable (parallelism, chiasm)
+
+**If New Testament:**
+                - Display Greek text with transliteration
+                - Analyze ALL Greek grammatical features:
+                  - Verb aspects (aorist, present, perfect, imperfect)
+                  - Voice (active, middle, passive)
+                  - Mood (indicative, subjunctive, optative, imperative, infinitive, participle)
+                  - Case system (nominative, genitive, dative, accusative, vocative)
+                  - Article usage and semantic significance
+                  - Participles and their functions
+                  - Prepositions and compound verbs
+
+Include detailed morphological analysis, clause structures, and syntactic relationships.`,
+                icon: '🔬'
+            },
+            'morphology': {
+                name: 'Morphology',
+                prompt: `Provide detailed morphological analysis of {passage}:
+
+**For each significant word:**
+                - Parse (part of speech, person, number, gender, tense, voice, mood, case)
+                - Root/lexical form
+                - Semantic range
+                - Usage in this context
+
+**Analysis should include:**
+                - Word-by-word breakdown of key terms
+                - Morphological patterns that affect meaning
+                - Comparative usage across Scripture
+                - Theological implications of specific forms`,
+                icon: '📝'
+            },
+            'lexicon': {
+                name: 'Greek/Hebrew Lexicon',
+                prompt: `Provide lexical analysis for key terms in {passage}:
+
+**For each significant word:**
+                1. **Original Language:** Hebrew/Greek word (with transliteration)
+                2. **Root Meaning:** Etymology and basic semantic range
+                3. **Usage Patterns:** How this word is used elsewhere in Scripture
+                4. **Theological Significance:** What this word contributes to biblical theology
+                5. **Context:** How the meaning functions specifically in this passage
+
+Focus on words that carry theological weight or cultural significance.`,
+                icon: '📚'
+            },
+            'semantic-range': {
+                name: 'Semantic Range',
+                prompt: `Analyze the semantic range and contextual meaning of key terms in {passage}:
+
+**For each major term:**
+                1. **Full Semantic Range:** Complete spectrum of meanings
+                2. **Usage Categories:** How the term functions in different contexts
+                3. **Scripture Survey:** Key passages using this term
+                4. **Contextual Determination:** Why this specific meaning applies here
+                5. **Theological Trajectories:** How meaning develops across biblical corpus
+
+Show how word meanings shift based on context while maintaining core concepts.`,
+                icon: '🎯'
+            },
+            'verse-by-verse-grammar': {
+                name: 'Verse-by-Verse Grammar',
+                prompt: `Provide verse-by-verse grammatical analysis of {passage}:
+
+**For each verse:**
+                1. **Text:** Display original language with transliteration
+                2. **Clause Structure:** Identify main and subordinate clauses
+                3. **Grammatical Features:** Key morphological and syntactic elements
+                4. **Structural Relationships:** How clauses connect
+                5. **Meaning Impact:** How grammar affects interpretation
+
+Make technical analysis accessible while maintaining precision.`,
+                icon: '📋'
+            }
+        }
+    },
+    'devotional': {
+
+**If passage is New Testament:**
+- Display Greek text with transliteration
+- Analyze Greek grammatical features
+- Explain Greek cases, verb aspects, participles
+- Note article usage, prepositions, conjunctions
+- Reference Greek syntax and style
+
+Focus on making complex grammar accessible while maintaining scholarly accuracy.`,
+                icon: '📖'
+            },
+            'advanced-grammar': {
+                name: 'Advanced Grammar',
+                prompt: `Perform comprehensive syntactic analysis of {passage} combining scholarly precision with theological depth.
+
+LANGUAGE AUTO-DETECTION & SCHOLARLY TREATMENT:
+**If Old Testament:**
+- Display Hebrew text (pointed Masoretic)
+- Provide transliteration for accessibility
+- Analyze ALL Hebrew grammatical features:
+  - Verb stems (Qal, Niphal, Piel, Pual, Hithpael, Hophal, Hiphil)
+  - Verb conjugations (Perfect, Imperfect, Imperative, Infinitive, Participle)
+  - Noun patterns, construct chains, pronominal suffixes
+  - Particles, prepositions, conjunctions
+  - Word order and emphasis
+  - Poetic structures if applicable (parallelism, chiasm)
+
+**If New Testament:**
+- Display Greek text with transliteration
+- Analyze ALL Greek grammatical features:
+  - Verb aspects (aorist, present, perfect, imperfect)
+  - Voice (active, middle, passive)
+  - Mood (indicative, subjunctive, optative, imperative, infinitive, participle)
+  - Case system (nominative, genitive, dative, accusative, vocative)
+  - Article usage and semantic significance
+  - Participles and their functions
+  - Prepositions and compound verbs
+
+Include detailed morphological analysis, clause structures, and syntactic relationships that reveal theological meaning.`,
+                icon: '🔬'
+            },
+            'morphology': {
+                name: 'Morphology',
+                prompt: `Provide detailed morphological analysis of {passage}:
+
+**For each significant word:**
+- Parse (part of speech, person, number, gender, tense, voice, mood, case)
+- Root/lexical form
+- Semantic range
+- Usage in this context
+
+**Analysis should include:**
+- Word-by-word breakdown of key terms
+- Morphological patterns that affect meaning
+- Comparative usage across Scripture
+- Theological implications of specific forms`,
+                icon: '📝'
+            },
+            'lexicon': {
+                name: 'Greek/Hebrew Lexicon',
+                prompt: `Provide lexical analysis for key terms in {passage}:
+
+**For each significant word:**
+1. **Original Language:** Hebrew/Greek word (with transliteration)
+2. **Root Meaning:** Etymology and basic semantic range
+3. **Usage Patterns:** How this word is used elsewhere in Scripture
+4. **Theological Significance:** What this word contributes to biblical theology
+5. **Context:** How the meaning functions specifically in this passage
+
+Focus on words that carry theological weight or cultural significance.`,
+                icon: '📚'
+            },
+            'semantic-range': {
+                name: 'Semantic Range',
+                prompt: `Analyze the semantic range and contextual meaning of key terms in {passage}:
+
+**For each major term:**
+1. **Full Semantic Range:** Complete spectrum of meanings
+2. **Usage Categories:** How the term functions in different contexts
+3. **Scripture Survey:** Key passages using this term
+4. **Contextual Determination:** Why this specific meaning applies here
+5. **Theological Trajectories:** How meaning develops across biblical corpus
+
+Show how word meanings shift based on context while maintaining core concepts.`,
+                icon: '🎯'
+            },
+            'verse-by-verse-grammar': {
+                name: 'Verse-by-Verse Grammar',
+                prompt: `Provide verse-by-verse grammatical analysis of {passage}:
+
+**For each verse:**
+1. **Text:** Display original language with transliteration
+2. **Clause Structure:** Identify main and subordinate clauses
+3. **Grammatical Features:** Key morphological and syntactic elements
+4. **Structural Relationships:** How clauses connect
+5. **Meaning Impact:** How grammar affects interpretation
+
+Make technical analysis accessible while maintaining precision.`,
+                icon: '📋'
+            }
+        }
+    },
+    'devotional': {
+        name: 'Devotional',
     'devotional': {
         name: 'Devotional',
         modules: {

@@ -813,6 +813,37 @@
             border-top: 1px solid var(--sand);
             text-align: center;
         }
+        ... (existing CSS above) ...
+
+    /* Regenerate Button Styling */
+    .regenerate-btn {
+        background: var(--evergreen);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .regenerate-btn:hover {
+        background: var(--pine);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .regenerate-btn:active {
+        transform: translateY(0);
+    }
+</style>
+</head>
+<body>
     </style>
 </head>
 <body>

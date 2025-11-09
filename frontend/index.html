@@ -97,6 +97,7 @@
             position: relative;
             transition: all 0.3s ease;
             border-right: 1px solid var(--evergreen);
+            flex-shrink: 0; /* Prevent sidebar from shrinking */
         }
 
         .sidebar.collapsed {
@@ -212,6 +213,7 @@
             display: flex;
             flex-direction: column;
             background: var(--parchment);
+            min-width: 0; /* Important for flex shrinking */
         }
 
         .content-header {
@@ -219,11 +221,14 @@
             padding: 20px 32px;
             border-bottom: 1px solid var(--sand);
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
         .search-main {
             width: 100%;
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
         }
 
@@ -235,19 +240,17 @@
             letter-spacing: 0.8px;
             margin-bottom: 8px;
             display: block;
-            text-align: center;
         }
 
         .search-input {
             width: 100%;
-            padding: 14px 20px;
+            padding: 12px 16px;
             border: 2px solid var(--sand);
             border-radius: 6px;
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-dark);
             background: white;
             transition: all 0.2s;
-            text-align: center;
         }
 
         .search-input:focus {
@@ -255,65 +258,62 @@
             border-color: var(--evergreen);
             box-shadow: 0 0 0 3px rgba(74, 93, 78, 0.1);
         }
-
+        
         .action-bar {
             display: flex;
             gap: 12px;
-            max-width: 900px;
-            margin: 16px auto 0;
-            align-items: stretch;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         .action-btn {
             flex: 1;
-            padding: 12px 24px;
             background: var(--evergreen);
             color: white;
             border: none;
+            padding: 10px 20px;
             border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
             cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
             transition: all 0.2s;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        .action-btn:hover:not(:disabled) {
+        .action-btn:hover {
             background: var(--pine);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(74, 93, 78, 0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-
+        
         .action-btn:disabled {
-            opacity: 0.5;
+            background: var(--stone-light);
             cursor: not-allowed;
-            background: var(--evergreen);
+            transform: none;
+            box-shadow: none;
         }
 
-        .action-btn span:first-child {
-            font-size: 18px;
+        .action-btn-secondary {
+            background: var(--warm-white);
+            color: var(--evergreen);
+            border: 2px solid var(--evergreen);
         }
-
-        .version-select-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .version-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--text-medium);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
+        
+        .action-btn-secondary:hover {
+            background: var(--sand);
+            border-color: var(--pine);
+            color: var(--pine);
         }
         
         .version-select {
-            padding: 6px 10px;
-            border: 2px solid var(--evergreen);
+            padding: 10px 14px;
+            border: 2px solid var(--sand);
             border-radius: 6px;
             font-size: 13px;
             font-weight: 600;
@@ -321,23 +321,13 @@
             background: white;
             cursor: pointer;
             transition: all 0.2s;
-            height: 100%; /* Match button height */
-        }
-
-        .version-select:hover {
-            border-color: var(--pine);
-        }
-
-        .version-select:focus {
-            outline: none;
-            border-color: var(--evergreen);
-            box-shadow: 0 0 0 3px rgba(74, 93, 78, 0.1);
+            margin-left: 8px;
         }
 
         .results-main {
             flex: 1;
             padding: 32px;
-            overflow-y: auto;
+            overflow-y: scroll; /* <-- FIX: Changed from auto to scroll */
         }
 
         .analysis-display {
@@ -348,7 +338,33 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             border: 1px solid var(--sand);
             min-height: 500px;
+            overflow: hidden; /* To contain header/footer borders */
         }
+        
+        /* This template holds the header content */
+        <template id="analysisHeaderTemplate">
+            <div class="analysis-header">
+                <!-- View 1: Standard Module Analysis Title -->
+                <div id="analysisTitleDisplay" class="analysis-title">
+                    <span class="analysis-icon">📖</span>
+                    <div>
+                        <div class="analysis-passage" id="analysisPassageDisplay">Romans 8:1-8</div>
+                        <div class="analysis-module" id="analysisModuleDisplay">Spiritual Analysis</div>
+                    </div>
+                </div>
+                
+                <!-- View 2: Bible Reader Controls (Hidden by default) -->
+                <div id="readerControlsDisplay" class="reader-controls hidden">
+                    <button class="reader-nav-btn" id="prevChapterBtn">◀ Prev</button>
+                    <div class="reader-title">
+                        <div class="reader-chapter" id="readerChapterDisplay">Romans 8</div>
+                        <div class="reader-version" id="readerVersionDisplay">Modern English</div>
+                    </div>
+                    <button class="reader-nav-btn" id="nextChapterBtn">Next ▶</button>
+                </div>
+            </div>
+        </template>
+
 
         .status-message {
             text-align: center;
@@ -375,9 +391,9 @@
             margin: 0 auto;
         }
 
+        /* Stub for version controls (hidden by default) */
         .version-controls {
-            display: none; /* Hidden by default */
-            margin-top: 20px;
+            display: none;
             gap: 8px;
             justify-content: center;
             align-items: center;
@@ -420,6 +436,7 @@
             display: flex;
             flex-direction: column;
             border-left: 1px solid var(--sand);
+            flex-shrink: 0; /* Prevent notes from shrinking */
         }
 
         .notes-panel.collapsed {
@@ -470,6 +487,8 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            overflow: hidden;
+            width: 100%;
         }
 
         .notes-panel.collapsed .notes-inner {
@@ -668,6 +687,7 @@
             color: var(--text-dark);
             background: white;
             font-family: 'Georgia', serif;
+            overflow-y: auto;
         }
 
         .notes-editor:focus {
@@ -710,33 +730,52 @@
 
         /* Scrollbar Styling */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
         }
 
-        ::-webkit-scrollbar-track {
+        /* This is the main content pane scrollbar */
+        .results-main::-webkit-scrollbar-track {
             background: var(--parchment);
+            border-left: 1px solid var(--sand);
         }
-
-        ::-webkit-scrollbar-thumb {
+        .results-main::-webkit-scrollbar-thumb {
             background: var(--sand);
-            border-radius: 4px;
+            border-radius: 5px;
+            border: 2px solid var(--parchment);
         }
-
-        ::-webkit-scrollbar-thumb:hover {
+        .results-main::-webkit-scrollbar-thumb:hover {
             background: var(--sage-warm);
         }
+
+        /* This is the sidebar scrollbar */
+        .sidebar-content::-webkit-scrollbar-track,
+        .notes-editor::-webkit-scrollbar-track {
+            background: var(--stone);
+        }
+        .sidebar-content::-webkit-scrollbar-thumb,
+        .notes-editor::-webkit-scrollbar-thumb {
+            background: var(--stone-dark);
+            border-radius: 4px;
+        }
+        .sidebar-content::-webkit-scrollbar-thumb:hover,
+        .notes-editor::-webkit-scrollbar-thumb:hover {
+            background: var(--evergreen);
+        }
+
 
         /* Loading Animation */
         .loading-dots {
             display: inline-flex;
             gap: 4px;
+            align-items: center;
+            height: 100%;
         }
 
         .loading-dots span {
             animation: loadingDot 1.4s infinite;
             font-size: 24px;
-            color: var(--evergreen);
+            line-height: 1;
         }
 
         .loading-dots span:nth-child(2) {
@@ -754,13 +793,13 @@
             }
             30% {
                 opacity: 1;
-                transform: translateY(-10px);
+                transform: translateY(-5px);
             }
         }
 
         /* Analysis Content Styling */
         .analysis-content {
-            padding: 28px;
+            padding: 28px 48px 48px 48px;
             line-height: 1.8;
             color: var(--text-dark);
         }
@@ -802,94 +841,92 @@
             color: var(--evergreen);
             font-weight: 600;
         }
+        
+        .analysis-content strong[style*="[$1]"] { /* Style for verse numbers */
+            color: var(--text-dark);
+            font-weight: bold;
+        }
 
-        /* --- HEADER STYLES --- */
+
         .analysis-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: center; /* Center the content */
             align-items: center;
             padding: 20px 28px;
             background: var(--warm-white);
             border-bottom: 1px solid var(--sand);
+            min-height: 85px; /* Ensure a consistent height */
         }
-
+        
         .analysis-title {
             display: flex;
             align-items: center;
             gap: 16px;
         }
-
         .analysis-icon {
-            font-size: 24px;
+            font-size: 28px;
         }
-
         .analysis-passage {
             font-size: 18px;
             font-weight: 600;
             color: var(--text-dark);
         }
-
         .analysis-module {
             font-size: 13px;
             color: var(--text-medium);
-            font-weight: 500;
         }
+        
+        /* New Reader Controls Styles */
+        .reader-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .reader-nav-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid var(--sand);
+            color: var(--text-dark);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .reader-nav-btn:hover:not(:disabled) {
+            background: var(--parchment);
+            border-color: var(--evergreen);
+        }
+        .reader-nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: var(--parchment);
+        }
+        .reader-title {
+            text-align: center;
+        }
+        .reader-chapter {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .reader-version {
+            font-size: 13px;
+            color: var(--text-medium);
+        }
+        .hidden {
+            display: none !important;
+        }
+
 
         .analysis-footer {
             padding: 16px 28px;
             background: var(--warm-white);
             border-top: 1px solid var(--sand);
             text-align: center;
+            min-height: 60px; /* Consistent height */
         }
-        
-        /* --- NEW: Reader Controls --- */
-        .reader-controls {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-        }
-
-        .reader-nav-btn {
-            background: var(--evergreen);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            padding: 10px 20px;
-        }
-        .reader-nav-btn:hover:not(:disabled) {
-            background: var(--pine);
-        }
-        .reader-nav-btn:disabled {
-            background: var(--sand);
-            cursor: not-allowed;
-        }
-
-        .reader-title-display {
-            text-align: center;
-        }
-        
-        .reader-chapter-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        .reader-version-title {
-            font-size: 13px;
-            color: var(--text-medium);
-            font-weight: 500;
-        }
-
-        /* Utility class to hide elements */
-        .hidden {
-            display: none !important;
-        }
-
 
     </style>
 </head>
@@ -947,7 +984,6 @@
                     <button class="secondary-tab" data-module="advanced-grammar">Advanced Grammar</button>
                     <button class="secondary-tab" data-module="verse-by-verse">Verse-by-Verse Grammar</button>
                     <button class="secondary-tab" data-module="semantic-range">Semantic Range</button>
-                    <!-- New Interlinear Module from Step 4 will go here -->
                 </div>
 
                 <!-- Context Modules -->
@@ -963,7 +999,7 @@
                 <div class="module-group" data-category="jewish">
                     <button class="secondary-tab" data-module="second-temple">Second Temple Period</button>
                     <button class="secondary-tab" data-module="rabbinic">Rabbinic Literature</button>
-                    <button classs="secondary-tab" data-module="dead-sea-scrolls">Dead Sea Scrolls</button>
+                    <button class="secondary-tab" data-module="dead-sea-scrolls">Dead Sea Scrolls</button>
                     <button class="secondary-tab" data-module="pseudepigrapha">Pseudepigrapha</button>
                 </div>
 
@@ -983,33 +1019,31 @@
         </aside>
 
         <!-- Content Area -->
-        <main classs="content-area">
+        <main class="content-area">
             <div class="content-header">
                 <div class="search-main">
-                    <label class="search-label">Scripture Passage or General Question</label>
+                    <label class="search-label" for="passageInput">Scripture Passage or General Question</label>
                     <input 
                         type="text" 
                         class="search-input" 
                         id="passageInput"
-                        placeholder="e.g., John 3:16, Romans 8, or 'What is propitiation?'"
+                        placeholder="e.g., John 3:16, Romans 8:1-8, or 'What is propitiation?'"
                     >
-                    <div class="action-bar">
-                        <button class="action-btn" id="moduleAnalysisBtn">
-                            <span>📖</span>
-                            <span>Run Module Analysis</span>
-                        </button>
-                        <select class="version-select" id="versionSelect">
-                            <option value="Modern English (Default)">Modern English (Default)</option>
-                            <option value="KJV">King James Version (KJV)</option>
-                            <option value="WEB">World English Bible (WEB)</option>
-                            <option value="Reina-Valera 1909">Spanish (Reina-Valera 1909)</option>
-                            <!-- Step 3 will add more versions here -->
-                        </select>
-                        <button class="action-btn" id="displayScriptureBtn">
-                            <span>📚</span>
-                            <span>Display Scripture Text</span>
-                        </button>
-                    </div>
+                </div>
+                
+                <div class="action-bar">
+                    <button class="action-btn" id="moduleAnalysisBtn">
+                        <span>📖</span> Run Module Analysis
+                    </button>
+                    <button class="action-btn action-btn-secondary" id="displayScriptureBtn">
+                        <span>💬</span> Display Scripture Text
+                    </button>
+                    <select class="version-select" id="versionSelect">
+                        <option value="modern-english">Modern English</option>
+                        <option value="kjv">King James Version</option>
+                        <option value="web">World English Bible (WEB)</option>
+                        <option value="rv1909">Reina-Valera 1909 (Spanish)</option>
+                    </select>
                 </div>
             </div>
 
@@ -1021,10 +1055,11 @@
                         <div class="status-title">Ready to Study God's Word</div>
                         <p class="status-text">
                             Enter your scripture passage above, then simply click a module tab. 
-                            Or, select a version and display the full scripture text.
+                            Analysis generates automatically—streamlined for deep theological study.
                         </p>
                         
-                        <div class="version-controls" id="versionControls">
+                        <!-- This is a cloneable template, not displayed by default -->
+                        <div class="version-controls" id="versionControls" style="display: none;">
                             <button class="version-btn" id="prevVersionBtn" disabled>◀ Previous</button>
                             <span class="version-indicator" id="versionIndicator">Version 1 of 1</span>
                             <button class="version-btn" id="nextVersionBtn" disabled>Next ▶</button>
@@ -1036,7 +1071,7 @@
         </main>
 
         <!-- Notes Panel -->
-        <aside classs="notes-panel" id="notesPanel">
+        <aside class="notes-panel" id="notesPanel">
             <button class="notes-tab" id="notesToggle">
                 <span id="notesArrow">▶</span>
                 NOTES
@@ -1048,7 +1083,7 @@
                         <div class="size-controls">
                             <button class="size-btn" id="collapseBtn" data-tooltip="Collapse">◀</button>
                             <button class="size-btn active" id="normalBtn" data-tooltip="Normal (400px)">↔</button>
-                            <button class="size-btn" id="mediumBtn" data-tooltip="Medium (600px)">↔</Mbutton>
+                            <button class="size-btn" id="mediumBtn" data-tooltip="Medium (600px)">↔</button>
                             <button class="size-btn" id="wideBtn" data-tooltip="Wide (800px)">⛶</button>
                         </div>
                     </div>
@@ -1101,29 +1136,26 @@
         </aside>
     </div>
 
-    <!-- 
-      ANALYSIS HEADER TEMPLATE 
-      This is the template for the header of the analysis content.
-    -->
+    <!-- Template for Analysis Header -->
     <template id="analysisHeaderTemplate">
         <div class="analysis-header">
-            <!-- 1. Analysis Title (Default View) -->
-            <div class="analysis-title" id="analysisTitleDisplay">
+            <!-- View 1: Standard Module Analysis Title -->
+            <div id="analysisTitleDisplay" class="analysis-title">
                 <span class="analysis-icon">📖</span>
                 <div>
                     <div class="analysis-passage" id="analysisPassageDisplay">Romans 8:1-8</div>
-                    <div class="analysis-module" id="analysisModuleDisplay">Advanced Grammar</div>
+                    <div class="analysis-module" id="analysisModuleDisplay">Spiritual Analysis</div>
                 </div>
             </div>
-
-            <!-- 2. Reader Controls (Scripture Display View) -->
-            <div class="reader-controls hidden" id="readerControlsDisplay">
-                <button class="reader-nav-btn" id="prevChapterBtn" disabled>◀ Prev</button>
-                <div class="reader-title-display">
-                    <div class="reader-chapter-title" id="readerChapterDisplay">Romans 8</div>
-                    <div class="reader-version-title" id="readerVersionDisplay">Modern English (Default)</div>
+            
+            <!-- View 2: Bible Reader Controls (Hidden by default) -->
+            <div id="readerControlsDisplay" class="reader-controls hidden">
+                <button class="reader-nav-btn" id="prevChapterBtn">◀ Prev</button>
+                <div class="reader-title">
+                    <div class="reader-chapter" id="readerChapterDisplay">Romans 8</div>
+                    <div class="reader-version" id="readerVersionDisplay">Modern English</div>
                 </div>
-                <button class="reader-nav-btn" id="nextChapterBtn" disabled>Next ▶</button>
+                <button class="reader-nav-btn" id="nextChapterBtn">Next ▶</button>
             </div>
         </div>
     </template>

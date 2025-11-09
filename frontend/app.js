@@ -14,26 +14,51 @@ const AppState = {
     currentNoteId: null,
     notes: {},
     analysisVersions: {},
-    currentVersionIndex: {}
-};
-
-// ===== PROMPT DEFINITIONS =====
-const Prompts = {
-    displayScripture: `Please provide the full, formatted text for {passage}. 
-- Include verse numbers (e.g., **[16]**).
-- Do not add any commentary, analysis, or headers. 
-- Just return the scripture text, formatted for readability.`,
-    
-    askAi: `You are a helpful and knowledgeable assistant for theological study. 
-Answer the following question clearly and concisely.
-Question: {passage}` // {passage} will be the user's question
+    currentVersionIndex: {},
+    // NEW: State for Bible Reader
+    currentBibleReference: {
+        book: '',
+        chapter: null,
+        verse: null
+    }
 };
 
 // ===== MODULE DEFINITIONS =====
 const ModuleDefinitions = {
-    'languages': { 
+    'languages': {
         name: 'Original Languages',
         modules: {
+            'greek-hebrew': {
+                name: 'Greek/Hebrew Lexicon',
+                prompt: `Provide lexical analysis for key terms in {passage}:
+
+**For each significant word:**
+                1. **Original Language:** Hebrew/Greek word (with transliteration)
+                2. **Root Meaning:** Etymology and basic semantic range
+                3. **Usage Patterns:** How this word is used elsewhere in Scripture
+                4. **Theological Significance:** What this word contributes to biblical theology
+                5. **Context:** How the meaning functions specifically in this passage
+
+Focus on words that carry theological weight or cultural significance.`,
+                icon: '📚'
+            },
+            'morphology': {
+                name: 'Morphology',
+                prompt: `Provide detailed morphological analysis of {passage}:
+
+**For each significant word:**
+                - Parse (part of speech, person, number, gender, tense, voice, mood, case)
+                - Root/lexical form
+                - Semantic range
+                - Usage in this context
+
+**Analysis should include:**
+                - Word-by-word breakdown of key terms
+                - Morphological patterns that affect meaning
+                - Comparative usage across Scripture
+                - Theological implications of specific forms`,
+                icon: '📝'
+            },
             'grammar-essentials': {
                 name: 'Grammar Essentials',
                 prompt: `Analyze the grammar of {passage} to help anyone understand how sentence structure reveals theological truth—accessible yet thorough.
@@ -86,36 +111,19 @@ LANGUAGE AUTO-DETECTION & SCHOLARLY TREATMENT:
 Include detailed morphological analysis, clause structures, and syntactic relationships.`,
                 icon: '🔬'
             },
-            'morphology': {
-                name: 'Morphology',
-                prompt: `Provide detailed morphological analysis of {passage}:
+            'verse-by-verse': {
+                name: 'Verse-by-Verse Grammar',
+                prompt: `Provide verse-by-verse grammatical analysis of {passage}:
 
-**For each significant word:**
-                - Parse (part of speech, person, number, gender, tense, voice, mood, case)
-                - Root/lexical form
-                - Semantic range
-                - Usage in this context
+**For each verse:**
+                1. **Text:** Display original language with transliteration
+                2. **Clause Structure:** Identify main and subordinate clauses
+                3. **Grammatical Features:** Key morphological and syntactic elements
+                4. **Structural Relationships:** How clauses connect
+                5. **Meaning Impact:** How grammar affects interpretation
 
-**Analysis should include:**
-                - Word-by-word breakdown of key terms
-                - Morphological patterns that affect meaning
-                - Comparative usage across Scripture
-                - Theological implications of specific forms`,
-                icon: '📝'
-            },
-            'greek-hebrew': { 
-                name: 'Greek/Hebrew Lexicon',
-                prompt: `Provide lexical analysis for key terms in {passage}:
-
-**For each significant word:**
-                1. **Original Language:** Hebrew/Greek word (with transliteration)
-                2. **Root Meaning:** Etymology and basic semantic range
-                3. **Usage Patterns:** How this word is used elsewhere in Scripture
-                4. **Theological Significance:** What this word contributes to biblical theology
-                5. **Context:** How the meaning functions specifically in this passage
-
-Focus on words that carry theological weight or cultural significance.`,
-                icon: '📚'
+Make technical analysis accessible while maintaining precision.`,
+                icon: '📋'
             },
             'semantic-range': {
                 name: 'Semantic Range',
@@ -130,20 +138,6 @@ Focus on words that carry theological weight or cultural significance.`,
 
 Show how word meanings shift based on context while maintaining core concepts.`,
                 icon: '🎯'
-            },
-            'verse-by-verse': { 
-                name: 'Verse-by-Verse Grammar',
-                prompt: `Provide verse-by-verse grammatical analysis of {passage}:
-
-**For each verse:**
-                1. **Text:** Display original language with transliteration
-                2. **Clause Structure:** Identify main and subordinate clauses
-                3. **Grammatical Features:** Key morphological and syntactic elements
-                4. **Structural Relationships:** How clauses connect
-                5. **Meaning Impact:** How grammar affects interpretation
-
-Make technical analysis accessible while maintaining precision.`,
-                icon: '📋'
             }
         }
     },
@@ -312,8 +306,30 @@ Avoid generic observations—focus on transformative truth that leads to worship
     }
 };
 
+// ===== DOM ELEMENTS =====
+// Cached DOM elements to avoid repeated lookups
+const DOMElements = {};
+
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
+    // Cache all DOM elements
+    DOMElements.sidebar = document.getElementById('sidebar');
+    DOMElements.sidebarHeader = document.getElementById('sidebarHeader');
+    DOMElements.primaryTabs = document.querySelectorAll('.primary-tab');
+    DOMElements.moduleGroups = document.querySelectorAll('.module-group');
+    DOMElements.secondaryTabs = document.querySelectorAll('.secondary-tab');
+    DOMElements.passageInput = document.getElementById('passageInput');
+    DOMElements.moduleAnalysisBtn = document.getElementById('moduleAnalysisBtn');
+    DOMElements.displayScriptureBtn = document.getElementById('displayScriptureBtn');
+    DOMElements.versionSelect = document.getElementById('versionSelect');
+    DOMElements.analysisDisplay = document.getElementById('analysisDisplay');
+    DOMElements.statusMessage = document.getElementById('statusMessage');
+    DOMElements.analysisHeaderTemplate = document.getElementById('analysisHeaderTemplate');
+    DOMElements.sidebarToggle = document.getElementById('sidebarToggle');
+    DOMElements.notesPanel = document.getElementById('notesPanel');
+    DOMElements.notesToggle = document.getElementById('notesToggle');
+    // ... add other elements as needed
+
     initializeApp();
     loadNotes();
     checkAPIHealth();
@@ -321,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initializeApp() {
     // Primary tabs
-    document.querySelectorAll('.primary-tab').forEach(tab => {
+    DOMElements.primaryTabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             const category = e.target.dataset.category;
             switchCategory(category);
@@ -329,25 +345,27 @@ function initializeApp() {
     });
 
     // Secondary tabs (modules)
-    document.querySelectorAll('.secondary-tab').forEach(tab => {
+    DOMElements.secondaryTabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             const module = e.target.dataset.module;
             switchModule(module);
         });
     });
 
-    // --- NEW: Action Bar Buttons ---
-    document.getElementById('moduleAnalysisBtn').addEventListener('click', generateModuleAnalysis);
-    document.getElementById('displayScriptureBtn').addEventListener('click', displayScripture);
-    document.getElementById('askAiBtn').addEventListener('click', askGeneralQuestion);
+    // --- Action Bar ---
+    DOMElements.moduleAnalysisBtn.addEventListener('click', generateModuleAnalysis);
+    DOMElements.displayScriptureBtn.addEventListener('click', displayScripture);
     
-    // Enter key (defaults to module analysis)
-    document.getElementById('passageInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') generateModuleAnalysis();
+    // Enter key
+    DOMElements.passageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') generateModuleAnalysis(); // Default to module analysis
     });
 
     // Sidebar toggle
-    document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+    DOMElements.sidebarToggle.addEventListener('click', () => DOMElements.sidebar.classList.toggle('collapsed'));
+
+    // Notes toggle
+    DOMElements.notesToggle.addEventListener('click', () => DOMElements.notesPanel.classList.toggle('collapsed'));
 }
 
 // ===== API HEALTH CHECK =====
@@ -365,80 +383,61 @@ async function checkAPIHealth() {
     }
 }
 
-// ===== NEW: ANALYSIS FUNCTIONS =====
+// ===== CORE ANALYSIS FUNCTIONS =====
 
 /**
- * Gets the passage from the input box.
- * @returns {string} The trimmed passage or an empty string.
+ * NEW: Parses a passage reference string (e.g., "John 3:16", "Romans 8:1-2")
+ * and returns a structured object.
+ * This is a simple parser and can be expanded.
+ * @param {string} passageStr - The input string from the user.
+ * @returns {object} - An object { book: string, chapter: number, verse: number }
  */
-function getPassageInput() {
-    const passage = document.getElementById('passageInput').value.trim();
-    if (!passage) {
-        showError('Please enter a scripture passage or question in the text box.');
-        return '';
-    }
-    AppState.currentPassage = passage;
-    return passage;
-}
-
-/**
- * Disables or enables all action buttons.
- * @param {boolean} disabled - True to disable, false to enable.
- */
-function setActionButtonsDisabled(disabled) {
-    document.getElementById('moduleAnalysisBtn').disabled = disabled;
-    document.getElementById('displayScriptureBtn').disabled = disabled;
-    document.getElementById('askAiBtn').disabled = disabled;
-}
-
-/**
- * Runs the selected module's analysis.
- */
-function generateModuleAnalysis() {
-    const passage = getPassageInput();
-    if (!passage) return;
-
-    const moduleInfo = getModuleInfo(AppState.currentCategory, AppState.currentModule);
-    const prompt = moduleInfo.prompt.replace('{passage}', passage);
+function parsePassageReference(passageStr) {
+    // This is a basic parser. A more robust one would handle "1 John", "Song of Solomon", etc.
+    const match = passageStr.match(/^(\d?\s*[a-zA-Z]+(?:\s[a-zA-Z]+)?)\s*(\d+)(?:[:.](\d+))?/);
     
-    runAnalysis(prompt, moduleInfo.name, passage);
+    if (match) {
+        const book = match[1].trim();
+        const chapter = parseInt(match[2], 10);
+        const verse = match[3] ? parseInt(match[3], 10) : 1; // Default to verse 1 if not specified
+        
+        return { book, chapter, verse };
+    }
+    
+    // Fallback for simple inputs like "Romans 8" or general questions
+    const parts = passageStr.split(' ');
+    const lastPart = parts[parts.length - 1];
+    if (parts.length > 1 && /^\d+$/.test(lastPart)) {
+        const chapter = parseInt(lastPart, 10);
+        const book = parts.slice(0, -1).join(' ');
+        return { book, chapter, verse: 1 };
+    }
+
+    // Not a scripture reference, or just a book name.
+    // Treat as a general question or topic.
+    return { book: passageStr, chapter: null, verse: null };
 }
 
-/**
- * Displays the scripture text for the given passage.
- */
-function displayScripture() {
-    const passage = getPassageInput();
-    if (!passage) return;
-
-    const prompt = Prompts.displayScripture.replace('{passage}', passage);
-    runAnalysis(prompt, `Scripture Text: ${passage}`, passage);
-}
 
 /**
- * Asks a general question to the AI.
+ * Main function to call the backend API.
+ * @param {string} prompt - The final prompt to send to the AI.
+ * @param {string} analysisType - 'module', 'scripture', or 'general'.
+ * @param {object} context - Additional info (passage, moduleName, etc.)
  */
-function askGeneralQuestion() {
-    const passage = getPassageInput(); // Here, 'passage' is the user's question
-    if (!passage) return;
+async function runAnalysis(prompt, analysisType, context) {
+    const passage = DOMElements.passageInput.value.trim();
+    if (!passage) {
+        showError('Please enter a scripture passage or question.');
+        return;
+    }
 
-    const prompt = Prompts.askAi.replace('{passage}', passage);
-    runAnalysis(prompt, `General Question`, passage);
-}
-
-/**
- * The core function to call the backend API.
- * @param {string} prompt - The full prompt to send to the AI.
- * @param {string} moduleName - The name of the module or action for display.
- * @param {string} passage - The user's input passage/question for display.
- */
-async function runAnalysis(prompt, moduleName, passage) {
-    // 1. Show loading state and disable buttons
-    showLoadingState(moduleName, passage);
-    setActionButtonsDisabled(true);
+    // Show loading state
+    setLoadingState(true, 'Analyzing...');
+    DOMElements.statusMessage.classList.add('hidden');
 
     try {
-        // 2. Call BACKEND API
+        // Call BACKEND API (not Groq directly!)
         const response = await fetch(`${API_URL}/analyze`, {
             method: 'POST',
             headers: {
@@ -447,7 +446,7 @@ async function runAnalysis(prompt, moduleName, passage) {
             body: JSON.stringify({
                 prompt: prompt,
                 passage: passage,
-                moduleName: moduleName
+                moduleName: context.moduleName || 'Analysis'
             })
         });
 
@@ -459,8 +458,8 @@ async function runAnalysis(prompt, moduleName, passage) {
         const data = await response.json();
         const analysis = data.analysis;
 
-        // 3. Store version (only for module analysis)
-        if (moduleName !== `Scripture Text: ${passage}` && moduleName !== `General Question`) {
+        // Store version if it's a module analysis
+        if (analysisType === 'module') {
             const versionKey = `${AppState.currentCategory}-${AppState.currentModule}`;
             if (!AppState.analysisVersions[versionKey]) {
                 AppState.analysisVersions[versionKey] = [];
@@ -469,247 +468,283 @@ async function runAnalysis(prompt, moduleName, passage) {
             AppState.currentVersionIndex[versionKey] = AppState.analysisVersions[versionKey].length - 1;
         }
 
-        // 4. Display results
-        displayAnalysis(analysis, moduleName, passage);
+        // Display
+        displayAnalysis(analysis, analysisType, context);
 
     } catch (error) {
         console.error('Analysis Error:', error);
         showError(error.message);
     } finally {
-        // 5. Re-enable buttons
-        setActionButtonsDisabled(false);
+        setLoadingState(false);
     }
+}
+
+/**
+ * Triggered by the "Run Module Analysis" button.
+ */
+function generateModuleAnalysis() {
+    const passage = DOMElements.passageInput.value.trim();
+    AppState.currentPassage = passage;
+
+    // Get module info
+    const moduleInfo = getModuleInfo(AppState.currentCategory, AppState.currentModule);
+    if (!moduleInfo) {
+        showError("Could not find selected module.");
+        return;
+    }
+    
+    // Build prompt
+    let prompt = moduleInfo.prompt.replace('{passage}', passage);
+
+    // If it's a general question, add a system message
+    const ref = parsePassageReference(passage);
+    if (!ref.chapter) {
+        prompt = `User's input is a general topic or question, not a specific scripture passage.
+User's input: "${passage}"
+Based on this, perform the following analysis as a topic-based query:
+${prompt}`;
+    }
+
+    runAnalysis(prompt, 'module', {
+        passage: passage,
+        moduleName: moduleInfo.name,
+        icon: moduleInfo.icon
+    });
+}
+
+/**
+ * Triggered by the "Display Scripture Text" button.
+ */
+function displayScripture() {
+    const passage = DOMElements.passageInput.value.trim();
+    const version = DOMElements.versionSelect.value;
+    const versionText = DOMElements.versionSelect.options[DOMElements.versionSelect.selectedIndex].text;
+
+    // Try to parse the passage
+    const ref = parsePassageReference(passage);
+    let chapterQuery = passage;
+
+    if (ref.chapter) {
+        // It's a valid reference, let's get the whole chapter
+        chapterQuery = `${ref.book} ${ref.chapter}`;
+        // Store this for Step 2 (Navigation)
+        AppState.currentBibleReference = ref;
+    } else {
+        // Not a reference, maybe just a book? Or topic?
+        // Let's just send the raw query.
+        AppState.currentBibleReference = { book: passage, chapter: null, verse: null };
+    }
+
+    const prompt = `Please provide the full text for the *entire chapter* of ${chapterQuery} using the ${versionText} version.
+Format the text with verse numbers in brackets, like [1], [2], [3], etc.
+If the input is not a specific chapter (e.g., "Genesis 1"), but a book or topic (e.g., "Genesis" or "Love"), please state that you can only display full chapters.`;
+
+    runAnalysis(prompt, 'scripture', {
+        passage: passage,
+        chapter: chapterQuery,
+        version: versionText
+    });
 }
 
 
 // ===== DISPLAY FUNCTIONS =====
-function showLoadingState(moduleName, passage) {
-    // Set button text during loading
-    const moduleBtn = document.getElementById('moduleAnalysisBtn');
-    const scriptureBtn = document.getElementById('displayScriptureBtn');
-    const aiBtn = document.getElementById('askAiBtn');
-    
-    // Reset all buttons
-    moduleBtn.innerHTML = `<span>📖</span><span>Run Module Analysis</span>`;
-    scriptureBtn.innerHTML = `<span>📚</span><span>Display Scripture Text</span>`;
-    aiBtn.innerHTML = `<span>✨</span><span>Ask General Question</span>`;
 
-    // Set loading text on the specific button clicked (or default to module)
-    if (moduleName === `Scripture Text: ${passage}`) {
-        scriptureBtn.innerHTML = `<span>📚</span><span>Loading...</span>`;
-    } else if (moduleName === `General Question`) {
-        aiBtn.innerHTML = `<span>✨</span><span>Loading...</span>`;
+/**
+ * Toggles the loading state of the action buttons.
+ * @param {boolean} isLoading - Whether to show the loading state.
+ * @param {string} [message] - Optional message (e.g., "Loading...").
+ */
+function setLoadingState(isLoading, message = "Loading...") {
+    if (isLoading) {
+        DOMElements.moduleAnalysisBtn.disabled = true;
+        DOMElements.moduleAnalysisBtn.innerHTML = `<span><div class="loading-dots" style="font-size: 14px; color: white;"><span>.</span><span>.</span><span>.</span></div></span> ${message}`;
+        DOMElements.displayScriptureBtn.disabled = true;
     } else {
-        moduleBtn.innerHTML = `<span>📖</span><span>Loading...</span>`;
+        DOMElements.moduleAnalysisBtn.disabled = false;
+        DOMElements.moduleAnalysisBtn.innerHTML = `<span>📖</span> Run Module Analysis`;
+        DOMElements.displayScriptureBtn.disabled = false;
     }
-
-    const display = document.getElementById('analysisDisplay');
-    display.innerHTML = `
-        <div style="padding: 40px; text-align: center;">
-            <div style="font-size: 48px; margin-bottom: 20px;">⚡</div>
-            <div style="font-size: 18px; color: var(--text-medium); margin-bottom: 10px;">
-                Analyzing ${passage}...
-            </div>
-            <div style="font-size: 14px; color: var(--text-medium);">
-                Using ${moduleName}
-            </div>
-            <div style="margin-top: 20px;">
-                <div class="loading-dots">
-                    <span>.</span><span>.</span><span>.</span>
-                </div>
-            </div>
-        </div>
-    `;
 }
 
-function displayAnalysis(analysis, moduleName, passage) {
-    // Reset all button text
-    document.getElementById('moduleAnalysisBtn').innerHTML = `<span>📖</span><span>Run Module Analysis</span>`;
-    document.getElementById('displayScriptureBtn').innerHTML = `<span>📚</span><span>Display Scripture Text</span>`;
-    document.getElementById('askAiBtn').innerHTML = `<span>✨</span><span>Ask General Question</span>`;
+/**
+ * Formats raw markdown/plain text from AI into clean HTML.
+ */
+function formatAiResponse(text) {
+    // 1. Convert newlines to paragraphs
+    let html = text.split('\n\n')
+                   .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+                   .join('');
 
-    const display = document.getElementById('analysisDisplay');
+    // 2. Handle simple markdown lists (bulleted or numbered)
+    html = html.replace(/<p>(?:[\*\-]\s|(\d+)\.\s)(.+?)<\/p>/g, '<li>$2</li>');
+    html = html.replace(/(<li>.+?<\/li>)/g, '<ul>$1</ul>');
+    html = html.replace(/<\/ul>\s*<ul>/g, ''); // Fix contiguous lists
+
+    // 3. Handle headings
+    html = html.replace(/<p>###\s*(.+?)<\/p>/g, '<h3>$1</h3>');
+    html = html.replace(/<p>##\s*(.+?)<\/p>/g, '<h2>$1</h2>');
+    html = html.replace(/<p>#\s*(.+?)<\/p>/g, '<h1>$1</h1>');
+
+    // 4. Handle bold and italic
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     
-    // --- New, More Robust Markdown-to-HTML Converter ---
-    let formatted = analysis
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-        .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italic
+    // 5. Clean up verse numbers for scripture display
+    html = html.replace(/\[(\d+)\]/g, ' <strong>[$1]</strong> ');
 
-    // Headers
-    formatted = formatted
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-        .replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
-    // Unordered lists (hyphens or asterisks)
-    formatted = formatted.replace(/^(?:(?:-|\*)\s.*(?:\n|$))+/gm, (match) => {
-        const items = match.trim().split('\n');
-        return '<ul>\n' + items.map(item => `  <li>${item.substring(item.indexOf(' ')).trim()}</li>`).join('\n') + '\n</ul>';
-    });
-
-    // Ordered lists
-    formatted = formatted.replace(/^(?:\d+\.\s.*(?:\n|$))+/gm, (match) => {
-        const items = match.trim().split('\n');
-        return '<ol>\n' + items.map(item => `  <li>${item.substring(item.indexOf(' ')).trim()}</li>`).join('\n') + '\n</ol>';
-    });
-    
-    // Paragraphs
-    const lines = formatted.split('\n');
-    let html = '';
-    let inParagraph = false;
-
-    for (const line of lines) {
-        if (line.trim() === '') {
-            if (inParagraph) {
-                html += '</p>\n';
-                inParagraph = false;
-            }
-            html += '\n'; // Add a newline for separation
-        } else if (line.startsWith('<ul>') || line.startsWith('<ol>') || line.startsWith('<li>') || line.startsWith('</ul>') || line.startsWith('</ol>') || line.startsWith('<h')) {
-            if (inParagraph) {
-                html += '</p>\n';
-                inParagraph = false;
-            }
-            html += line + '\n';
-        } else {
-            if (!inParagraph) {
-                html += '<p>';
-                inParagraph = true;
-            }
-            html += line + ' '; // Join lines in a paragraph
-        }
-    }
-    if (inParagraph) {
-        html += '</p>\n';
-    }
-    // --- End of New Converter ---
-
-    display.innerHTML = `
-        <div class="analysis-header">
-            <div class="analysis-title">
-                <span class="analysis-icon">📖</span>
-                <div>
-                    <div class="analysis-passage">${passage}</div>
-                    <div class="analysis-module">${moduleName}</div>
-                </div>
-            </div>
-        </div>
-        <div class="analysis-content">
-            ${html} 
-        </div>
-        <div class="analysis-footer">
-            <span style="color: var(--text-medium); font-size: 12px;">
-                ⚡ Powered by Groq AI
-            </span>
-        </div>
-    `;
-
-    updateVersionControls();
+    return html;
 }
+
+/**
+ * Main function to render analysis or scripture text in the display pane.
+ * @param {string} content - The raw text/markdown from the AI.
+ * @param {string} analysisType - 'module', 'scripture', or 'general'.
+ * @param {object} context - Additional info (passage, moduleName, etc.)
+ */
+function displayAnalysis(content, analysisType, context) {
+    DOMElements.analysisDisplay.innerHTML = ''; // Clear display
+
+    // --- 1. CLONE AND APPEND HEADER ---
+    const headerTemplate = DOMElements.analysisHeaderTemplate.content.cloneNode(true);
+    const headerEl = headerTemplate.querySelector('.analysis-header');
+    DOMElements.analysisDisplay.appendChild(headerEl);
+
+    // Get all the nodes from the new header
+    const analysisTitleDisplay = headerEl.querySelector('#analysisTitleDisplay');
+    const analysisPassageDisplay = headerEl.querySelector('#analysisPassageDisplay');
+    const analysisModuleDisplay = headerEl.querySelector('#analysisModuleDisplay');
+    
+    const readerControlsDisplay = headerEl.querySelector('#readerControlsDisplay');
+    const prevChapterBtn = headerEl.querySelector('#prevChapterBtn');
+    const nextChapterBtn = headerEl.querySelector('#nextChapterBtn');
+    const readerChapterDisplay = headerEl.querySelector('#readerChapterDisplay');
+    const readerVersionDisplay = headerEl.querySelector('#readerVersionDisplay');
+
+    // --- 2. CONFIGURE HEADER BASED ON TYPE ---
+    if (analysisType === 'scripture') {
+        // We are in "Reader" mode
+        analysisTitleDisplay.classList.add('hidden');
+        readerControlsDisplay.classList.remove('hidden');
+
+        readerChapterDisplay.textContent = context.chapter;
+        readerVersionDisplay.textContent = context.version;
+        
+        // TODO: Hook up buttons in Step 2
+        // prevChapterBtn.addEventListener('click', ...);
+        // nextChapterBtn.addEventListener('click', ...);
+        
+    } else {
+        // We are in "Module" mode (or general)
+        analysisTitleDisplay.classList.remove('hidden');
+        readerControlsDisplay.classList.add('hidden');
+        
+        analysisPassageDisplay.textContent = context.passage;
+        analysisModuleDisplay.textContent = context.moduleName;
+    }
+    
+    // --- 3. FORMAT AND APPEND CONTENT ---
+    const contentEl = document.createElement('div');
+    contentEl.className = 'analysis-content';
+    contentEl.innerHTML = formatAiResponse(content);
+    DOMElements.analysisDisplay.appendChild(contentEl);
+
+    // --- 4. APPEND FOOTER ---
+    const footerEl = document.createElement('div');
+    footerEl.className = 'analysis-footer';
+    
+    // Add version controls if it's a module
+    if (analysisType === 'module') {
+        const versionControls = document.getElementById('versionControls').cloneNode(true);
+        versionControls.style.display = 'flex';
+        footerEl.appendChild(versionControls);
+        // TODO: Hook up version button logic
+        // updateVersionControls();
+    }
+    
+    DOMElements.analysisDisplay.appendChild(footerEl);
+    
+    // Hide the initial status message
+    DOMElements.statusMessage.classList.add('hidden');
+}
+
 
 function showError(message) {
-    // Reset all button text
-    document.getElementById('moduleAnalysisBtn').innerHTML = `<span>📖</span><span>Run Module Analysis</span>`;
-    document.getElementById('displayScriptureBtn').innerHTML = `<span>📚</span><span>Display Scripture Text</span>`;
-    document.getElementById('askAiBtn').innerHTML = `<span>✨</span><span>Ask General Question</span>`;
-
-    const display = document.getElementById('analysisDisplay');
-    display.innerHTML = `
-        <div style="padding: 40px; text-align: center;">
-            <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-            <div style="font-size: 18px; color: #d32f2f; margin-bottom: 10px;">
-                Error
-            </div>
-            <div style="font-size: 14px; color: var(--text-medium); margin-bottom: 20px;">
-                ${message}
-            </div>
-        </div>
+    DOMElements.analysisDisplay.innerHTML = ''; // Clear
+    DOMElements.statusMessage.innerHTML = `
+        <div class="status-icon">⚠️</div>
+        <div class="status-title" style="color: #d32f2f;">Error</div>
+        <p class="status-text">${message}</p>
     `;
+    DOMElements.statusMessage.classList.remove('hidden');
+    setLoadingState(false); // Make sure buttons are re-enabled
 }
 
 // ===== NAVIGATION =====
 function switchCategory(category) {
+    if (!ModuleDefinitions[category]) {
+        console.error(`Category "${category}" not found in ModuleDefinitions.`);
+        return;
+    }
+    
     AppState.currentCategory = category;
     
     // Update UI
-    document.querySelectorAll('.primary-tab').forEach(tab => {
+    DOMElements.primaryTabs.forEach(tab => {
         tab.classList.toggle('active', tab.dataset.category === category);
     });
     
-    document.querySelectorAll('.module-group').forEach(group => {
+    DOMElements.moduleGroups.forEach(group => {
         group.classList.toggle('active', group.dataset.category === category);
     });
 
     // Set first module as active
     const firstModule = ModuleDefinitions[category].modules;
     const firstModuleKey = Object.keys(firstModule)[0];
-    switchModule(firstModuleKey);
+    switchModule(firstModuleKey, true); // Force-switch to first module
 
     // Update header
-    document.getElementById('sidebarHeader').textContent = ModuleDefinitions[category].name;
+    DOMElements.sidebarHeader.textContent = ModuleDefinitions[category].name;
 }
 
-function switchModule(module) {
+function switchModule(module, forceSwitch = false) {
+    // Don't auto-run if module is already active, unless forced
+    if (AppState.currentModule === module && !forceSwitch) return;
+    
     AppState.currentModule = module;
     
-    document.querySelectorAll('.secondary-tab').forEach(tab => {
+    DOMElements.secondaryTabs.forEach(tab => {
         tab.classList.toggle('active', tab.dataset.module === module);
     });
 
-    // No longer need to update a module display in the header
+    // Auto-run analysis
+    const passage = DOMElements.passageInput.value.trim();
+    if (passage) {
+        generateModuleAnalysis();
+    }
 }
 
 function getModuleInfo(category, module) {
-    // Add check for missing definitions
-    if (!ModuleDefinitions[category] || !ModuleDefinitions[category].modules[module]) {
-        console.error(`Missing module definition for: ${category} -> ${module}`);
-        // Return a fallback to prevent crashing
-        return { name: "Error", prompt: "Error: Missing module.", icon: "⚠️" };
+    try {
+        return ModuleDefinitions[category].modules[module];
+    } catch (e) {
+        console.error(`Could not find module info for: ${category}/${module}`, e);
+        return null;
     }
-    return ModuleDefinitions[category].modules[module];
 }
 
-// REMOVED updateModuleDisplay() as it's no longer needed
-
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('collapsed');
-}
-
-// ===== VERSION NAVIGATION =====
+// ===== VERSION NAVIGATION (STUB) =====
 function navigateVersion(direction) {
-    const versionKey = `${AppState.currentCategory}-${AppState.currentModule}`;
-    const versions = AppState.analysisVersions[versionKey] || [];
-    let currentIndex = AppState.currentVersionIndex[versionKey] || 0;
-
-    currentIndex += direction;
-    
-    if (currentIndex >= 0 && currentIndex < versions.length) {
-        AppState.currentVersionIndex[versionKey] = currentIndex;
-        const moduleInfo = getModuleInfo(AppState.currentCategory, AppState.currentModule);
-        displayAnalysis(versions[currentIndex], moduleInfo.name, AppState.currentPassage);
-    }
+    // This logic needs to be attached to the buttons created in displayAnalysis
+    // ...
 }
 
 function updateVersionControls() {
-    const versionKey = `${AppState.currentCategory}-${AppState.currentModule}`;
-    const versions = AppState.analysisVersions[versionKey] || [];
-    const currentIndex = AppState.currentVersionIndex[versionKey] || 0;
-
-    const prevBtn = document.getElementById('prevVersionBtn');
-    const nextBtn = document.getElementById('nextVersionBtn');
-    const indicator = document.getElementById('versionIndicator');
-
-    // Need to check if these elements exist, as they are not in the initial HTML
-    if (prevBtn) prevBtn.disabled = currentIndex === 0;
-    if (nextBtn) nextBtn.disabled = currentIndex >= versions.length - 1;
-    if (indicator) indicator.textContent = `Version ${currentIndex + 1} of ${Math.max(versions.length, 1)}`;
+    // This logic needs to be attached to the buttons created in displayAnalysis
+    // ...
 }
 
 // ===== NOTES (STUB - IMPLEMENT LATER) =====
 function loadNotes() {
-    // This should be refactored to use Firestore
-    console.warn("Notes are using localStorage. This should be migrated to Firestore.");
     const saved = localStorage.getItem('scribeNotes');
     if (saved) {
         AppState.notes = JSON.parse(saved);
@@ -717,7 +752,5 @@ function loadNotes() {
 }
 
 function saveNotes() {
-    // This should be refactored to use Firestore
-    console.warn("Notes are using localStorage. This should be migrated to Firestore.");
-    localStorage.setItem('scribeNotes', JSON.JSON.stringify(AppState.notes));
+    localStorage.setItem('scribeNotes', JSON.stringify(AppState.notes));
 }

@@ -386,9 +386,8 @@ async function checkAPIHealth() {
 // ===== CORE ANALYSIS FUNCTIONS =====
 
 /**
- * NEW: Parses a passage reference string (e.g., "John 3:16", "Romans 8:1-2")
+ * Parses a passage reference string (e.g., "John 3:16", "Romans 8:1-2")
  * and returns a structured object.
- * This is a simple parser and can be expanded.
  * @param {string} passageStr - The input string from the user.
  * @returns {object} - An object { book: string, chapter: number, verse: number }
  */
@@ -414,7 +413,6 @@ function parsePassageReference(passageStr) {
     }
 
     // Not a scripture reference, or just a book name.
-    // Treat as a general question or topic.
     return { book: passageStr, chapter: null, verse: null };
 }
 
@@ -427,7 +425,7 @@ function parsePassageReference(passageStr) {
  */
 async function runAnalysis(prompt, analysisType, context) {
     const passage = DOMElements.passageInput.value.trim();
-    if (!passage) {
+    if (!passage && analysisType !== 'scripture') { // Allow scripture navigation
         showError('Please enter a scripture passage or question.');
         return;
     }
@@ -445,7 +443,7 @@ async function runAnalysis(prompt, analysisType, context) {
             },
             body: JSON.stringify({
                 prompt: prompt,
-                passage: passage,
+                passage: context.passage || passage,
                 moduleName: context.moduleName || 'Analysis'
             })
         });
@@ -514,36 +512,68 @@ ${prompt}`;
 
 /**
  * Triggered by the "Display Scripture Text" button.
+ * This function now just parses the input and updates the state.
  */
 function displayScripture() {
     const passage = DOMElements.passageInput.value.trim();
-    const version = DOMElements.versionSelect.value;
-    const versionText = DOMElements.versionSelect.options[DOMElements.versionSelect.selectedIndex].text;
-
+    
     // Try to parse the passage
     const ref = parsePassageReference(passage);
-    let chapterQuery = passage;
-
+    
     if (ref.chapter) {
         // It's a valid reference, let's get the whole chapter
-        chapterQuery = `${ref.book} ${ref.chapter}`;
-        // Store this for Step 2 (Navigation)
+        // Store this for navigation
         AppState.currentBibleReference = ref;
     } else {
         // Not a reference, maybe just a book? Or topic?
-        // Let's just send the raw query.
         AppState.currentBibleReference = { book: passage, chapter: null, verse: null };
     }
+    
+    // Call the new function to actually fetch and display
+    fetchAndDisplayChapter();
+}
+
+/**
+ * NEW: Fetches and displays the chapter based on AppState.currentBibleReference.
+ * This is called by displayScripture() AND navigateChapter().
+ */
+function fetchAndDisplayChapter() {
+    const { book, chapter } = AppState.currentBibleReference;
+    
+    if (!chapter) {
+        showError(`Cannot display scripture for "${book}". Please enter a valid reference like "John 3:16" or "Romans 8".`);
+        return;
+    }
+    
+    const version = DOMElements.versionSelect.value;
+    const versionText = DOMElements.versionSelect.options[DOMElements.versionSelect.selectedIndex].text;
+    const chapterQuery = `${book} ${chapter}`;
 
     const prompt = `Please provide the full text for the *entire chapter* of ${chapterQuery} using the ${versionText} version.
 Format the text with verse numbers in brackets, like [1], [2], [3], etc.
-If the input is not a specific chapter (e.g., "Genesis 1"), but a book or topic (e.g., "Genesis" or "Love"), please state that you can only display full chapters.`;
+If the input is not a specific chapter (e..g, "Genesis 1"), but a book or topic (e.g., "Genesis" or "Love"), please state that you can only display full chapters.`;
 
     runAnalysis(prompt, 'scripture', {
-        passage: passage,
+        passage: chapterQuery,
         chapter: chapterQuery,
         version: versionText
     });
+}
+
+/**
+ * NEW: Handles clicks for "Prev" and "Next" chapter buttons.
+ * @param {number} direction - 1 for next, -1 for previous.
+ */
+function navigateChapter(direction) {
+    if (!AppState.currentBibleReference.chapter) return; // Should not happen
+
+    AppState.currentBibleReference.chapter += direction;
+    
+    // Update the main search bar text to reflect the new chapter
+    DOMElements.passageInput.value = `${AppState.currentBibleReference.book} ${AppState.currentBibleReference.chapter}`;
+    
+    // Fetch the new chapter
+    fetchAndDisplayChapter();
 }
 
 
@@ -598,7 +628,7 @@ function formatAiResponse(text) {
 /**
  * Main function to render analysis or scripture text in the display pane.
  * @param {string} content - The raw text/markdown from the AI.
- * @param {string} analysisType - 'module', 'scripture', or 'general'.
+ *img/ @param {string} analysisType - 'module', 'scripture', or 'general'.
  * @param {object} context - Additional info (passage, moduleName, etc.)
  */
 function displayAnalysis(content, analysisType, context) {
@@ -629,9 +659,14 @@ function displayAnalysis(content, analysisType, context) {
         readerChapterDisplay.textContent = context.chapter;
         readerVersionDisplay.textContent = context.version;
         
-        // TODO: Hook up buttons in Step 2
-        // prevChapterBtn.addEventListener('click', ...);
-        // nextChapterBtn.addEventListener('click', ...);
+        // --- HOOK UP BUTTONS (STEP 2) ---
+        prevChapterBtn.addEventListener('click', () => navigateChapter(-1));
+        nextChapterBtn.addEventListener('click', () => navigateChapter(1));
+        
+        // Disable "Prev" if it's chapter 1
+        prevChapterBtn.disabled = (AppState.currentBibleReference.chapter <= 1);
+        // We don't know the max chapters, so "Next" is always enabled for now.
+        nextChapterBtn.disabled = false;
         
     } else {
         // We are in "Module" mode (or general)
@@ -671,7 +706,7 @@ function displayAnalysis(content, analysisType, context) {
 function showError(message) {
     DOMElements.analysisDisplay.innerHTML = ''; // Clear
     DOMElements.statusMessage.innerHTML = `
-        <div class="status-icon">⚠️</div>
+        <div class"status-icon">⚠️</div>
         <div class="status-title" style="color: #d32f2f;">Error</div>
         <p class="status-text">${message}</p>
     `;

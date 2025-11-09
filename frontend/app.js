@@ -17,9 +17,21 @@ const AppState = {
     currentVersionIndex: {}
 };
 
+// ===== PROMPT DEFINITIONS =====
+const Prompts = {
+    displayScripture: `Please provide the full, formatted text for {passage}. 
+- Include verse numbers (e.g., **[16]**).
+- Do not add any commentary, analysis, or headers. 
+- Just return the scripture text, formatted for readability.`,
+    
+    askAi: `You are a helpful and knowledgeable assistant for theological study. 
+Answer the following question clearly and concisely.
+Question: {passage}` // {passage} will be the user's question
+};
+
 // ===== MODULE DEFINITIONS =====
 const ModuleDefinitions = {
-    'languages': { // <--- FIXED: Was 'original-languages', now matches HTML
+    'languages': { 
         name: 'Original Languages',
         modules: {
             'grammar-essentials': {
@@ -91,7 +103,7 @@ Include detailed morphological analysis, clause structures, and syntactic relati
                 - Theological implications of specific forms`,
                 icon: '📝'
             },
-            'greek-hebrew': { // Changed from 'lexicon' to match HTML
+            'greek-hebrew': { 
                 name: 'Greek/Hebrew Lexicon',
                 prompt: `Provide lexical analysis for key terms in {passage}:
 
@@ -119,7 +131,7 @@ Focus on words that carry theological weight or cultural significance.`,
 Show how word meanings shift based on context while maintaining core concepts.`,
                 icon: '🎯'
             },
-            'verse-by-verse': { // Changed from 'verse-by-verse-grammar' to match HTML
+            'verse-by-verse': { 
                 name: 'Verse-by-Verse Grammar',
                 prompt: `Provide verse-by-verse grammatical analysis of {passage}:
 
@@ -324,12 +336,14 @@ function initializeApp() {
         });
     });
 
-    // Generate button
-    document.getElementById('globalGenerateBtn').addEventListener('click', generateAnalysis); // FIXED
+    // --- NEW: Action Bar Buttons ---
+    document.getElementById('moduleAnalysisBtn').addEventListener('click', generateModuleAnalysis);
+    document.getElementById('displayScriptureBtn').addEventListener('click', displayScripture);
+    document.getElementById('askAiBtn').addEventListener('click', askGeneralQuestion);
     
-    // Enter key
+    // Enter key (defaults to module analysis)
     document.getElementById('passageInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') generateAnalysis();
+        if (e.key === 'Enter') generateModuleAnalysis();
     });
 
     // Sidebar toggle
@@ -351,28 +365,80 @@ async function checkAPIHealth() {
     }
 }
 
-// ===== GENERATE ANALYSIS (CALLS BACKEND) =====
-async function generateAnalysis() {
+// ===== NEW: ANALYSIS FUNCTIONS =====
+
+/**
+ * Gets the passage from the input box.
+ * @returns {string} The trimmed passage or an empty string.
+ */
+function getPassageInput() {
     const passage = document.getElementById('passageInput').value.trim();
-    
     if (!passage) {
-        showError('Please enter a scripture passage'); // FIXED
-        return;
+        showError('Please enter a scripture passage or question in the text box.');
+        return '';
     }
-
     AppState.currentPassage = passage;
+    return passage;
+}
 
-    // Get module info
+/**
+ * Disables or enables all action buttons.
+ * @param {boolean} disabled - True to disable, false to enable.
+ */
+function setActionButtonsDisabled(disabled) {
+    document.getElementById('moduleAnalysisBtn').disabled = disabled;
+    document.getElementById('displayScriptureBtn').disabled = disabled;
+    document.getElementById('askAiBtn').disabled = disabled;
+}
+
+/**
+ * Runs the selected module's analysis.
+ */
+function generateModuleAnalysis() {
+    const passage = getPassageInput();
+    if (!passage) return;
+
     const moduleInfo = getModuleInfo(AppState.currentCategory, AppState.currentModule);
-    
-    // Build prompt
     const prompt = moduleInfo.prompt.replace('{passage}', passage);
+    
+    runAnalysis(prompt, moduleInfo.name, passage);
+}
 
-    // Show loading
-    showLoadingState(moduleInfo.name, passage);
+/**
+ * Displays the scripture text for the given passage.
+ */
+function displayScripture() {
+    const passage = getPassageInput();
+    if (!passage) return;
+
+    const prompt = Prompts.displayScripture.replace('{passage}', passage);
+    runAnalysis(prompt, `Scripture Text: ${passage}`, passage);
+}
+
+/**
+ * Asks a general question to the AI.
+ */
+function askGeneralQuestion() {
+    const passage = getPassageInput(); // Here, 'passage' is the user's question
+    if (!passage) return;
+
+    const prompt = Prompts.askAi.replace('{passage}', passage);
+    runAnalysis(prompt, `General Question`, passage);
+}
+
+/**
+ * The core function to call the backend API.
+ * @param {string} prompt - The full prompt to send to the AI.
+ * @param {string} moduleName - The name of the module or action for display.
+ * @param {string} passage - The user's input passage/question for display.
+ */
+async function runAnalysis(prompt, moduleName, passage) {
+    // 1. Show loading state and disable buttons
+    showLoadingState(moduleName, passage);
+    setActionButtonsDisabled(true);
 
     try {
-        // Call BACKEND API (not Groq directly!)
+        // 2. Call BACKEND API
         const response = await fetch(`${API_URL}/analyze`, {
             method: 'POST',
             headers: {
@@ -381,7 +447,7 @@ async function generateAnalysis() {
             body: JSON.stringify({
                 prompt: prompt,
                 passage: passage,
-                moduleName: moduleInfo.name
+                moduleName: moduleName
             })
         });
 
@@ -393,32 +459,49 @@ async function generateAnalysis() {
         const data = await response.json();
         const analysis = data.analysis;
 
-        // Store version
-        const versionKey = `${AppState.currentCategory}-${AppState.currentModule}`;
-        if (!AppState.analysisVersions[versionKey]) {
-            AppState.analysisVersions[versionKey] = [];
+        // 3. Store version (only for module analysis)
+        if (moduleName !== `Scripture Text: ${passage}` && moduleName !== `General Question`) {
+            const versionKey = `${AppState.currentCategory}-${AppState.currentModule}`;
+            if (!AppState.analysisVersions[versionKey]) {
+                AppState.analysisVersions[versionKey] = [];
+            }
+            AppState.analysisVersions[versionKey].push(analysis);
+            AppState.currentVersionIndex[versionKey] = AppState.analysisVersions[versionKey].length - 1;
         }
-        AppState.analysisVersions[versionKey].push(analysis);
-        AppState.currentVersionIndex[versionKey] = AppState.analysisVersions[versionKey].length - 1;
 
-        // Display
-        displayAnalysis(analysis, moduleInfo.name, passage);
+        // 4. Display results
+        displayAnalysis(analysis, moduleName, passage);
 
     } catch (error) {
         console.error('Analysis Error:', error);
         showError(error.message);
+    } finally {
+        // 5. Re-enable buttons
+        setActionButtonsDisabled(false);
     }
 }
 
+
 // ===== DISPLAY FUNCTIONS =====
 function showLoadingState(moduleName, passage) {
-    // ADDED BLOCK: Update global button state
-    const genBtn = document.getElementById('globalGenerateBtn');
-    if (genBtn) {
-        genBtn.disabled = true;
-        genBtn.textContent = 'Generating...';
+    // Set button text during loading
+    const moduleBtn = document.getElementById('moduleAnalysisBtn');
+    const scriptureBtn = document.getElementById('displayScriptureBtn');
+    const aiBtn = document.getElementById('askAiBtn');
+    
+    // Reset all buttons
+    moduleBtn.innerHTML = `<span>📖</span><span>Run Module Analysis</span>`;
+    scriptureBtn.innerHTML = `<span>📚</span><span>Display Scripture Text</span>`;
+    aiBtn.innerHTML = `<span>✨</span><span>Ask General Question</span>`;
+
+    // Set loading text on the specific button clicked (or default to module)
+    if (moduleName === `Scripture Text: ${passage}`) {
+        scriptureBtn.innerHTML = `<span>📚</span><span>Loading...</span>`;
+    } else if (moduleName === `General Question`) {
+        aiBtn.innerHTML = `<span>✨</span><span>Loading...</span>`;
+    } else {
+        moduleBtn.innerHTML = `<span>📖</span><span>Loading...</span>`;
     }
-    // END ADDED BLOCK
 
     const display = document.getElementById('analysisDisplay');
     display.innerHTML = `
@@ -440,13 +523,10 @@ function showLoadingState(moduleName, passage) {
 }
 
 function displayAnalysis(analysis, moduleName, passage) {
-    // ADDED BLOCK: Update global button state
-    const genBtn = document.getElementById('globalGenerateBtn');
-    if (genBtn) {
-        genBtn.disabled = false;
-        genBtn.textContent = '↻ Regenerate';
-    }
-    // END ADDED BLOCK
+    // Reset all button text
+    document.getElementById('moduleAnalysisBtn').innerHTML = `<span>📖</span><span>Run Module Analysis</span>`;
+    document.getElementById('displayScriptureBtn').innerHTML = `<span>📚</span><span>Display Scripture Text</span>`;
+    document.getElementById('askAiBtn').innerHTML = `<span>✨</span><span>Ask General Question</span>`;
 
     const display = document.getElementById('analysisDisplay');
     
@@ -513,10 +593,9 @@ function displayAnalysis(analysis, moduleName, passage) {
                     <div class="analysis-module">${moduleName}</div>
                 </div>
             </div>
-            <!-- REMOVED DYNAMIC REGENERATE BUTTON -->
         </div>
         <div class="analysis-content">
-            ${html} <!-- USE NEW 'html' VARIABLE -->
+            ${html} 
         </div>
         <div class="analysis-footer">
             <span style="color: var(--text-medium); font-size: 12px;">
@@ -525,19 +604,14 @@ function displayAnalysis(analysis, moduleName, passage) {
         </div>
     `;
 
-    // document.getElementById('regenerateAnalysisBtn').addEventListener('click', generateAnalysis); // REMOVED
-
     updateVersionControls();
 }
 
 function showError(message) {
-    // ADDED BLOCK: Update global button state
-    const genBtn = document.getElementById('globalGenerateBtn');
-    if (genBtn) {
-        genBtn.disabled = false;
-        genBtn.textContent = 'Try Again';
-    }
-    // END ADDED BLOCK
+    // Reset all button text
+    document.getElementById('moduleAnalysisBtn').innerHTML = `<span>📖</span><span>Run Module Analysis</span>`;
+    document.getElementById('displayScriptureBtn').innerHTML = `<span>📚</span><span>Display Scripture Text</span>`;
+    document.getElementById('askAiBtn').innerHTML = `<span>✨</span><span>Ask General Question</span>`;
 
     const display = document.getElementById('analysisDisplay');
     display.innerHTML = `
@@ -549,11 +623,8 @@ function showError(message) {
             <div style="font-size: 14px; color: var(--text-medium); margin-bottom: 20px;">
                 ${message}
             </div>
-            <!-- REMOVED DYNAMIC TRY AGAIN BUTTON -->
         </div>
     `;
-    
-    // document.getElementById('tryAgainBtn').addEventListener('click', generateAnalysis); // REMOVED
 }
 
 // ===== NAVIGATION =====
@@ -585,7 +656,7 @@ function switchModule(module) {
         tab.classList.toggle('active', tab.dataset.module === module);
     });
 
-    updateModuleDisplay();
+    // No longer need to update a module display in the header
 }
 
 function getModuleInfo(category, module) {
@@ -598,15 +669,7 @@ function getModuleInfo(category, module) {
     return ModuleDefinitions[category].modules[module];
 }
 
-function updateModuleDisplay() {
-    const moduleInfo = getModuleInfo(AppState.currentCategory, AppState.currentModule);
-    document.getElementById('currentModuleName').textContent = moduleInfo.name;
-    // Also update the icon
-    const iconEl = document.querySelector('#moduleDisplay span:first-child');
-    if (iconEl) {
-        iconEl.textContent = moduleInfo.icon || '📖';
-    }
-}
+// REMOVED updateModuleDisplay() as it's no longer needed
 
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
@@ -656,5 +719,5 @@ function loadNotes() {
 function saveNotes() {
     // This should be refactored to use Firestore
     console.warn("Notes are using localStorage. This should be migrated to Firestore.");
-    localStorage.setItem('scribeNotes', JSON.stringify(AppState.notes));
+    localStorage.setItem('scribeNotes', JSON.JSON.stringify(AppState.notes));
 }

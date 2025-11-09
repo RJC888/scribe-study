@@ -42,7 +42,7 @@ LANGUAGE AUTO-DETECTION:
                 - Note article usage, prepositions, conjunctions
                 - Reference Greek syntax and style
 
-Focus on making complex grammar accessible while maintaining scholarly accuracy.`,
+'Focus on making complex grammar accessible while maintaining scholarly accuracy.`,
                 icon: '📖'
             },
             'advanced-grammar': {

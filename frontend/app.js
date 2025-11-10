@@ -1,1152 +1,956 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scribe Study - Bible Study Companion</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #4a5456;
-            overflow: hidden;
-        }
-
-        :root {
-            --stone-dark: #3a4244;
-            --stone: #4a5456;
-            --stone-light: #5a6668;
-            --evergreen: #4a5d4e;
-            --pine: #5a6d5e;
-            --sage-warm: #6d7c6e;
-            --moss: #7a8c7b;
-            --sand: #d8d4c8;
-            --parchment: #eae6da;
-            --warm-white: #f5f2ea;
-            --charcoal: #2d3234;
-            --text-dark: #2d3234;
-            --text-medium: #5a6668;
-        }
-
-        /* Header */
-        .header {
-            background: linear-gradient(to bottom, var(--stone-dark), var(--stone));
-            border-bottom: 2px solid var(--evergreen);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
-        .header-content {
-            display: flex;
-            align-items: center;
-            padding: 0 28px;
-        }
-
-        .app-name {
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            padding: 18px 40px 18px 0;
-            color: var(--sand);
-        }
-
-        .primary-tabs {
-            display: flex;
-            gap: 4px;
-            flex: 1;
-        }
-
-        .primary-tab {
-            background: transparent;
-            border: none;
-            color: var(--sand);
-            opacity: 0.7;
-            padding: 18px 22px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.2s;
-            border-bottom: 2px solid transparent;
-        }
-
-        .primary-tab:hover {
-            opacity: 1;
-            background: rgba(74, 93, 78, 0.3);
-        }
-
-        .primary-tab.active {
-            opacity: 1;
-            border-bottom-color: var(--moss);
-            background: rgba(74, 93, 78, 0.2);
-        }
-
-        /* Main Container */
-        .main-container {
-            display: flex;
-            height: calc(100vh - 56px);
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 260px;
-            background: var(--stone-light);
-            position: relative;
-            transition: all 0.3s ease;
-            border-right: 1px solid var(--evergreen);
-        }
-
-        .sidebar.collapsed {
-            width: 0;
-            border-right: none;
-        }
-
-        .sidebar-tab {
-            position: absolute;
-            right: -32px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 32px;
-            height: 120px;
-            background: var(--evergreen);
-            border: none;
-            border-radius: 0 8px 8px 0;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            color: white;
-            font-size: 11px;
-            font-weight: 700;
-            z-index: 10;
-            transition: all 0.2s;
-            box-shadow: 2px 0 8px rgba(0,0,0,0.15);
-            writing-mode: vertical-rl;
-            letter-spacing: 1px;
-        }
-
-        .sidebar-tab:hover {
-            background: var(--pine);
-            right: -34px;
-        }
-
-        .sidebar-tab.active {
-            background: var(--stone-dark);
-        }
-        
-        .sidebar-content {
-            padding: 28px 20px;
-            height: 100%;
-            overflow-y: auto;
-        }
-
-        .sidebar.collapsed .sidebar-content {
-            display: none;
-        }
-
-        .sidebar-header {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--sand);
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid var(--evergreen);
-        }
-
-        .module-group {
-            display: none;
-        }
-
-        .module-group.active {
-            display: block;
-        }
-
-        .secondary-tab {
-            background: transparent;
-            border: none;
-            width: 100%;
-            text-align: left;
-            padding: 13px 14px;
-            cursor: pointer;
-            font-size: 14px;
-            color: var(--sand);
-            opacity: 0.8;
-            border-radius: 6px;
-            margin-bottom: 4px;
-            transition: all 0.2s;
-            border-left: 3px solid transparent;
-        }
-
-        .secondary-tab:hover {
-            background: var(--stone);
-            opacity: 1;
-            border-left-color: var(--moss);
-        }
-
-        .secondary-tab.active {
-            background: var(--stone-dark);
-            opacity: 1;
-            font-weight: 600;
-            border-left-color: var(--pine);
-        }
-
-        .auto-run-hint {
-            margin-top: 20px;
-            padding: 12px;
-            background: rgba(74, 93, 78, 0.2);
-            border-left: 3px solid var(--evergreen);
-            border-radius: 4px;
-            font-size: 11px;
-            color: var(--sand);
-            line-height: 1.5;
-        }
-
-        /* Content Area */
-        .content-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--parchment);
-        }
-
-        .content-header {
-            background: var(--warm-white);
-            padding: 20px 32px 16px;
-            border-bottom: 1px solid var(--sand);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .search-main {
-            width: 100%;
-            max-width: 800px;
-        }
-
-        .search-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-medium);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 8px;
-            display: block;
-            text-align: center;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid var(--sand);
-            border-radius: 6px;
-            font-size: 14px;
-            color: var(--text-dark);
-            background: white;
-            transition: all 0.2s;
-            text-align: center;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--evergreen);
-            box-shadow: 0 0 0 3px rgba(74, 93, 78, 0.1);
-        }
-        
-        .action-bar {
-            display: flex;
-            gap: 12px;
-            width: 100%;
-            max-width: 800px;
-        }
-
-        .action-btn {
-            flex: 1;
-            background: var(--evergreen);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .action-btn:hover:not(:disabled) {
-            background: var(--pine);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(74, 93, 78, 0.3);
-        }
-
-        .action-btn:disabled {
-            background: var(--stone-light);
-            cursor: not-allowed;
-            box-shadow: none;
-            transform: translateY(0);
-        }
-
-        .version-select {
-            padding: 12px 14px;
-            border: 2px solid var(--sand);
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-dark);
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .version-select:hover {
-            border-color: var(--pine);
-        }
-
-
-        .results-wrapper {
-            flex: 1;
-            overflow-y: hidden;
-            position: relative;
-        }
-
-        /* This is the initial status message, now positioned absolutely */
-        .status-message {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 80px 40px;
-            color: var(--text-medium);
-            z-index: 5;
-            background: var(--parchment);
-        }
-
-        .analysis-display {
-            position: absolute;
-            inset: 0;
-            overflow-y: scroll; /* FORCED SCROLLBAR */
-            max-width: 900px;
-            margin: 32px auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border: 1px solid var(--sand);
-            display: flex;
-            flex-direction: column;
-            z-index: 10;
-        }
-
-        /* Hide analysis display by default */
-        .analysis-display:not(.visible) {
-            display: none;
-        }
-
-
-        .status-icon {
-            font-size: 56px;
-            margin-bottom: 20px;
-        }
-
-        .status-title {
-            font-size: 22px;
-            color: var(--text-dark);
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-
-        .status-text {
-            font-size: 15px;
-            line-height: 1.7;
-            max-width: 480px;
-            margin: 0 auto;
-        }
-
-        /* Notes Panel */
-        .notes-panel {
-            width: 400px;
-            background: var(--warm-white);
-            position: relative;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            border-left: 1px solid var(--sand);
-        }
-
-        .notes-panel.collapsed {
-            width: 0;
-            border-left: none;
-        }
-
-        .notes-panel.medium {
-            width: 600px;
-        }
-
-        .notes-panel.wide {
-            width: 800px;
-        }
-
-        .notes-tab {
-            position: absolute;
-            left: -32px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 32px;
-            height: 120px;
-            background: var(--evergreen);
-            border: none;
-            border-radius: 8px 0 0 8px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            color: var(--sand);
-            font-size: 11px;
-            font-weight: 700;
-            z-index: 10;
-            transition: all 0.2s;
-            box-shadow: -2px 0 8px rgba(0,0,0,0.15);
-            writing-mode: vertical-rl;
-            letter-spacing: 1px;
-        }
-
-        .notes-tab:hover {
-            background: var(--pine);
-            left: -34px;
-        }
-
-        .notes-inner {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            overflow: hidden; /* Added to make notes panel scroll */
-        }
-
-        .notes-panel.collapsed .notes-inner {
-            display: none;
-        }
-
-        .notes-header {
-            padding: 24px 28px 20px;
-            background: var(--warm-white);
-            border-bottom: 2px solid var(--evergreen);
-        }
-
-        .notes-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .notes-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-dark);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-
-        .size-controls {
-            display: flex;
-            gap: 4px;
-        }
-
-        .size-btn {
-            width: 28px;
-            height: 28px;
-            background: white;
-            border: 1px solid var(--sand);
-            color: var(--text-medium);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s;
-            position: relative;
-        }
-
-        .size-btn:hover {
-            background: var(--parchment);
-            border-color: var(--evergreen);
-            color: var(--text-dark);
-        }
-
-        .size-btn.active {
-            background: var(--evergreen);
-            border-color: var(--evergreen);
-            color: white;
-        }
-
-        .size-btn:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--charcoal);
-            color: white;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            white-space: nowrap;
-            margin-bottom: 8px;
-            z-index: 100;
-        }
-
-        .note-name-section {
-            margin-bottom: 16px;
-        }
-
-        .note-name-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-medium);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 6px;
-            display: block;
-        }
-
-        .note-name-input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid var(--sand);
-            border-radius: 4px;
-            font-size: 14px;
-            color: var(--text-dark);
-            background: white;
-            font-weight: 600;
-        }
-
-        .note-name-input:focus {
-            outline: none;
-            border-color: var(--evergreen);
-        }
-
-        .note-meta {
-            font-size: 11px;
-            color: var(--text-medium);
-            margin-top: 6px;
-        }
-
-        .note-switcher {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .my-notes-btn {
-            flex: 1;
-            padding: 8px 12px;
-            background: white;
-            border: 1px solid var(--sand);
-            color: var(--text-dark);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .my-notes-btn:hover {
-            background: var(--parchment);
-            border-color: var(--evergreen);
-        }
-
-        .note-count {
-            background: var(--evergreen);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 11px;
-        }
-
-        .new-note-btn {
-            padding: 8px 16px;
-            background: var(--evergreen);
-            border: none;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.15s;
-        }
-
-        .new-note-btn:hover {
-            background: var(--pine);
-        }
-
-        .notes-toolbar {
-            display: flex;
-            gap: 8px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--sand);
-        }
-
-        .notes-tool-btn {
-            padding: 6px 12px;
-            background: white;
-            border: 1px solid var(--sand);
-            color: var(--text-dark);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: 600;
-            transition: all 0.15s;
-        }
-
-        .notes-tool-btn:hover {
-            background: var(--parchment);
-            border-color: var(--evergreen);
-        }
-
-        .notes-editor {
-            flex: 1;
-            padding: 24px 28px;
-            border: none;
-            resize: none;
-            font-size: 14px;
-            line-height: 1.8;
-            color: var(--text-dark);
-            background: white;
-            font-family: 'Georgia', serif;
-            overflow-y: auto; /* Added for notes scroll */
-        }
-
-        .notes-editor:focus {
-            outline: none;
-        }
-
-        .notes-editor::placeholder {
-            color: var(--text-medium);
-        }
-
-        .notes-status {
-            padding: 16px 28px;
-            background: var(--warm-white);
-            border-top: 1px solid var(--sand);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .save-indicator {
-            font-size: 11px;
-            color: var(--text-medium);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .save-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--pine);
-        }
-
-        .word-count {
-            font-size: 11px;
-            color: var(--text-medium);
-            font-weight: 600;
-        }
-
-        /* Scrollbar Styling */
-        ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.05);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--sand);
-            border-radius: 5px;
-            border: 2px solid transparent;
-            background-clip: content-box;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--sage-warm);
-            background-clip: content-box;
-        }
-
-        /* Sidebar scrollbar uses a different track */
-        .sidebar-content::-webkit-scrollbar-track {
-            background: var(--stone);
-        }
-
-        /* Loading Animation */
-        .loading-dots {
-            display: inline-flex;
-            gap: 4px;
-        }
-
-        .loading-dots span {
-            animation: loadingDot 1.4s infinite;
-            font-size: 24px;
-            color: var(--evergreen);
-        }
-
-        .loading-dots span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .loading-dots span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes loadingDot {
-            0%, 60%, 100% {
-                opacity: 0.3;
-                transform: translateY(0);
-            }
-            30% {
-                opacity: 1;
-                transform: translateY(-10px);
+// ===== SCRIBE STUDY FRONTEND =====
+// Calls backend API - users don't need API keys!
+
+// ===== CONFIGURATION =====
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api'  // Local development
+    : '/api';  // Production (same domain)
+
+// ===== APPLICATION STATE =====
+const AppState = {
+    currentCategory: 'devotional',
+    currentModule: 'spiritual-analysis',
+    currentPassage: '',
+    currentNoteId: null,
+    notes: {},
+    analysisVersions: {},
+    currentVersionIndex: {},
+    // NEW: State for Bible Reader
+    currentBibleReference: {
+        book: '',
+        chapter: null,
+        verse: null
+    },
+    // NEW: State for infinite scroll
+    isFetchingChapter: false,
+    currentReaderMode: false // Is the Bible reader active?
+};
+
+// ===== MODULE DEFINITIONS =====
+const ModuleDefinitions = {
+    'languages': {
+        name: 'Original Languages',
+        modules: {
+            'greek-hebrew': {
+                name: 'Greek/Hebrew Lexicon',
+                prompt: `Provide lexical analysis for key terms in {passage}:
+
+**For each significant word:**
+                1. **Original Language:** Hebrew/Greek word (with transliteration)
+                2. **Root Meaning:** Etymology and basic semantic range
+                3. **Usage Patterns:** How this word is used elsewhere in Scripture
+                4. **Theological Significance:** What this word contributes to biblical theology
+                5. **Context:** How the meaning functions specifically in this passage
+
+Focus on words that carry theological weight or cultural significance.`,
+                icon: '📚'
+            },
+            'morphology': {
+                name: 'Morphology',
+                prompt: `Provide detailed morphological analysis of {passage}:
+
+**For each significant word:**
+                - Parse (part of speech, person, number, gender, tense, voice, mood, case)
+                - Root/lexical form
+                - Semantic range
+                - Usage in this context
+
+**Analysis should include:**
+                - Word-by-word breakdown of key terms
+                - Morphological patterns that affect meaning
+                - Comparative usage across Scripture
+                - Theological implications of specific forms`,
+                icon: '📝'
+            },
+            'grammar-essentials': {
+                name: 'Grammar Essentials',
+                prompt: `Analyze the grammar of {passage} to help anyone understand how sentence structure reveals theological truth—accessible yet thorough.
+
+LANGUAGE AUTO-DETECTION:
+**If passage is Old Testament:**
+- Display Hebrew text with transliteration
+- Analyze Hebrew grammatical features
+- Explain Hebrew word order, construct chains, verb stems
+- Note definiteness, pronominal suffixes, particles
+- Reference Hebrew syntax and style
+
+**If passage is New Testament:**
+                - Display Greek text with transliteration
+                - Analyze Greek grammatical features
+                - Explain Greek cases, verb aspects, participles
+                - Note article usage, prepositions, conjunctions
+                - Reference Greek syntax and style
+
+'Focus on making complex grammar accessible while maintaining scholarly accuracy.`,
+                icon: '📖'
+            },
+            'advanced-grammar': {
+                name: 'Advanced Grammar',
+                prompt: `Perform comprehensive syntactic analysis of {passage} combining scholarly precision with theological depth.
+
+LANGUAGE AUTO-DETECTION & SCHOLARLY TREATMENT:
+**If Old Testament:**
+                - Display Hebrew text (pointed Masoretic)
+                - Provide transliteration for accessibility
+                - Analyze ALL Hebrew grammatical features:
+                    - Verb stems (Qal, Niphal, Piel, Pual, Hithpael, Hophal, Hiphil)
+                    - Verb conjugations (Perfect, Imperfect, Imperative, Infinitive, Participle)
+                    - Noun patterns, construct chains, pronominal suffixes
+                    - Particles, prepositions, conjunctions
+                    - Word order and emphasis
+                    - Poetic structures if applicable (parallelism, chiasm)
+
+**If New Testament:**
+                - Display Greek text with transliteration
+                - Analyze ALL Greek grammatical features:
+                    - Verb aspects (aorist, present, perfect, imperfect)
+                    - Voice (active, middle, passive)
+                    - Mood (indicative, subjunctive, optative, imperative, infinitive, participle)
+                    - Case system (nominative, genitive, dative, accusative, vocative)
+                    - Article usage and semantic significance
+                    - Participles and their functions
+                    - Prepositions and compound verbs
+
+Include detailed morphological analysis, clause structures, and syntactic relationships.`,
+                icon: '🔬'
+            },
+            'verse-by-verse': {
+                name: 'Verse-by-Verse Grammar',
+                prompt: `Provide verse-by-verse grammatical analysis of {passage}:
+
+**For each verse:**
+                1. **Text:** Display original language with transliteration
+                2. **Clause Structure:** Identify main and subordinate clauses
+                3. **Grammatical Features:** Key morphological and syntactic elements
+                4. **Structural Relationships:** How clauses connect
+                5. **Meaning Impact:** How grammar affects interpretation
+
+Make technical analysis accessible while maintaining precision.`,
+                icon: '📋'
+            },
+            'semantic-range': {
+                name: 'Semantic Range',
+                prompt: `Analyze the semantic range and contextual meaning of key terms in {passage}:
+
+**For each major term:**
+                1. **Full Semantic Range:** Complete spectrum of meanings
+                2. **Usage Categories:** How the term functions in different contexts
+                3. **Scripture Survey:** Key passages using this term
+                4. **Contextual Determination:** Why this specific meaning applies here
+                5. **Theological Trajectories:** How meaning develops across biblical corpus
+
+Show how word meanings shift based on context while maintaining core concepts.`,
+                icon: '🎯'
             }
         }
+    },
+    'devotional': {
+        name: 'Devotional',
+        modules: {
+            'spiritual-analysis': {
+                name: 'Spiritual Analysis',
+                prompt: `Provide a deep spiritual analysis of {passage} with focus on:
 
-        /* Analysis Content Styling */
-        .analysis-content {
-            padding: 28px;
-            line-height: 1.8;
-            color: var(--text-dark);
-            flex-grow: 1; /* Allows content to fill space */
+* Core theological truths revealed
+* Personal heart impact and conviction
+* Christ-centered interpretation
+* Redemptive-historical context
+
+Include:
+* Key spiritual insights that lead to worship
+* Personal application points
+* How this passage transforms believers
+* Connection to themes of divine sovereignty, faith, perseverance, and covenant faithfulness
+
+Avoid generic observations—focus on transformative truth that leads to worship and obedience.`,
+                icon: '📖'
+            },
+            'devotional-reflection': {
+                name: 'Devotional Reflection',
+                prompt: `Create a devotional reflection on {passage} suitable for personal meditation...`,
+                icon: '🙏'
+            },
+            'discipleship': {
+                name: 'Discipleship Application',
+                prompt: `Analyze {passage} for discipleship and spiritual growth applications...`,
+                icon: '🌱'
+            },
+            'redemptive-focus': {
+                name: 'Redemptive Focus',
+                prompt: `Analyze {passage} through the lens of redemptive exposition...`,
+                icon: '✝️'
+            },
+            'life-application': {
+                name: 'Life Application',
+                prompt: `Provide practical life applications from {passage}...`,
+                icon: '🎯'
+            }
         }
-
-        .analysis-content h1, .analysis-content h2, .analysis-content h3 {
-            color: var(--evergreen);
-            margin-top: 24px;
-            margin-bottom: 12px;
+    },
+    'text-analysis': {
+        name: 'Text Analysis',
+        modules: {
+            'passage-overview': {
+                name: 'Passage Overview',
+                prompt: `Provide a comprehensive overview of {passage}...`,
+                icon: '📋'
+            },
+            'structural-analysis': {
+                name: 'Structural Analysis',
+                prompt: `Analyze the literary structure of {passage}...`,
+                icon: '🏗️'
+            },
+            'literary-devices': {
+                name: 'Literary Devices',
+                prompt: `Identify literary devices in {passage}...`,
+                icon: '✍️'
+            },
+            'discourse-analysis': {
+                name: 'Discourse Analysis',
+                prompt: `Analyze the discourse structure of {passage}...`,
+                icon: '💬'
+            },
+            'semantic-outline': {
+                name: 'Semantic Outline',
+                prompt: `Generate a semantic outline of {passage}...`,
+                icon: '📊'
+            },
+            'key-words': {
+                name: 'Key Words',
+                prompt: `Identify and analyze key words in {passage}...`,
+                icon: '🔑'
+            }
         }
-
-        .analysis-content h1 {
-            font-size: 24px;
-            border-bottom: 2px solid var(--sand);
-            padding-bottom: 8px;
+    },
+    'context': {
+        name: 'Context & Background',
+        modules: {
+            'historical-cultural': {
+                name: 'Historical-Cultural',
+                prompt: `Provide historical and cultural context for {passage}...`,
+                icon: '🏛️'
+            },
+            'geographical': {
+                name: 'Geographical Context',
+                prompt: `Explain the geographical context of {passage}...`,
+                icon: '🗺️'
+            },
+            'theological-context': {
+                name: 'Theological Context',
+                prompt: `Analyze the theological context of {passage}...`,
+                icon: '⛪'
+            },
+            'cross-references': {
+                name: 'Cross-References',
+                prompt: `Identify cross-references to {passage}...`,
+                icon: '🔗'
+            },
+            'literary-context': {
+                name: 'Literary Context',
+                prompt: `Analyze how {passage} fits within its book...`,
+                icon: '📖'
+            }
         }
-
-        .analysis-content h2 {
-            font-size: 20px;
+    },
+    'jewish': {
+        name: 'Jewish Background',
+        modules: {
+            'second-temple': {
+                name: 'Second Temple Period',
+                prompt: `Analyze {passage} in light of Second Temple literature...`,
+                icon: '🕍'
+            },
+            'rabbinic': {
+                name: 'Rabbinic Literature',
+                prompt: `Examine connections to Rabbinic literature...`,
+                icon: '📜'
+            },
+            'dead-sea-scrolls': {
+                name: 'Dead Sea Scrolls',
+                prompt: `Explore connections to Dead Sea Scrolls...`,
+                icon: '📰'
+            },
+            'pseudepigrapha': {
+                name: 'Pseudepigrapha',
+                prompt: `Analyze in light of Pseudepigraphal writings...`,
+                icon: '📕'
+            }
         }
-
-        .analysis-content h3 {
-            font-size: 16px;
+    },
+    'teaching': {
+        name: 'Teaching & Preaching',
+        modules: {
+            'sermon-outline': {
+                name: 'Sermon Outline',
+                prompt: `Create a sermon outline for {passage}...`,
+                icon: '📋'
+            },
+            'lesson-plan': {
+                name: 'Lesson Plan',
+                prompt: `Develop a lesson plan for {passage}...`,
+                icon: '📝'
+            },
+            'discussion-questions': {
+                name: 'Discussion Questions',
+                prompt: `Generate discussion questions for {passage}...`,
+                icon: '❓'
+            },
+            'illustrations': {
+                name: 'Illustrations',
+                prompt: `Suggest illustrations for {passage}...`,
+                icon: '💡'
+            },
+            'teaching-points': {
+                name: 'Teaching Points',
+                prompt: `Extract key teaching points from {passage}...`,
+                icon: '🎯'
+            }
         }
+    }
+};
 
-        .analysis-content p {
-            margin-bottom: 16px;
-        }
+// ===== DOM ELEMENTS =====
+// Cached DOM elements to avoid repeated lookups
+const DOMElements = {};
 
-        .analysis-content ul, .analysis-content ol {
-            margin-left: 24px;
-            margin-bottom: 16px;
-        }
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', () => {
+    // Cache all DOM elements
+    DOMElements.sidebar = document.getElementById('sidebar');
+    DOMElements.sidebarHeader = document.getElementById('sidebarHeader');
+    DOMElements.primaryTabs = document.querySelectorAll('.primary-tab');
+    DOMElements.moduleGroups = document.querySelectorAll('.module-group');
+    DOMElements.secondaryTabs = document.querySelectorAll('.secondary-tab');
+    DOMElements.passageInput = document.getElementById('passageInput');
+    DOMElements.moduleAnalysisBtn = document.getElementById('moduleAnalysisBtn');
+    DOMElements.displayScriptureBtn = document.getElementById('displayScriptureBtn');
+    DOMElements.versionSelect = document.getElementById('versionSelect');
+    DOMElements.analysisDisplay = document.getElementById('analysisDisplay');
+    DOMElements.resultsMain = document.getElementById('resultsMain'); // The scrolling pane
+    DOMElements.statusMessage = document.getElementById('statusMessage');
+    DOMElements.analysisHeaderTemplate = document.getElementById('analysisHeaderTemplate');
+    DOMElements.scrollLoaderTemplate = document.getElementById('scrollLoaderTemplate');
+    DOMElements.sidebarToggle = document.getElementById('sidebarToggle');
+    DOMElements.notesPanel = document.getElementById('notesPanel');
+    DOMElements.notesToggle = document.getElementById('notesToggle');
+    // ... add other elements as needed
 
-        .analysis-content li {
-            margin-bottom: 8px;
-        }
+    initializeApp();
+    loadNotes();
+    checkAPIHealth();
+});
 
-        .analysis-content strong {
-            color: var(--evergreen);
-            font-weight: 600;
-        }
+function initializeApp() {
+    // Primary tabs
+    DOMElements.primaryTabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            const category = e.target.dataset.category;
+            switchCategory(category);
+        });
+    });
 
-        .analysis-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 28px;
-            background: var(--warm-white);
-            border-bottom: 1px solid var(--sand);
-            position: sticky; /* Make header sticky */
-            top: 0;
-            z-index: 20;
-        }
-        
-        /* New Reader Controls */
-        .reader-controls {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            width: 100%;
-        }
+    // Secondary tabs (modules)
+    DOMElements.secondaryTabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            const module = e.target.dataset.module;
+            switchModule(module);
+        });
+    });
 
-        .reader-nav-btn {
-            padding: 8px 16px;
-            background: white;
-            border: 2px solid var(--sand);
-            color: var(--text-dark);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        .reader-nav-btn:hover:not(:disabled) {
-            background: var(--parchment);
-            border-color: var(--evergreen);
-        }
-        .reader-nav-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        
-        .reader-chapter-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-dark);
-            text-align: center;
-            flex: 1;
-        }
-
-
-        .analysis-title {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .analysis-icon {
-            font-size: 28px;
-        }
-
-        .analysis-passage {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-        
-        .analysis-module {
-            font-size: 13px;
-            color: var(--text-medium);
-        }
-        
-        .analysis-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        /* This is the new template for the Regenerate button */
-        .regenerate-btn {
-            background: var(--evergreen);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .regenerate-btn:hover {
-            background: var(--pine);
-            transform: translateY(-1px);
-        }
-
-
-        .analysis-footer {
-            padding: 16px 28px;
-            background: var(--warm-white);
-            border-top: 1px solid var(--sand);
-            text-align: center;
-            position: sticky; /* Make footer sticky */
-            bottom: 0;
-            z-index: 20;
-        }
-        
-        /* New Scroll Loaders */
-        .scroll-loader-top, .scroll-loader-bottom {
-            display: none; /* Hidden by default */
-            padding: 20px;
-            text-align: center;
-        }
-
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <div class="header">
-        <div class="header-content">
-            <div class="app-name">Scribe Study</div>
-            <div class="primary-tabs">
-                <button class="primary-tab active" data-category="devotional">Devotional</button>
-                <button class="primary-tab" data-category="text-analysis">Text Analysis</button>
-                <button class="primary-tab" data-category="languages">Original Languages</button>
-                <button class="primary-tab" data-category="context">Context</button>
-                <button class="primary-tab" data-category="jewish">Jewish Background</button>
-                <button class="primary-tab" data-category="teaching">Teaching</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Container -->
-    <div class="main-container">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <button class="sidebar-tab" id="sidebarToggle">
-                <span id="sidebarArrow">◀</span>
-                MODULES
-            </button>
-            <div class="sidebar-content">
-                <div class="sidebar-header" id="sidebarHeader">Devotional</div>
-                
-                <!-- Devotional Modules -->
-                <div class="module-group active" data-category="devotional">
-                    <button class="secondary-tab active" data-module="spiritual-analysis">Spiritual Analysis</button>
-                    <button class="secondary-tab" data-module="devotional-reflection">Devotional Reflection</button>
-                    <button class="secondary-tab" data-module="discipleship">Discipleship Application</button>
-                    <button class="secondary-tab" data-module="redemptive-focus">Redemptive Focus</button>
-                    <button class="secondary-tab" data-module="life-application">Life Application</button>
-                </div>
-
-                <!-- Text Analysis Modules -->
-                <div class="module-group" data-category="text-analysis">
-                    <button class="secondary-tab" data-module="passage-overview">Passage Overview</button>
-                    <button class="secondary-tab" data-module="structural-analysis">Structural Analysis</button>
-                    <button class="secondary-tab" data-module="literary-devices">Literary Devices</button>
-                    <button class="secondary-tab" data-module="discourse-analysis">Discourse Analysis</button>
-                    <button class="secondary-tab" data-module="semantic-outline">Semantic Outline</button>
-                    <button class="secondary-tab" data-module="key-words">Key Words</button>
-                </div>
-
-                <!-- Original Languages Modules -->
-                <div class="module-group" data-category="languages">
-                    <button class="secondary-tab" data-module="greek-hebrew">Greek/Hebrew Lexicon</button>
-                    <button class="secondary-tab" data-module="morphology">Morphology</button>
-                    <button class="secondary-tab" data-module="grammar-essentials">Grammar Essentials</button>
-                    <button class="secondary-tab" data-module="advanced-grammar">Advanced Grammar</button>
-                    <button class="secondary-tab" data-module="verse-by-verse">Verse-by-Verse Grammar</button>
-                    <button class="secondary-tab" data-module="semantic-range">Semantic Range</button>
-                </div>
-
-                <!-- Context Modules -->
-                <div class="module-group" data-category="context">
-                    <button class="secondary-tab" data-module="historical-cultural">Historical-Cultural</button>
-                    <button class="secondary-tab" data-module="geographical">Geographical Context</button>
-                    <button class="secondary-tab" data-module="theological-context">Theological Context</button>
-                    <button class="secondary-tab" data-module="cross-references">Cross-References</button>
-                    <button class="secondary-tab" data-module="literary-context">Literary Context</button>
-                </div>
-
-                <!-- Jewish Background Modules -->
-                <div class="module-group" data-category="jewish">
-                    <button class="secondary-tab" data-module="second-temple">Second Temple Period</button>
-                    <button class="secondary-tab" data-module="rabbinic">Rabbinic Literature</button>
-                    <button class="secondary-tab" data-module="dead-sea-scrolls">Dead Sea Scrolls</button>
-                    <button class="secondary-tab" data-module="pseudepigrapha">Pseudepigrapha</button>
-                </div>
-
-                <!-- Teaching Modules -->
-                <div class="module-group" data-category="teaching">
-                    <button class="secondary-tab" data-module="sermon-outline">Sermon Outline</button>
-                    <button class="secondary-tab" data-module="lesson-plan">Lesson Plan</button>
-                    <button class="secondary-tab" data-module="discussion-questions">Discussion Questions</button>
-                    <button class="secondary-tab" data-module="illustrations">Illustrations</button>
-                    <button class="secondary-tab" data-module="teaching-points">Teaching Points</button>
-                </div>
-
-                <div class="auto-run-hint">
-                    💡 Analysis auto-runs when you switch tabs—no extra clicks needed!
-                </div>
-            </div>
-        </aside>
-
-        <!-- Content Area -->
-        <main class="content-area">
-            <div class="content-header">
-                <div class="search-main">
-                    <label class="search-label" for="passageInput">Scripture Passage or General Question</label>
-                    <input 
-                        type="text" 
-                        class="search-input" 
-                        id="passageInput"
-                        placeholder="e.g., John 3:16, Romans 8, or 'What is substitutionary atonement?'"
-                    >
-                </div>
-                
-                <div class="action-bar">
-                    <button class="action-btn" id="runModuleBtn">
-                        <span style="font-size: 18px;">🔬</span>
-                        Run Module Analysis
-                    </button>
-                    <button class="action-btn" id="displayScriptureBtn">
-                        <span style="font-size: 18px;">📖</span>
-                        Display Scripture Text
-                    </button>
-                    <select class="version-select" id="versionSelect">
-                        <option value="Modern English">Modern English</option>
-                        <option value="KJV">King James (KJV)</option>
-                        <option value="WEB">World English (WEB)</option>
-                        <option value="Reina-Valera 1909">Spanish (RVR 1909)</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="results-wrapper">
-
-                <!-- This is the container for the results -->
-                <div class="analysis-display" id="analysisDisplay">
-                    <!-- Content (headers, text, etc.) is injected here by JS -->
-                </div>
-
-                <!-- This is the initial status message -->
-                <div class="status-message" id="statusMessage">
-                    <div class="status-icon">✨</div>
-                    <div class="status-title">Ready to Study God's Word</div>
-                    <p class="status-text">
-                        Enter your scripture passage above.
-                        Choose a module from the left, or just display the scripture text.
-                    </p>
-                </div>
-
-            </div>
-        </main>
-
-        <!-- Notes Panel -->
-        <aside class="notes-panel" id="notesPanel">
-            <button class="notes-tab" id="notesToggle">
-                <span id="notesArrow">▶</span>
-                NOTES
-            </button>
-            <div class="notes-inner">
-                <div class="notes-header">
-                    <div class="notes-title-row">
-                        <div class="notes-title">Study Notes</div>
-                        <div class="size-controls">
-                            <button class="size-btn" id="collapseBtn" data-tooltip="Collapse">◀</button>
-                            <button class="size-btn active" id="normalBtn" data-tooltip="Normal (400px)">↔</button>
-                            <button class="size-btn" id="mediumBtn" data-tooltip="Medium (600px)">↔</button>
-                            <button class="size-btn" id="wideBtn" data-tooltip="Wide (800px)">⛶</button>
-                        </div>
-                    </div>
-
-                    <div class="note-name-section">
-                        <label class="note-name-label" for="noteNameInput">Note Name</label>
-                        <input 
-                            type="text" 
-                            class="note-name-input" 
-                            id="noteNameInput"
-                            placeholder="e.g., John 3:16 - Spiritual Analysis"
-                        >
-                        <div class="note-meta" id="noteMeta">New note • 0 words</div>
-                    </div>
-
-                    <div class="note-switcher">
-                        <button class="my-notes-btn" id="myNotesBtn">
-                            📝 My Notes 
-                            <span class="note-count" id="noteCount">0</span>
-                        </button>
-                        <button class="new-note-btn" id="newNoteBtn">+ New</button>
-                    </div>
-
-                    <div class="notes-toolbar">
-                        <button class="notes-tool-btn" id="exportBtn">📥 Export</button>
-                        <button class="notes-tool-btn" id="copyBtn">📋 Copy</button>
-                        <button class="notes-tool-btn" id="deleteBtn">🗑 Delete</button>
-                    </div>
-                </div>
-
-                <textarea 
-                    class="notes-editor" 
-                    id="notesEditor"
-                    placeholder="Capture your theological insights and observations...
-
-• Key theological truths discovered
-• Personal applications
-• Questions for further study
-• Cross-references to explore"
-                ></textarea>
-
-                <div class="notes-status">
-                    <div class="save-indicator">
-                        <div class="save-dot"></div>
-                        <span id="saveStatus">Ready</span>
-                    </div>
-                    <div class="word-count" id="wordCount">0 words</div>
-                </div>
-            </div>
-        </aside>
-    </div>
-
-    <!-- ===== TEMPLATES (hidden) ===== -->
+    // --- Action Bar ---
+    DOMElements.moduleAnalysisBtn.addEventListener('click', generateModuleAnalysis);
+    DOMElements.displayScriptureBtn.addEventListener('click', displayScripture);
     
-    <!-- Analysis Header Template -->
-    <template id="analysisHeaderTemplate">
-        <div class="analysis-title" id="analysisTitleDisplay">
-            <span class="analysis-icon" id="analysisIconDisplay">🔬</span>
-            <div>
-                <div class="analysis-passage" id="analysisPassageDisplay"></div>
-                <div class="analysis-module" id="analysisModuleDisplay"></div>
-            </div>
-        </div>
-        <div class="analysis-actions">
-            <button class="regenerate-btn" id="regenerateBtn">
-                <span style="font-size: 18px;">↻</span>
-                Regenerate
-            </button>
-        </div>
-    </template>
+    // Enter key
+    DOMElements.passageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') generateModuleAnalysis(); // Default to module analysis
+    });
 
-    <!-- Reader Header Template -->
-    <template id="readerHeaderTemplate">
-        <div class="reader-controls" id="readerControlsDisplay">
-            <button class="reader-nav-btn" id="prevChapterBtn" disabled>◀ Prev</button>
-            <div class="reader-chapter-title" id="readerChapterDisplay"></div>
-            <button class="reader-nav-btn" id="nextChapterBtn">Next ▶</button>
-        </div>
-    </template>
+    // Sidebar toggle
+    DOMElements.sidebarToggle.addEventListener('click', () => DOMElements.sidebar.classList.toggle('collapsed'));
+
+    // Notes toggle
+    DOMElements.notesToggle.addEventListener('click', () => DOMElements.notesPanel.classList.toggle('collapsed'));
     
-    <!-- Version Controls (for footer) -->
-    <template id="versionControlsTemplate">
-        <div class="version-controls" style="display: none; justify-content: center; align-items: center; gap: 8px;">
-            <button class="version-btn" id="prevVersionBtn" disabled>◀ Previous</button>
-            <span class="version-indicator" id="versionIndicator">Version 1 of 1</span>
-            <button class="version-btn" id="nextVersionBtn" disabled>Next ▶</button>
-        </div>
-    </template>
+    // --- NEW: Infinite Scroll Listener ---
+    DOMElements.resultsMain.addEventListener('scroll', handleReaderScroll);
+}
 
-    <!-- Scroll Loader Template -->
-    <template id="scrollLoaderTemplate">
-        <div class="scroll-loader">
-            <div class="loading-dots">
-                <span>.</span><span>.</span><span>.</span>
-            </div>
-        </div>
-    </template>
+// ===== API HEALTH CHECK =====
+async function checkAPIHealth() {
+    try {
+        const response = await fetch(`${API_URL}/health`);
+        const data = await response.json();
+        
+        if (!data.hasApiKey) {
+            console.warn('⚠️ Backend API key not configured');
+        }
+    } catch (error) {
+        console.error('Cannot connect to backend:', error);
+        showError('Cannot connect to server. Make sure backend is running.');
+    }
+}
+
+// ===== CORE ANALYSIS FUNCTIONS =====
+
+/**
+ * Parses a passage reference string (e.g., "John 3:16", "Romans 8:1-2")
+ * and returns a structured object.
+ * @param {string} passageStr - The input string from the user.
+ * @returns {object} - An object { book: string, chapter: number, verse: number }
+ */
+function parsePassageReference(passageStr) {
+    // This is a basic parser. A more robust one would handle "1 John", "Song of Solomon", etc.
+    const match = passageStr.match(/^(\d?\s*[a-zA-Z]+(?:\s[a-zA-Z]+)?)\s*(\d+)(?:[:.](\d+))?/);
+    
+    if (match) {
+        const book = match[1].trim();
+        const chapter = parseInt(match[2], 10);
+        const verse = match[3] ? parseInt(match[3], 10) : 1; // Default to verse 1 if not specified
+        
+        return { book, chapter, verse };
+    }
+    
+    // Fallback for simple inputs like "Romans 8" or general questions
+    const parts = passageStr.split(' ');
+    const lastPart = parts[parts.length - 1];
+    if (parts.length > 1 && /^\d+$/.test(lastPart)) {
+        const chapter = parseInt(lastPart, 10);
+        const book = parts.slice(0, -1).join(' ');
+        return { book, chapter, verse: 1 };
+    }
+
+    // Not a scripture reference, or just a book name.
+    return { book: passageStr, chapter: null, verse: null };
+}
 
 
-    <script src="app.js"></script>
-</body>
-</html>
+/**
+ * Main function to call the backend API.
+ * @param {string} prompt - The final prompt to send to the AI.
+ * @param {string} analysisType - 'module', 'scripture', or 'scripture-append'.
+ * @param {object} context - Additional info (passage, moduleName, etc.)
+ */
+async function runAnalysis(prompt, analysisType, context) {
+    const passage = DOMElements.passageInput.value.trim();
+    if (!passage && analysisType !== 'scripture') { // Allow scripture navigation
+        showError('Please enter a scripture passage or question.');
+        return;
+    }
+
+    // Show loading state
+    // Don't show global loading for append, we'll show a local spinner
+    if (analysisType !== 'scripture-append') {
+        setLoadingState(true, 'Analyzing...');
+        DOMElements.statusMessage.classList.add('hidden');
+    }
+
+    try {
+        // Call BACKEND API (not Groq directly!)
+        const response = await fetch(`${API_URL}/analyze`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prompt: prompt,
+                passage: context.passage || passage,
+                moduleName: context.moduleName || 'Analysis'
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Analysis failed');
+        }
+
+        const data = await response.json();
+        const analysis = data.analysis;
+
+        // --- Handle Response Based on Type ---
+        if (analysisType === 'module') {
+            // Store version
+            const versionKey = `${AppState.currentCategory}-${AppState.currentModule}`;
+            if (!AppState.analysisVersions[versionKey]) {
+                AppState.analysisVersions[versionKey] = [];
+            }
+            AppState.analysisVersions[versionKey].push(analysis);
+            AppState.currentVersionIndex[versionKey] = AppState.analysisVersions[versionKey].length - 1;
+            // Display
+            displayAnalysis(analysis, analysisType, context);
+
+        } else if (analysisType === 'scripture') {
+            // This is the *first* chapter load
+            displayAnalysis(analysis, analysisType, context);
+            
+        } else if (analysisType === 'scripture-append') {
+            // This is a subsequent chapter load (scrolling)
+            appendChapter(analysis, context.direction, context);
+        }
+
+    } catch (error) {
+        console.error('Analysis Error:', error);
+        if (analysisType !== 'scripture-append') {
+            showError(error.message);
+        } else {
+            // Don't show a full-screen error, just log it
+            console.error("Failed to append chapter:", error);
+            AppState.isFetchingChapter = false;
+            hideLoadSpinners();
+        }
+    } finally {
+        if (analysisType !== 'scripture-append') {
+            setLoadingState(false);
+        }
+    }
+}
+
+/**
+ * Triggered by the "Run Module Analysis" button.
+ */
+function generateModuleAnalysis() {
+    AppState.currentReaderMode = false; // We are no longer in reader mode
+    const passage = DOMElements.passageInput.value.trim();
+    AppState.currentPassage = passage;
+
+    // Get module info
+    const moduleInfo = getModuleInfo(AppState.currentCategory, AppState.currentModule);
+    if (!moduleInfo) {
+        showError("Could not find selected module.");
+        return;
+    }
+    
+    // Build prompt
+    let prompt = moduleInfo.prompt.replace('{passage}', passage);
+
+    // If it's a general question, add a system message
+    const ref = parsePassageReference(passage);
+    if (!ref.chapter) {
+        prompt = `User's input is a general topic or question, not a specific scripture passage.
+User's input: "${passage}"
+Based on this, perform the following analysis as a topic-based query:
+${prompt}`;
+    }
+
+    runAnalysis(prompt, 'module', {
+        passage: passage,
+        moduleName: moduleInfo.name,
+        icon: moduleInfo.icon
+    });
+}
+
+/**
+ * Triggered by the "Display Scripture Text" button.
+ * This function now just parses the input and updates the state.
+ */
+function displayScripture() {
+    AppState.currentReaderMode = true; // We are now in reader mode
+    const passage = DOMElements.passageInput.value.trim();
+    
+    // Try to parse the passage
+    const ref = parsePassageReference(passage);
+    
+    if (ref.chapter) {
+        // It's a valid reference, let's get the whole chapter
+        // Store this for navigation
+        AppState.currentBibleReference = ref;
+    } else {
+        // Not a reference, maybe just a book? Or topic?
+        AppState.currentBibleReference = { book: passage, chapter: 1, verse: 1 };
+    }
+    
+    // Call the function to actually fetch and display
+    fetchAndDisplayChapter(0); // 0 = initial load
+}
+
+/**
+ * NEW: Fetches and displays a chapter.
+ * @param {number} direction - 0 (initial), 1 (next), -1 (prev).
+ */
+function fetchAndDisplayChapter(direction = 0) {
+    const { book, chapter } = AppState.currentBibleReference;
+    
+    if (!chapter) {
+        showError(`Cannot display scripture for "${book}". Please enter a valid reference like "John 3:16" or "Romans 8".`);
+        return;
+    }
+    
+    const version = DOMElements.versionSelect.value;
+    const versionText = DOMElements.versionSelect.options[DOMElements.versionSelect.selectedIndex].text;
+    const chapterQuery = `${book} ${chapter}`;
+
+    const prompt = `Please provide the full text for the *entire chapter* of ${chapterQuery} using the ${versionText} version.
+Format the text with verse numbers in brackets, like [1], [2], [3], etc.
+Only provide the text, no commentary or introduction.`;
+    
+    let analysisType = 'scripture'; // Initial load
+    if (direction !== 0) {
+        analysisType = 'scripture-append';
+    }
+
+    runAnalysis(prompt, analysisType, {
+        passage: chapterQuery,
+        chapter: chapterQuery,
+        version: versionText,
+        direction: direction // Pass direction to context
+    });
+}
+
+
+// ===== NEW: INFINITE SCROLL =====
+
+/**
+ * Handles the scroll event on the main results pane.
+ */
+function handleReaderScroll() {
+    // Only run if we are in reader mode and not already fetching
+    if (!AppState.currentReaderMode || AppState.isFetchingChapter) {
+        return;
+    }
+
+    const pane = DOMElements.resultsMain;
+    const scrollThreshold = 100; // Pixels from edge to trigger load
+
+    // Check for scrolling to the bottom
+    if (pane.scrollHeight - pane.scrollTop - pane.clientHeight < scrollThreshold) {
+        loadChapter(1); // Load next chapter
+    }
+    
+    // Check for scrolling to the top
+    if (pane.scrollTop < scrollThreshold && AppState.currentBibleReference.chapter > 1) {
+        loadChapter(-1); // Load previous chapter
+    }
+}
+
+/**
+ * Initiates loading of a new chapter.
+ * @param {number} direction - 1 for next, -1 for previous.
+ */
+function loadChapter(direction) {
+    if (AppState.isFetchingChapter) return; // Don't double-load
+    
+    // Don't load "Chapter 0"
+    if (direction === -1 && AppState.currentBibleReference.chapter <= 1) {
+        return;
+    }
+    
+    console.log(`Loading chapter... (Direction: ${direction})`);
+    AppState.isFetchingChapter = true;
+    
+    // Show the correct spinner
+    if (direction === 1) {
+        showLoadSpinner('bottom');
+    } else {
+        showLoadSpinner('top');
+    }
+
+    // Update state and fetch
+    AppState.currentBibleReference.chapter += direction;
+    
+    // Update the main search bar text to reflect the new chapter
+    DOMElements.passageInput.value = `${AppState.currentBibleReference.book} ${AppState.currentBibleReference.chapter}`;
+    
+    // Fetch the new chapter
+    fetchAndDisplayChapter(direction);
+}
+
+/**
+ * Appends a newly fetched chapter to the display.
+ * @param {string} content - The raw text/markdown from the AI.
+ * @param {number} direction - 1 for next, -1 for previous.
+ * @param {object} context - The analysis context.
+ */
+function appendChapter(content, direction, context) {
+    const contentEl = DOMElements.analysisDisplay.querySelector('.analysis-content');
+    if (!contentEl) return; // Safety check
+
+    // Create a new element for the chapter
+    const chapterDiv = document.createElement('div');
+    chapterDiv.className = 'chapter-chunk';
+    chapterDiv.innerHTML = `<h2>${context.chapter}</h2>` + formatAiResponse(content);
+
+    if (direction === 1) {
+        // Append to bottom
+        contentEl.appendChild(chapterDiv);
+    } else {
+        // Prepend to top
+        // Need to save scroll position
+        const oldScrollHeight = DOMElements.resultsMain.scrollHeight;
+        contentEl.prepend(chapterDiv);
+        const newScrollHeight = DOMElements.resultsMain.scrollHeight;
+        DOMElements.resultsMain.scrollTop += (newScrollHeight - oldScrollHeight);
+    }
+
+    // Update the sticky header to the *first* visible chapter
+    // This is a bit complex, for now, let's just update to the one we just loaded
+    const readerChapterDisplay = DOMElements.analysisDisplay.querySelector('#readerChapterDisplay');
+    if (readerChapterDisplay) {
+        readerChapterDisplay.textContent = context.chapter;
+    }
+
+    AppState.isFetchingChapter = false;
+    hideLoadSpinners();
+    console.log(`Successfully appended ${context.chapter}`);
+}
+
+/**
+ * Shows the correct scroll loader.
+ * @param {'top' | 'bottom'} position 
+ */
+function showLoadSpinner(position) {
+    hideLoadSpinners(); // Clear any existing
+    
+    const loaderTemplate = DOMElements.scrollLoaderTemplate.content.cloneNode(true);
+    const loaderEl = loaderTemplate.querySelector('.scroll-loader');
+    
+    const contentEl = DOMElements.analysisDisplay.querySelector('.analysis-content');
+
+    if (position === 'top') {
+        loaderEl.id = 'loaderTop';
+        contentEl.prepend(loaderEl);
+        loaderEl.classList.add('visible');
+    } else {
+        loaderEl.id = 'loaderBottom';
+        contentEl.append(loaderEl);
+        loaderEl.classList.add('visible');
+    }
+}
+
+/**
+ * Hides all scroll loaders.
+ */
+function hideLoadSpinners() {
+    DOMElements.analysisDisplay.querySelector('#loaderTop')?.remove();
+    DOMElements.analysisDisplay.querySelector('#loaderBottom')?.remove();
+}
+
+
+// ===== DISPLAY FUNCTIONS =====
+
+/**
+ * Toggles the loading state of the action buttons.
+ * @param {boolean} isLoading - Whether to show the loading state.
+ * @param {string} [message] - Optional message (e.g., "Loading...").
+ */
+function setLoadingState(isLoading, message = "Loading...") {
+    if (isLoading) {
+        DOMElements.moduleAnalysisBtn.disabled = true;
+        DOMElements.moduleAnalysisBtn.innerHTML = `<span><div class="loading-dots" style="font-size: 14px; color: white;"><span>.</span><span>.</span><span>.</span></div></span> ${message}`;
+        DOMElements.displayScriptureBtn.disabled = true;
+    } else {
+        DOMElements.moduleAnalysisBtn.disabled = false;
+        DOMElements.moduleAnalysisBtn.innerHTML = `<span>📖</span> Run Module Analysis`;
+        DOMElements.displayScriptureBtn.disabled = false;
+    }
+}
+
+/**
+ * Formats raw markdown/plain text from AI into clean HTML.
+ */
+function formatAiResponse(text) {
+    // 1. Convert newlines to paragraphs
+    let html = text.split('\n\n')
+                   .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+                   .join('');
+
+    // 2. Handle simple markdown lists (bulleted or numbered)
+    html = html.replace(/<p>(?:[\*\-]\s|(\d+)\.\s)(.+?)<\/p>/g, '<li>$2</li>');
+    html = html.replace(/(<li>.+?<\/li>)/g, '<ul>$1</ul>');
+    html = html.replace(/<\/ul>\s*<ul>/g, ''); // Fix contiguous lists
+
+    // 3. Handle headings
+    html = html.replace(/<p>###\s*(.+?)<\/p>/g, '<h3>$1</h3>');
+    html = html.replace(/<p>##\s*(.+?)<\/p>/g, '<h2>$1</h2>');
+    html = html.replace(/<p>#\s*(.+?)<\/p>/g, '<h1>$1</h1>');
+
+    // 4. Handle bold and italic
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    
+    // 5. Clean up verse numbers for scripture display
+    html = html.replace(/\[(\d+)\]/g, ' <strong class="verse-number">[$1]</strong> ');
+
+    return html;
+}
+
+/**
+ * Main function to render analysis or scripture text in the display pane.
+ * @param {string} content - The raw text/markdown from the AI.
+ * @param {string} analysisType - 'module' or 'scripture'.
+ * @param {object} context - Additional info (passage, moduleName, etc.)
+ */
+function displayAnalysis(content, analysisType, context) {
+    DOMElements.analysisDisplay.innerHTML = ''; // Clear display
+
+    // --- 1. CLONE AND APPEND HEADER ---
+    const headerTemplate = DOMElements.analysisHeaderTemplate.content.cloneNode(true);
+    const headerEl = headerTemplate.querySelector('.analysis-header');
+    DOMElements.analysisDisplay.appendChild(headerEl);
+
+    // Get all the nodes from the new header
+    const analysisTitleDisplay = headerEl.querySelector('#analysisTitleDisplay');
+    const analysisPassageDisplay = headerEl.querySelector('#analysisPassageDisplay');
+    const analysisModuleDisplay = headerEl.querySelector('#analysisModuleDisplay');
+    
+    const readerControlsDisplay = headerEl.querySelector('#readerControlsDisplay');
+    const readerChapterDisplay = headerEl.querySelector('#readerChapterDisplay');
+    const readerVersionDisplay = headerEl.querySelector('#readerVersionDisplay');
+
+    // --- 2. CONFIGURE HEADER BASED ON TYPE ---
+    if (analysisType === 'scripture') {
+        // We are in "Reader" mode
+        analysisTitleDisplay.classList.add('hidden');
+        readerControlsDisplay.classList.remove('hidden');
+
+        readerChapterDisplay.textContent = context.chapter;
+        readerVersionDisplay.textContent = context.version;
+        
+    } else {
+        // We are in "Module" mode (or general)
+        analysisTitleDisplay.classList.remove('hidden');
+        readerControlsDisplay.classList.add('hidden');
+        
+        analysisPassageDisplay.textContent = context.passage;
+        analysisModuleDisplay.textContent = context.moduleName;
+    }
+    
+    // --- 3. FORMAT AND APPEND CONTENT ---
+    const contentEl = document.createElement('div');
+    contentEl.className = 'analysis-content';
+    
+    if (analysisType === 'scripture') {
+        // For first load of scripture, add a chapter title
+        contentEl.innerHTML = `<h2>${context.chapter}</h2>` + formatAiResponse(content);
+    } else {
+        // For module analysis, just add content
+        contentEl.innerHTML = formatAiResponse(content);
+    }
+    
+    DOMElements.analysisDisplay.appendChild(contentEl);
+    
+    // Scroll to the verse if it was specified
+    if (analysisType === 'scripture' && AppState.currentBibleReference.verse > 1) {
+        setTimeout(() => {
+            const verseEl = contentEl.querySelector(`strong.verse-number:contains('[${AppState.currentBibleReference.verse}]')`);
+            if (verseEl) {
+                verseEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                // Fallback: just scroll to top of content
+                contentEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 100);
+    } else if (analysisType === 'scripture') {
+         // Scroll to top of pane
+         DOMElements.resultsMain.scrollTop = 0;
+    }
+
+
+    // --- 4. APPEND FOOTER (Only for Module Analysis) ---
+    if (analysisType === 'module') {
+        const footerEl = document.createElement('div');
+        footerEl.className = 'analysis-footer';
+        
+        // Add version controls
+        const versionControls = document.getElementById('versionControls').cloneNode(true);
+        versionControls.style.display = 'flex';
+        footerEl.appendChild(versionControls);
+        // TODO: Hook up version button logic
+        // updateVersionControls();
+        
+        DOMElements.analysisDisplay.appendChild(footerEl);
+    }
+    
+    // Hide the initial status message
+    DOMElements.statusMessage.classList.add('hidden');
+}
+
+
+function showError(message) {
+    DOMElements.analysisDisplay.innerHTML = ''; // Clear
+    DOMElements.statusMessage.innerHTML = `
+        <div class"status-icon">⚠️</div>
+        <div class="status-title" style="color: #d32f2f;">Error</div>
+        <p class="status-text">${message}</p>
+    `;
+    DOMElements.statusMessage.classList.remove('hidden');
+    setLoadingState(false); // Make sure buttons are re-enabled
+}
+
+// ===== NAVIGATION =====
+function switchCategory(category) {
+    if (!ModuleDefinitions[category]) {
+        console.error(`Category "${category}" not found in ModuleDefinitions.`);
+        return;
+    }
+    
+    AppState.currentCategory = category;
+    
+    // Update UI
+    DOMElements.primaryTabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.category === category);
+    });
+    
+    DOMElements.moduleGroups.forEach(group => {
+        group.classList.toggle('active', group.dataset.category === category);
+    });
+
+    // Set first module as active
+    const firstModule = ModuleDefinitions[category].modules;
+    const firstModuleKey = Object.keys(firstModule)[0];
+    switchModule(firstModuleKey, true); // Force-switch to first module
+
+    // Update header
+    DOMElements.sidebarHeader.textContent = ModuleDefinitions[category].name;
+}
+
+function switchModule(module, forceSwitch = false) {
+    // Don't auto-run if module is already active, unless forced
+    if (AppState.currentModule === module && !forceSwitch) return;
+    
+    AppState.currentModule = module;
+    
+    DOMElements.secondaryTabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.module === module);
+    });
+
+    // Auto-run analysis
+    const passage = DOMElements.passageInput.value.trim();
+    if (passage) {
+        // Don't auto-run if we're in reader mode
+        if (!AppState.currentReaderMode) {
+            generateModuleAnalysis();
+        }
+    }
+}
+
+function getModuleInfo(category, module) {
+    try {
+        return ModuleDefinitions[category].modules[module];
+    } catch (e) {
+        console.error(`Could not find module info for: ${category}/${module}`, e);
+        return null;
+    }
+}
+
+// ===== VERSION NAVIGATION (STUB) =====
+function navigateVersion(direction) {
+    // This logic needs to be attached to the buttons created in displayAnalysis
+    // ...
+}
+
+function updateVersionControls() {
+    // This logic needs to be attached to the buttons created in displayAnalysis
+    // ...
+}
+
+// ===== NOTES (STUB - IMPLEMENT LATER) =====
+function loadNotes() {
+    const saved = localStorage.getItem('scribeNotes');
+    if (saved) {
+        AppState.notes = JSON.parse(saved);
+    }
+}
+
+function saveNotes() {
+    localStorage.setItem('scribeNotes', JSON.stringify(AppState.notes));
+}

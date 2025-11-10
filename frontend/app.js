@@ -500,14 +500,14 @@ function initializeAppListeners() {
 function setLoadingState(isLoading, title = 'Analyzing...') {
     if (isLoading) {
         // --- Enter Loading State ---
-        AppState.currentReaderMode = false; // Always exit reader mode
-        disconnectObservers(); // CRITICAL: Stop all background listeners
+        // CRITICAL: Stop all background listeners BEFORE new action
+        disconnectObservers(); 
         
         DOMElements.statusTitle.textContent = title;
-        DOMElements.statusIcon.style.display = 'none';
-        DOMElements.statusText.style.display = 'none';
-        DOMElements.statusMessage.style.display = 'block';
-        DOMElements.analysisDisplay.style.display = 'none';
+        DOMElements.statusIcon.style.display = 'none'; // Hide icon
+        DOMElements.statusText.style.display = 'none'; // Hide text
+        DOMElements.statusMessage.style.display = 'block'; // Show status wrapper
+        DOMElements.analysisDisplay.style.display = 'none'; // Hide old analysis
 
         // Disable all inputs
         DOMElements.passageInput.disabled = true;
@@ -599,6 +599,10 @@ async function runAnalysis(prompt, passage, moduleName) {
  * Runs the currently selected module analysis.
  */
 async function runModuleAnalysis() {
+    // CRITICAL FIX: Kill any "ghost" Bible Reader listeners FIRST.
+    disconnectObservers();
+    AppState.currentReaderMode = false;
+
     const passage = DOMElements.passageInput.value.trim();
     if (!passage) {
         setErrorState('Please enter a scripture passage or question.');
@@ -641,6 +645,10 @@ async function runModuleAnalysis() {
  * Initiates the Bible Reader, fetching the full chapter.
  */
 async function displayScripture() {
+    // CRITICAL: Kill any "ghost" listeners from a previous session
+    disconnectObservers();
+    AppState.currentReaderMode = true;
+
     const passageInput = DOMElements.passageInput.value.trim();
     if (!passageInput) {
         setErrorState('Please enter a scripture passage.');
@@ -667,6 +675,10 @@ async function displayScripture() {
  * @param {'replace' | 'prepend' | 'append'} mode - How to add the content.
  */
 async function fetchAndDisplayChapter(ref, mode = 'replace') {
+    if (!ref) {
+        console.warn("fetchAndDisplayChapter called with null reference.");
+        return;
+    }
     AppState.isFetchingChapter = true;
     const version = DOMElements.versionSelect.value;
     const passage = `${ref.book} ${ref.chapter}`;
@@ -704,8 +716,15 @@ async function fetchAndDisplayChapter(ref, mode = 'replace') {
         } else {
             // This is an infinite scroll request
             const newChunk = createChapterChunk(analysis, ref.book, ref.chapter);
+            const scrollContainer = DOMElements.resultsMain;
+            const oldScrollHeight = scrollContainer.scrollHeight;
+            const oldScrollTop = scrollContainer.scrollTop;
+
             if (mode === 'prepend') {
                 DOMElements.analysisContent.prepend(newChunk);
+                // Maintain scroll position
+                const newScrollHeight = scrollContainer.scrollHeight;
+                scrollContainer.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
             } else {
                 DOMElements.analysisContent.append(newChunk);
             }
@@ -792,32 +811,44 @@ function parsePassageReference(input) {
  * @returns {string} - Formatted HTML.
  */
 function simpleMarkdown(text) {
-    let html = text
-        // 1. Headers
-        .replace(/^###\s(.*)/gm, '<h3>$1</h3>')
-        .replace(/^##\s(.*)/gm, '<h2>$1</h2>')
-        .replace(/^#\s(.*)/gm, '<h1>$1</h1>')
-        
-        // 2. Bold/Italics
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    // 0. Normalize line endings
+    let html = text.replace(/\r\n/g, '\n');
 
-        // 3. Lists
-        .replace(/^\s*[\-\*]\s(.*)/gm, '<li>$1</li>')
-        .replace(/^\s*[0-9]+\.\s(.*)/gm, '<li>$1</li>')
-        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>') // Wrap <li> groups
-        .replace(/<\/ul>\n<ul>/g, '') // Merge adjacent lists
+    // 1. Headers
+    html = html.replace(/^###\s(.*)/gm, '<h3>$1</h3>')
+               .replace(/^##\s(.*)/gm, '<h2>$1</h2>')
+               .replace(/^#\s(.*)/gm, '<h1>$1</h1>');
+    
+    // 2. Bold/Italics
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+               .replace(/\*(.*?)\*/g, '<em>$1</em>');
 
-        // 4. Blockquotes
-        .replace(/^\>\s(.*)/gm, '<blockquote>$1</blockquote>')
-        .replace(/<\/blockquote>\n<blockquote>/g, '\n'); // Merge adjacent blockquotes
+    // 3. Blockquotes
+    html = html.replace(/^\>\s(.*)/gm, '<blockquote>$1</blockquote>')
+               .replace(/<\/blockquote>\n<blockquote>/g, '\n'); // Merge adjacent
+
+    // 4. Lists
+    // Handle bullet lists
+    html = html.replace(/^\s*[\-\*]\s(.*)/gm, '<li>$1</li>')
+               .replace(/(\n?<li>.*<\/li>\n?)/gs, '<ul>$1</ul>')
+               .replace(/<\/ul>\n?<ul>/g, ''); // Merge adjacent
+    
+    // Handle numbered lists
+    html = html.replace(/^\s*[0-9]+\.\s(.*)/gm, '<li>$1</li>')
+               .replace(/(\n?<li>.*<\/li>\n?)/gs, (match, p1) => {
+                   // Only wrap if it's not already in a <ul>
+                   if (match.includes('<ul>')) return match;
+                   return `<ol>${p1}</ol>`;
+               })
+               .replace(/<\/ol>\n?<ul>/g, '') // Fix for mixed lists
+               .replace(/<\/ul>\n?<ol>/g, '')
+               .replace(/<\/ol>\n?<ol>/g, '');
 
     // 5. Paragraphs and Line Breaks
-    // Split by double newline (paragraph)
     html = html.split('\n\n')
         .map(paragraph => {
-            // If the paragraph is a list or header, leave it alone
-            if (paragraph.startsWith('<li') || paragraph.startsWith('<ul') || paragraph.startsWith('<h') || paragraph.startsWith('<blockquote')) {
+            // If the paragraph is a list, header, or blockquote, leave it alone
+            if (paragraph.trim().startsWith('<') || paragraph.trim() === '') {
                 return paragraph;
             }
             // Otherwise, wrap in <p> and replace single newlines with <br>
@@ -825,14 +856,15 @@ function simpleMarkdown(text) {
         })
         .join('');
         
-    // 6. Clean up empty <p> tags and <br> artifacts
-    html = html.replace(/<p>\s*<\/p>/g, '') // Remove empty paragraphs
-               .replace(/<p><br><\/p>/g, '')
-               .replace(/<br>\s*<(ul|h[1-3]|blockquote)/g, '<$1') // Don't break before list/header
-               .replace(/<\/(ul|h[1-3]|blockquote)>\s*<br>/g, '</$1>'); // Don't break after list/header
+    // 6. Clean up artifacts
+    html = html.replace(/<p>\s*<(ul|ol|h[1-3]|blockquote)/g, '<$1') // Remove <p> before block elements
+               .replace(/<\/(ul|ol|h[1-3]|blockquote)>\s*<\/p>/g, '</$1>') // Remove </p> after block elements
+               .replace(/<p>\s*<\/p>/g, '') // Remove empty paragraphs
+               .replace(/<p><br><\/p>/g, '');
 
     return html;
 }
+
 
 // ===== UI DISPLAY & NAVIGATION =====
 
@@ -868,8 +900,15 @@ function displayAnalysis({
         DOMElements.analysisDisplay.classList.add('reader-mode');
 
         // 3. Set up new observers for this mode
-        setupScrollObserver();
-        setupHeaderObserver();
+        // CRITICAL FIX: Add a "grace period" before attaching listeners.
+        // This prevents the "runaway scroll" bug on short chapters (e.g., Psalm 1)
+        // by giving the DOM time to settle before checking scroll position.
+        setTimeout(() => {
+            if (AppState.currentReaderMode) { // Only attach if still in reader mode
+                setupScrollObserver();
+                setupHeaderObserver();
+            }
+        }, 500); // 500ms grace period
         
     } else {
         // MODULE ANALYSIS MODE
@@ -928,29 +967,40 @@ function disconnectObservers() {
  * Updates the sticky header text when a new chapter hits the top.
  */
 function setupHeaderObserver() {
-    const options = {
-        root: DOMElements.resultsMain,
-        threshold: 0,
-        rootMargin: "0px 0px -90% 0px" // Trigger when 10% of the top is visible
-    };
+    // Safety check: ensure we are in reader mode and not already observing
+    if (!AppState.currentReaderMode || AppState.headerObserver) return;
+    
+    try {
+        const options = {
+            root: DOMElements.resultsMain,
+            threshold: 0.1, // Trigger when 10% is visible
+            rootMargin: "0px 0px -80% 0px" // Watch a "scan line" near the top
+        };
 
-    AppState.headerObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                // This entry is the one "at the top"
-                const book = entry.target.dataset.book;
-                const chapter = entry.target.dataset.chapter;
+        AppState.headerObserver = new IntersectionObserver((entries) => {
+            if (!AppState.currentReaderMode) return; // Don't act if not in reader mode
+
+            // Find the "topmost" visible entry
+            const topmostVisibleEntry = entries
+                .filter(e => e.isIntersecting)
+                .sort((a, b) => a.target.getBoundingClientRect().top - b.target.getBoundingClientRect().top)[0];
+            
+            if (topmostVisibleEntry) {
+                const book = topmostVisibleEntry.target.dataset.book;
+                const chapter = topmostVisibleEntry.target.dataset.chapter;
                 DOMElements.readerTitleDisplay.textContent = `${book} ${chapter}`;
                 // Update global state
                 AppState.currentBibleReference.book = book;
                 AppState.currentBibleReference.chapter = parseInt(chapter, 10);
             }
-        });
-    }, options);
+        }, options);
 
-    DOMElements.analysisContent.querySelectorAll('.chapter-chunk').forEach(chunk => {
-        AppState.headerObserver.observe(chunk);
-    });
+        DOMElements.analysisContent.querySelectorAll('.chapter-chunk').forEach(chunk => {
+            AppState.headerObserver.observe(chunk);
+        });
+    } catch (e) {
+        console.error("Failed to setup Header Observer:", e);
+    }
 }
 
 /**
@@ -958,56 +1008,67 @@ function setupHeaderObserver() {
  * Fetches new chapters when user scrolls near the top or bottom.
  */
 function setupScrollObserver() {
-    const options = {
-        root: DOMElements.resultsMain,
-        threshold: 0,
-        rootMargin: "200px 0px 200px 0px" // Load when 200px away
-    };
-
-    AppState.scrollObserver = new IntersectionObserver((entries) => {
-        if (AppState.isFetchingChapter) return; // Don't fetch if already fetching
-        
-        entries.forEach(entry => {
-            if (!entry.isIntersecting) return;
-            
-            const chunk = entry.target;
-            const currentRef = { 
-                book: chunk.dataset.book, 
-                chapter: parseInt(chunk.dataset.chapter, 10) 
-            };
-            
-            // Is this the first chunk? Check for "scroll up"
-            if (chunk === DOMElements.analysisContent.firstChild) {
-                const prevRef = getAdjacentChapter(currentRef, -1);
-                if (prevRef) {
-                    AppState.scrollObserver.unobserve(chunk); // Stop observing this
-                    fetchAndDisplayChapter(prevRef, 'prepend').then(() => {
-                        // Re-observe new first chunk
-                        AppState.scrollObserver.observe(DOMElements.analysisContent.firstChild);
-                    });
-                }
-            }
-            
-            // Is this the last chunk? Check for "scroll down"
-            if (chunk === DOMElements.analysisContent.lastChild) {
-                const nextRef = getAdjacentChapter(currentRef, 1);
-                if (nextRef) {
-                    AppState.scrollObserver.unobserve(chunk); // Stop observing this
-                    fetchAndDisplayChapter(nextRef, 'append').then(() => {
-                        // Re-observe new last chunk
-                        AppState.scrollObserver.observe(DOMElements.analysisContent.lastChild);
-                    });
-                }
-            }
-        });
-    }, options);
+    // Safety check: ensure we are in reader mode and not already observing
+    if (!AppState.currentReaderMode || AppState.scrollObserver) return;
     
-    // Observe the first and last chunks
-    if (DOMElements.analysisContent.firstChild) {
-        AppState.scrollObserver.observe(DOMElements.analysisContent.firstChild);
-    }
-    if (DOMElements.analysisContent.lastChild && DOMElements.analysisContent.firstChild !== DOMElements.analysisContent.lastChild) {
-        AppState.scrollObserver.observe(DOMElements.analysisContent.lastChild);
+    try {
+        const options = {
+            root: DOMElements.resultsMain,
+            threshold: 0,
+            rootMargin: "300px 0px 300px 0px" // Load when 300px away
+        };
+
+        AppState.scrollObserver = new IntersectionObserver((entries) => {
+            if (AppState.isFetchingChapter || !AppState.currentReaderMode) return; // Don't fetch if already fetching or not in mode
+            
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                
+                const chunk = entry.target;
+                const currentRef = { 
+                    book: chunk.dataset.book, 
+                    chapter: parseInt(chunk.dataset.chapter, 10) 
+                };
+                
+                // Is this the first chunk? Check for "scroll up"
+                if (chunk === DOMElements.analysisContent.firstChild) {
+                    const prevRef = getAdjacentChapter(currentRef, -1);
+                    if (prevRef) {
+                        AppState.scrollObserver.unobserve(chunk); // Stop observing this
+                        fetchAndDisplayChapter(prevRef, 'prepend').then(() => {
+                            // Re-observe new first chunk
+                            if(DOMElements.analysisContent.firstChild) {
+                                AppState.scrollObserver.observe(DOMElements.analysisContent.firstChild);
+                            }
+                        });
+                    }
+                }
+                
+                // Is this the last chunk? Check for "scroll down"
+                if (chunk === DOMElements.analysisContent.lastChild) {
+                    const nextRef = getAdjacentChapter(currentRef, 1);
+                    if (nextRef) {
+                        AppState.scrollObserver.unobserve(chunk); // Stop observing this
+                        fetchAndDisplayChapter(nextRef, 'append').then(() => {
+                            // Re-observe new last chunk
+                            if (DOMElements.analysisContent.lastChild) {
+                                AppState.scrollObserver.observe(DOMElements.analysisContent.lastChild);
+                            }
+                        });
+                    }
+                }
+            });
+        }, options);
+        
+        // Observe the first and last chunks
+        if (DOMElements.analysisContent.firstChild) {
+            AppState.scrollObserver.observe(DOMElements.analysisContent.firstChild);
+        }
+        if (DOMElements.analysisContent.lastChild && DOMElements.analysisContent.firstChild !== DOMElements.analysisContent.lastChild) {
+            AppState.scrollObserver.observe(DOMElements.analysisContent.lastChild);
+        }
+    } catch (e) {
+        console.error("Failed to setup Scroll Observer:", e);
     }
 }
 
@@ -1034,6 +1095,7 @@ function handleFontSizeChange(direction) {
  */
 function applyFontSize() {
     const sizes = ['font-size-small', 'font-size-normal', 'font-size-large', 'font-size-xlarge'];
+    // Apply to both content and notes editor
     DOMElements.analysisContent.classList.remove(...sizes);
     DOMElements.analysisContent.classList.add(AppState.currentFontSize);
     
@@ -1111,30 +1173,40 @@ function switchCategory(category) {
 
 /**
  * Switches the active module.
+ * @param {string} module - The module key.
+ * @param {boolean} [forceAutoRun=false] - Whether to force auto-run.
  */
 function switchModule(module, forceAutoRun = false) {
+    // Only switch if the module is different
+    if (AppState.currentModule === module && !forceAutoRun) {
+        return;
+    }
+
     AppState.currentModule = module;
     
     document.querySelectorAll('.secondary-tab').forEach(tab => {
         const isThisTab = tab.dataset.module === module;
         tab.classList.toggle('active', isThisTab);
-        // Ensure only active tab in this group is active
-        if (isThisTab && !tab.closest('.module-group').classList.contains('active')) {
-            tab.classList.remove('active');
+        
+        // This logic seems complex, let's simplify
+        if (isThisTab) {
+            // Ensure this tab's parent group is active
+            if (!tab.closest('.module-group').classList.contains('active')) {
+                 // This situation shouldn't happen if switchCategory is correct
+                 console.warn("Active tab is in an inactive group.");
+            }
         }
     });
 
-    updateModuleDisplay();
-    
     // Auto-run analysis if passage exists
     const passage = DOMElements.passageInput.value.trim();
-    if (forceAutoRun && passage) {
+    if (passage) {
         runModuleAnalysis();
     }
 }
 
+
 function updateModuleDisplay() {
-    const moduleInfo = getModuleInfo(AppState.currentCategory, AppState.currentModule);
     // This element no longer exists, but we'll leave the helper
 }
 
@@ -1143,10 +1215,18 @@ function getModuleInfo(category, module) {
         return ModuleDefinitions[category].modules[module];
     }
     // Fallback if module/category is missing
-    return { name: 'Error', prompt: 'Error', icon: '⚠️' };
+    console.warn(`Could not find module info for ${category}:${module}`);
+    // Find the *first* module in the category as a fallback
+    if (ModuleDefinitions[category]) {
+        const firstModuleKey = Object.keys(ModuleDefinitions[category].modules)[0];
+        return ModuleDefinitions[category].modules[firstModuleKey];
+    }
+    // Total fallback
+    return { name: 'Error', prompt: 'Error: Module not found.', icon: '⚠️' };
 }
 
-// ===== NOTES (STUB - IMPLEMENT LATER) =====
+// ===== NOTES (STUB - IMPLEMENT LINT) =====
+// TODO: Replace with Firestore
 function loadNotes() {
     // This will be replaced with Firestore
     const saved = localStorage.getItem('scribeNotes');

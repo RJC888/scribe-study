@@ -103,7 +103,11 @@ const AppState = {
     currentBibleReference: { book: '', chapter: null, verse: null },
     isFetchingChapter: false,
     currentReaderMode: false, // Is the Bible reader active?
-    currentObserver: null // Holds the IntersectionObserver
+    currentObserver: null, // Holds the IntersectionObserver
+    
+    // --- NEW: Font Size State ---
+    fontSizes: ['font-size-small', 'font-size-normal', 'font-size-large', 'font-size-xlarge'],
+    currentFontSizeIndex: 1 // Default is 'font-size-normal'
 };
 
 // ===== MODULE DEFINITIONS =====
@@ -500,7 +504,7 @@ function cacheDOMElements() {
     DOMElements.statusText = document.getElementById('statusText');
 
     DOMElements.analysisDisplay = document.getElementById('analysisDisplay');
-    DOMElements.analysisHeader = document.getElementById('analysis-header');
+    DOMElements.analysisHeader = document.getElementById('analysis-header'); // Note: This ID doesn't exist in HTML, but it's not used.
     DOMElements.analysisTitleDisplay = document.getElementById('analysisTitleDisplay');
     DOMElements.analysisIconDisplay = document.getElementById('analysisIconDisplay');
     DOMElements.analysisPassageDisplay = document.getElementById('analysisPassageDisplay');
@@ -508,6 +512,12 @@ function cacheDOMElements() {
     
     DOMElements.readerControlsDisplay = document.getElementById('readerControlsDisplay');
     DOMElements.readerTitleDisplay = document.getElementById('readerTitleDisplay');
+    
+    // Font Controls
+    DOMElements.fontDecreaseBtn = document.getElementById('fontDecreaseBtn');
+    DOMElements.fontIncreaseBtn = document.getElementById('fontIncreaseBtn');
+    DOMElements.readerFontDecreaseBtn = document.getElementById('readerFontDecreaseBtn');
+    DOMElements.readerFontIncreaseBtn = document.getElementById('readerFontIncreaseBtn');
     
     DOMElements.scrollLoaderTop = document.getElementById('scrollLoaderTop');
     DOMElements.analysisContent = document.getElementById('analysisContent');
@@ -661,6 +671,12 @@ function registerEventListeners() {
     
     // --- Scroll Listener for Bible Reader ---
     DOMElements.resultsMain.addEventListener('scroll', scrollHandler);
+    
+    // --- NEW: Font Size Listeners ---
+    DOMElements.fontDecreaseBtn.addEventListener('click', () => changeFontSize(-1));
+    DOMElements.fontIncreaseBtn.addEventListener('click', () => changeFontSize(1));
+    DOMElements.readerFontDecreaseBtn.addEventListener('click', () => changeFontSize(-1));
+    DOMElements.readerFontIncreaseBtn.addEventListener('click', () => changeFontSize(1));
 }
 
 // ===== API HEALTH CHECK =====
@@ -688,6 +704,12 @@ async function checkAPIHealth() {
  * This is the "controller" that handles all user actions.
  */
 async function runAnalysis(prompt, passage, analysisType, options = {}) {
+    // This is a safety check. If we are already fetching a chapter, don't do anything else.
+    if (AppState.isFetchingChapter && (analysisType === 'module' || analysisType === 'reader')) {
+        console.warn("Blocking new analysis: Chapter fetch in progress.");
+        return;
+    }
+    
     setLoadingState(true, analysisType);
     AppState.currentPassage = passage;
     
@@ -833,8 +855,11 @@ function setLoadingState(isLoading, analysisType = 'module') {
             if (loadingDots) loadingDots.style.display = 'inline-flex';
         }
     } else {
-        // Re-enable controls (will be done by displayAnalysis or showError)
-        // No need to do anything here, display functions handle it.
+        // Re-enable controls
+        DOMElements.runModuleBtn.disabled = false;
+        DOMElements.displayScriptureBtn.disabled = false;
+        DOMElements.versionSelect.disabled = false;
+        DOMElements.passageInput.disabled = false;
     }
 }
 
@@ -844,10 +869,7 @@ function setLoadingState(isLoading, analysisType = 'module') {
  */
 function displayAnalysis(analysis, error, analysisType, options) {
     // Re-enable controls, regardless of success or error
-    DOMElements.runModuleBtn.disabled = false;
-    DOMElements.displayScriptureBtn.disabled = false;
-    DOMElements.versionSelect.disabled = false;
-    DOMElements.passageInput.disabled = false;
+    setLoadingState(false, analysisType);
     
     // Always hide the top-level status message
     DOMElements.statusMessage.style.display = 'none';
@@ -875,6 +897,9 @@ function displayAnalysis(analysis, error, analysisType, options) {
         AppState.currentReaderMode = true; // Already true, but good to be explicit
     }
     
+    // Apply the current font size
+    applyFontSize();
+    
     // After any render, re-init the observer if we are in reader mode
     if (AppState.currentReaderMode) {
         setupIntersectionObserver();
@@ -893,10 +918,10 @@ function renderModuleAnalysis(analysis, options) {
     DOMElements.analysisIconDisplay.textContent = options.icon;
     
     // Format and inject content
-    const formatted = simpleMarkdown(analysis);
+    const formatted = robustMarkdown(analysis); // <-- NEW FORMATTER
     DOMElements.analysisContent.innerHTML = formatted;
     
-    // Show footer (for version controls, etc.) - currently empty
+    // Show footer
     DOMElements.analysisFooter.style.display = 'block';
     DOMElements.analysisFooter.innerHTML = `Analysis complete.`; // Placeholder
     
@@ -915,7 +940,7 @@ function renderBibleText(analysis, options) {
     DOMElements.readerTitleDisplay.textContent = `${options.book} ${options.chapter}`;
     
     // Format and inject content
-    const formatted = simpleMarkdown(analysis);
+    const formatted = robustMarkdown(analysis); // <-- NEW FORMATTER
     DOMElements.analysisContent.innerHTML = `
         <div class="chapter-chunk" data-book="${options.book}" data-chapter="${options.chapter}">
             ${formatted}
@@ -940,7 +965,7 @@ function renderAppendedBibleText(analysis, options) {
     const { book, chapter, direction } = options;
     
     // Format and create new chunk
-    const formatted = simpleMarkdown(analysis);
+    const formatted = robustMarkdown(analysis); // <-- NEW FORMATTER
     const newChunk = document.createElement('div');
     newChunk.className = 'chapter-chunk';
     newChunk.dataset.book = book;
@@ -1069,7 +1094,7 @@ function scrollHandler() {
     if (scroll < topThreshold) {
         // Scrolled to top, fetch previous chapter
         fetchAndDisplayChapter(-1);
-    } else if (scroll > bottomThreshold) {
+    } else if (scroll > bottomThreshold && (pane.scrollHeight > pane.clientHeight)) { // Added check to prevent firing on load
         // Scrolled to bottom, fetch next chapter
         fetchAndDisplayChapter(1);
     }
@@ -1077,6 +1102,7 @@ function scrollHandler() {
 
 /**
  * Sets up the IntersectionObserver to watch for chapter chunks.
+ * This is the FIX for the "smart header" bug.
  */
 function setupIntersectionObserver() {
     if (AppState.currentObserver) {
@@ -1085,19 +1111,27 @@ function setupIntersectionObserver() {
 
     const options = {
         root: DOMElements.resultsMain, // The scrollable pane
-        rootMargin: '0px 0px -90% 0px', // Fire when chunk is 10% from the top
-        threshold: 0
+        rootMargin: '0px 0px 0px 0px',
+        threshold: 0.1 // Fire when 10% of the element is visible
     };
 
     AppState.currentObserver = new IntersectionObserver((entries, observer) => {
+        let topmostVisibleEntry = null;
+        
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const { book, chapter } = entry.target.dataset;
-                DOMElements.readerTitleDisplay.textContent = `${book} ${chapter}`;
-                AppState.currentBibleReference.book = book;
-                AppState.currentBibleReference.chapter = parseInt(chapter, 10);
+                if (!topmostVisibleEntry || entry.boundingClientRect.y < topmostVisibleEntry.boundingClientRect.y) {
+                    topmostVisibleEntry = entry;
+                }
             }
         });
+
+        if (topmostVisibleEntry) {
+            const { book, chapter } = topmostVisibleEntry.target.dataset;
+            DOMElements.readerTitleDisplay.textContent = `${book} ${chapter}`;
+            AppState.currentBibleReference.book = book;
+            AppState.currentBibleReference.chapter = parseInt(chapter, 10);
+        }
     }, options);
 
     const chunks = DOMElements.analysisContent.querySelectorAll('.chapter-chunk');
@@ -1210,40 +1244,97 @@ function getAdjacentChapter(bookName, chapter, direction) {
     return { book: newBook, chapter: newChapter, verse: 1 };
 }
 
+// ===== NEW: FONT SIZE LOGIC =====
+
+/**
+ * Changes the font size for the analysis content.
+ * @param {number} direction - 1 to increase, -1 to decrease.
+ */
+function changeFontSize(direction) {
+    const newIndex = AppState.currentFontSizeIndex + direction;
+    
+    // Clamp the index between 0 and max size
+    if (newIndex < 0 || newIndex >= AppState.fontSizes.length) {
+        return;
+    }
+    
+    AppState.currentFontSizeIndex = newIndex;
+    applyFontSize();
+}
+
+/**
+ * Applies the current font size class to the content and updates buttons.
+ */
+function applyFontSize() {
+    const content = DOMElements.analysisContent;
+    const sizeClass = AppState.fontSizes[AppState.currentFontSizeIndex];
+    
+    // Remove old size classes and add new one
+    content.classList.remove(...AppState.fontSizes);
+    content.classList.add(sizeClass);
+    
+    // Update button states
+    const atMin = AppState.currentFontSizeIndex === 0;
+    const atMax = AppState.currentFontSizeIndex === AppState.fontSizes.length - 1;
+    
+    DOMElements.fontDecreaseBtn.disabled = atMin;
+    DOMElements.readerFontDecreaseBtn.disabled = atMin;
+    DOMElements.fontIncreaseBtn.disabled = atMax;
+    DOMElements.readerFontIncreaseBtn.disabled = atMax;
+}
+
+
 // ===== UTILITIES =====
 
 /**
- * A very simple markdown-to-HTML converter.
+ * A more robust markdown-to-HTML converter.
+ * FIXES the formatting bug.
  * @param {string} text - The raw text from the AI.
  * @returns {string} - Formatted HTML.
  */
-function simpleMarkdown(text) {
+function robustMarkdown(text) {
     if (!text) return '<p>No analysis returned.</p>';
-    
+
+    // 1. Handle block-level elements first (headers, lists, blockquotes)
     let html = text
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // Bold
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')     // Italics
-        .replace(/^### (.+)$/gm, '<h3>$S1</h3>')  // h3
-        .replace(/^## (.+)$/gm, '<h2>$1</h2>')    // h2
-        .replace(/^# (.+)$/gm, '<h1>$1</h1>');      // h1
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
+        .replace(/^\* (.*$)/gim, '<li>$1</li>')
+        .replace(/^\d+\. (.*$)/gim, '<li>$1</li>');
 
-    // Handle lists (bulleted)
-    html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
-
-    // Handle lists (numbered)
-    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>');
-    
-    // Handle blockquotes
-    html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-    
-    // Handle paragraphs (split by newlines, ignore list/header lines)
-    html = html.split(/\n\n+/).map(paragraph => {
-        if (paragraph.startsWith('<') || paragraph.trim() === '') {
-            return paragraph;
+    // 2. Wrap contiguous <li>s in <ul> or <ol>
+    // This regex looks for <li> elements and wraps them.
+    html = html.replace(/^(<li>(?:.|\n)*?)(?=^[^<li]|\Z)/gim, (match) => {
+        if (match.trim() === '') return '';
+        // Simple check: if the *first* li was from a numbered list, use <ol>
+        const firstLiContent = match.match(/<li>(.*?)<\/li>/i);
+        if (firstLiContent) {
+            // Find the original line in the *raw* text
+            const originalLine = text.split('\n').find(line => line.includes(firstLiContent[1]));
+            if (originalLine && /^\d+\./.test(originalLine.trim())) {
+                return `<ol>${match}</ol>`;
+            }
         }
-        return `<p>${paragraph.replace(/\n/g, '<br>')}</p>`;
+        return `<ul>${match}</ul>`;
+    });
+    
+    // 3. Handle inline elements (bold, italic)
+    html = html
+        .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/gim, '<em>$1</em>');
+
+    // 4. Handle paragraphs and line breaks
+    let paragraphs = html.split(/\n\n+/);
+    html = paragraphs.map(p => {
+        if (p.trim() === '') return '';
+        // If it's already a block element, just handle internal line breaks
+        if (p.match(/<\/?(h[1-3]|ul|ol|li|blockquote)>/)) {
+            return p.replace(/\n(?!<)/g, '<br>'); // Add line breaks but not before new tags
+        }
+        // Otherwise, wrap in a <p> tag and handle internal line breaks
+        return `<p>${p.replace(/\n/g, '<br>')}</p>`;
     }).join('');
 
     return html;

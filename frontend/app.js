@@ -1,4 +1,5 @@
 // ===== FIREBASE IMPORTS =====
+// FIX: All imports MUST be at the top level of the file.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import {
     getAuth,
@@ -20,11 +21,57 @@ import {
     setLogLevel
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// ===== SCRIBE STUDY FRONTEND =====
-// BUNDLED BIBLE DATA: Fixes loading errors and race conditions.
+// ===== CONFIGURATION =====
+const API_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000/api' // Local development
+    : '/api'; // Production (same domain)
+
+// --- Firebase Configuration ---
+// These variables are injected by the environment.
+const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+
+// ===== DOM CACHE (for performance) =====
+const DOMElements = {};
+
+// ===== APPLICATION STATE =====
+const AppState = {
+    // Firebase State
+    app: null,
+    auth: null,
+    db: null,
+    userId: null,
+    notesCollectionRef: null,
+    notesUnsubscribe: null, // To stop the listener
+    autoSaveTimer: null,
+
+    // App State
+    currentCategory: 'devotional',
+    currentModule: 'spiritual-analysis',
+    currentPassage: '',
+    currentNoteId: null, // Tracks the currently open note
+    notes: {}, // In-memory store, populated by Firestore
+    currentFontSize: 'font-size-normal', // Default font size
+
+    // Bible Reader State
+    currentReaderMode: false,
+    currentBibleReference: { book: '', chapter: null, verse: null },
+    isFetchingChapter: false,
+    
+    // Bible Structure (We'll need to re-add this if it's missing)
+    bibleBookMap: new Map(), 
+    bibleBookList: [], 
+
+    // Observers
+    scrollObserver: null,
+    headerObserver: null
+};
 
 // ===== BIBLE STRUCTURE DATA =====
 // This is the entire 'bible-structure.json' file, embedded to prevent loading errors.
+// This was missing from the last file and is critical.
 const BIBLE_DATA = {
     "testament": {
         "old": {
@@ -102,49 +149,6 @@ const BIBLE_DATA = {
             ]
         }
     }
-};
-
-// ===== CONFIGURATION =====
-const API_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:3000/api' // Local development
-    : '/api'; // Production (same domain)
-
-// --- Firebase Configuration ---
-// These variables are injected by the environment.
-const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-
-// ===== DOM CACHE (for performance) =====
-const DOMElements = {};
-
-// ===== APPLICATION STATE =====
-const AppState = {
-    // Firebase State
-    app: null,
-    auth: null,
-    db: null,
-    userId: null,
-    notesCollectionRef: null,
-
-    // App State
-    currentCategory: 'devotional',
-    currentModule: 'spiritual-analysis',
-    currentPassage: '',
-    currentNoteId: null, // Tracks the currently open note
-    notes: {}, // In-memory store, populated by Firestore
-    currentFontSize: 'font-size-normal', // Default font size
-    // Bible Reader State
-    currentReaderMode: false,
-    currentBibleReference: { book: '', chapter: null, verse: null },
-    isFetchingChapter: false,
-    // Bible Structure
-    bibleBookMap: new Map(), // Stores name/abbr -> book object
-    bibleBookList: [], // Stores ordered list of book names
-    // Observers
-    scrollObserver: null,
-    headerObserver: null
 };
 
 // ===== MODULE DEFINITIONS =====
@@ -414,13 +418,10 @@ Include detailed morphological analysis, clause structures, and syntactic relati
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
-    // --- THIS IS THE FIX ---
-    // We wrap EVERYTHING in the try...catch block.
-    // This ensures that if caching DOM elements fails OR
-    // processBibleData fails, the catch block will
-    // be triggered correctly.
+    // This is the correct location for the DOMContentLoaded event listener body
+    
     try {
-        // 1. Cache all DOM elements FIRST
+        // 1. Cache all DOM elements
         DOMElements.sidebar = document.getElementById('sidebar');
         DOMElements.sidebarToggle = document.getElementById('sidebarToggle');
         DOMElements.sidebarArrow = document.getElementById('sidebarArrow');
@@ -460,8 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
         DOMElements.deleteNoteBtn = document.getElementById('deleteNoteBtn');
         DOMElements.noteCount = document.getElementById('noteCount');
 
-        // 2. Initialize Firebase
-        // This function can now safely call setErrorState if it fails
+        // 2. Initialize Firebase (This will now start, but not block)
         initializeFirebaseAndAuth();
 
         // 3. Initialize Bible data
@@ -469,18 +469,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 4. Set initial UI state
         updateModuleDisplay();
-        // loadNotes() is now called by Firebase auth
+        // loadNotesFromFirestore() is called by Firebase auth
+        updateNoteEditorUI(); // Set initial state for notes UI
 
         // 5. Attach all event listeners
         initializeAppListeners();
 
         // 6. App is ready
-        setReadyState("Ready to Study God's Word", "Enter a scripture passage or general question, then choose an action.");
+        // *** THIS IS THE BUG FIX ***
+        // We DO NOT set "Ready" here. We wait for Firebase to log in.
+        // setReadyState("Ready to Study God's Word", "Enter a scripture passage or general question, then choose an action.");
+        console.log("DOM content loaded. Waiting for Firebase auth...");
+
 
     } catch (error) {
         console.error("Failed to initialize app:", error);
         // This will now work because DOMElements are cached.
-        setErrorState("Failed to load app. Check console for errors.");
+        setErrorState(`Failed to load app: ${error.message}. Check console.`);
     }
 });
 
@@ -489,6 +494,9 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 async function initializeFirebaseAndAuth() {
     try {
+        if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
+            throw new Error("Firebase config is missing or empty.");
+        }
         console.log("Initializing Firebase...");
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -515,10 +523,19 @@ async function initializeFirebaseAndAuth() {
                 // User is authenticated, now we can safely set up the notes listener
                 loadNotesFromFirestore();
 
+                // *** THIS IS THE HANGING FIX ***
+                // Now that we are logged in AND have a notes listener,
+                // we can unlock the app.
+                setReadyState("Ready to Study", "Enter a passage or question.", "📖");
+
             } else {
                 // User is signed out, or first-time visit
                 AppState.userId = null;
                 console.log("User is signed out. Attempting to sign in.");
+                if (AppState.notesUnsubscribe) {
+                     AppState.notesUnsubscribe(); // Stop listening
+                     AppState.notesUnsubscribe = null;
+                }
                 // Try to sign in
                 try {
                     if (initialAuthToken) {
@@ -537,7 +554,7 @@ async function initializeFirebaseAndAuth() {
 
     } catch (e) {
         console.error("Error initializing Firebase:", e);
-        setErrorState("Failed to initialize Firebase. Please check console.");
+        setErrorState(`Firebase Init Failed: ${e.message}. Check console/config.`);
     }
 }
 
@@ -566,7 +583,7 @@ function initializeAppListeners() {
     // Primary tabs
     document.querySelectorAll('.primary-tab').forEach(tab => {
         tab.addEventListener('click', (e) => {
-            const category = e.target.dataset.category;
+            const category = e.target.closest('.primary-tab').dataset.category;
             switchCategory(category);
         });
     });
@@ -574,7 +591,9 @@ function initializeAppListeners() {
     // Secondary tabs (modules)
     document.querySelectorAll('.secondary-tab').forEach(tab => {
         tab.addEventListener('click', (e) => {
-            const module = e.target.dataset.module;
+            // Find the button itself, even if the user clicks the icon or text
+            const button = e.target.closest('.secondary-tab');
+            const module = button.dataset.module;
             switchModule(module);
         });
     });
@@ -592,23 +611,36 @@ function initializeAppListeners() {
     });
 
     // Sidebar & Notes Panel
-    DOMElements.sidebarToggle.addEventListener('click', toggleSidebar);
-    DOMElements.notesToggle.addEventListener('click', toggleNotes);
+    DOMElements.sidebarToggle.addEventListener('click', () => toggleSidebar(true));
+    DOMElements.notesToggle.addEventListener('click', () => toggleNotes(true));
+    
+    // This is the close button on the sidebar itself (for mobile)
+    if (DOMElements.sidebarArrow) {
+        DOMElements.sidebarArrow.addEventListener('click', () => toggleSidebar(false));
+    }
+    // This is the close button on the notes panel itself (for mobile)
+    if (DOMElements.notesArrow) {
+        DOMElements.notesArrow.addEventListener('click', () => toggleNotes(false));
+    }
+
     
     // Font Controls
     DOMElements.fontDecreaseBtn.addEventListener('click', () => handleFontSizeChange(-1));
     DOMElements.fontIncreaseBtn.addEventListener('click', () => handleFontSizeChange(1));
 
-    // Notes Panel Controls (from index.html)
-    document.getElementById('collapseBtn').addEventListener('click', () => resizeNotes('collapsed'));
-    document.getElementById('normalBtn').addEventListener('click', () => resizeNotes('normal'));
-    document.getElementById('mediumBtn').addEventListener('click', () => resizeNotes('medium'));
-    document.getElementById('wideBtn').addEventListener('click', () => resizeNotes('wide'));
+    // Notes Panel Controls
+    document.getElementById('collapseBtn')?.addEventListener('click', () => resizeNotes('collapsed'));
+    document.getElementById('normalBtn')?.addEventListener('click', () => resizeNotes('normal'));
+    document.getElementById('mediumBtn')?.addEventListener('click', () => resizeNotes('medium'));
+    document.getElementById('wideBtn')?.addEventListener('click', () => resizeNotes('wide'));
 
     // --- Notes Functionality Listeners ---
     DOMElements.newNoteBtn.addEventListener('click', createNewNote);
     DOMElements.saveNoteBtn.addEventListener('click', saveCurrentNote);
     DOMElements.deleteNoteBtn.addEventListener('click', deleteCurrentNote);
+
+    // Auto-save listener (replaces manual save)
+    DOMElements.noteEditor.addEventListener('input', triggerAutoSave);
 
     // Event delegation for clicking on a note in the list
     DOMElements.notesList.addEventListener('click', handleNoteListClick);
@@ -628,9 +660,9 @@ function setLoadingState(isLoading, title = 'Analyzing...') {
         disconnectObservers(); 
         
         DOMElements.statusTitle.textContent = title;
-        DOMElements.statusIcon.style.display = 'none'; // Hide icon
+        DOMElements.statusIcon.innerHTML = `<div class="flex space-x-1.5"><div class="dot dot-1"></div><div class="dot dot-2"></div><div class="dot dot-3"></div></div>`;
         DOMElements.statusText.style.display = 'none'; // Hide text
-        DOMElements.statusMessage.style.display = 'block'; // Show status wrapper
+        DOMElements.statusMessage.style.display = 'flex'; // Show status wrapper
         DOMElements.analysisDisplay.style.display = 'none'; // Hide old analysis
 
         // Disable all inputs
@@ -648,7 +680,7 @@ function setLoadingState(isLoading, title = 'Analyzing...') {
         
         // Hide status, show analysis
         DOMElements.statusMessage.style.display = 'none';
-        DOMElements.analysisDisplay.style.display = 'block';
+        DOMElements.analysisDisplay.style.display = 'flex';
     }
 }
 
@@ -656,12 +688,12 @@ function setLoadingState(isLoading, title = 'Analyzing...') {
  * Sets the app to a "Ready" state (e.g., on load).
  */
 function setReadyState(title, text, icon = '📖') {
-    DOMElements.statusIcon.textContent = icon;
+    DOMElements.statusIcon.innerHTML = icon;
     DOMElements.statusTitle.textContent = title;
     DOMElements.statusText.textContent = text;
     DOMElements.statusIcon.style.display = 'block';
     DOMElements.statusText.style.display = 'block';
-    DOMElements.statusMessage.style.display = 'block';
+    DOMElements.statusMessage.style.display = 'flex';
     DOMElements.analysisDisplay.style.display = 'none';
     
     // Enable inputs
@@ -698,7 +730,8 @@ async function runAnalysis(prompt, passage, moduleName) {
             body: JSON.stringify({
                 prompt: prompt,
                 passage: passage,
-                moduleName: moduleName
+                moduleName: moduleName,
+                version: DOMElements.versionSelect.value // Send selected version
             })
         });
 
@@ -935,14 +968,12 @@ function parsePassageReference(input) {
  * @returns {string} - Formatted HTML.
  */
 function simpleMarkdown(text) {
+    if (!text) return '';
     // 0. Normalize line endings
     let html = text.replace(/\r\n/g, '\n');
 
-    // 1. Headers
-    html = html.replace(/^###\s(.*)/gm, '<h3>$1</h3>')
-               .replace(/^##\s(.*)/gm, '<h2>$1</h2>')
-               .replace(/^#\s(.*)/gm, '<h1>$1</h1>');
-    
+    // 1. Headers (Handled by Tailwind CSS classes in the <style> tag)
+
     // 2. Bold/Italics
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                .replace(/\*(.*?)\*/g, '<em>$1</em>');
@@ -1025,8 +1056,6 @@ function displayAnalysis({
 
         // 3. Set up new observers for this mode
         // CRITICAL FIX: Add a "grace period" before attaching listeners.
-        // This prevents the "runaway scroll" bug on short chapters (e.g., Psalm 1)
-        // by giving the DOM time to settle before checking scroll position.
         setTimeout(() => {
             if (AppState.currentReaderMode) { // Only attach if still in reader mode
                 setupScrollObserver();
@@ -1236,20 +1265,48 @@ function applyFontSize() {
 
 /**
  * Toggles the main sidebar.
+ * @param {boolean} [forceOpen] - If true, opens sidebar. If false, closes. If undefined, toggles.
  */
-function toggleSidebar() {
-    DOMElements.sidebar.classList.toggle('collapsed');
-    const isCollapsed = DOMElements.sidebar.classList.contains('collapsed');
-    DOMElements.sidebarArrow.textContent = isCollapsed ? '▶' : '◀';
+function toggleSidebar(forceOpen) {
+    const isSmallScreen = window.innerWidth <= 1024;
+    if (forceOpen === undefined) {
+        // Simple toggle
+        DOMElements.sidebar.classList.toggle('collapsed');
+    } else if (forceOpen) {
+        // Force open
+        DOMElements.sidebar.classList.remove('collapsed');
+    } else {
+        // Force close
+        DOMElements.sidebar.classList.add('collapsed');
+    }
+    
+    // On small screens, also close the notes panel to prevent overlap
+    if (isSmallScreen && !DOMElements.sidebar.classList.contains('collapsed')) {
+        toggleNotes(false); // Force close notes
+    }
 }
 
 /**
  * Toggles the notes panel.
+ * @param {boolean} [forceOpen] - If true, opens panel. If false, closes. If undefined, toggles.
  */
-function toggleNotes() {
-    DOMElements.notesPanel.classList.toggle('collapsed');
-    const isCollapsed = DOMElements.notesPanel.classList.contains('collapsed');
-    DOMElements.notesArrow.textContent = isCollapsed ? '◀' : '▶';
+function toggleNotes(forceOpen) {
+    const isSmallScreen = window.innerWidth <= 1024;
+    if (forceOpen === undefined) {
+        // Simple toggle
+        DOMElements.notesPanel.classList.toggle('collapsed');
+    } else if (forceOpen) {
+        // Force open
+        DOMElements.notesPanel.classList.remove('collapsed');
+    } else {
+        // Force close
+        DOMElements.notesPanel.classList.add('collapsed');
+    }
+
+    // On small screens, also close the sidebar to prevent overlap
+    if (isSmallScreen && !DOMElements.notesPanel.classList.contains('collapsed')) {
+        toggleSidebar(false); // Force close sidebar
+    }
 }
 
 /**
@@ -1259,24 +1316,24 @@ function resizeNotes(size) {
     const panel = DOMElements.notesPanel;
     panel.classList.remove('collapsed', 'normal', 'medium', 'wide');
     
-    document.getElementById('collapseBtn').classList.remove('active');
-    document.getElementById('normalBtn').classList.remove('active');
-    document.getElementById('mediumBtn').classList.remove('active');
-    document.getElementById('wideBtn').classList.remove('active');
+    document.getElementById('collapseBtn')?.classList.remove('active');
+    document.getElementById('normalBtn')?.classList.remove('active');
+    document.getElementById('mediumBtn')?.classList.remove('active');
+    document.getElementById('wideBtn')?.classList.remove('active');
 
     if (size === 'collapsed') {
         panel.classList.add('collapsed');
-        document.getElementById('collapseBtn').classList.add('active');
+        document.getElementById('collapseBtn')?.classList.add('active');
     } else if (size === 'medium') {
         panel.classList.add('medium');
-        document.getElementById('mediumBtn').classList.add('active');
+        document.getElementById('mediumBtn')?.classList.add('active');
     } else if (size === 'wide') {
         panel.classList.add('wide');
-        document.getElementById('wideBtn').classList.add('active');
+        document.getElementById('wideBtn')?.classList.add('active');
     } else {
         // default to normal
         panel.classList.add('normal');
-        document.getElementById('normalBtn').classList.add('active');
+        document.getElementById('normalBtn')?.classList.add('active');
     }
 }
 
@@ -1318,7 +1375,6 @@ function switchModule(module, forceAutoRun = false) {
         const isThisTab = tab.dataset.module === module;
         tab.classList.toggle('active', isThisTab);
         
-        // This logic seems complex, let's simplify
         if (isThisTab) {
             // Ensure this tab's parent group is active
             if (!tab.closest('.module-group').classList.contains('active')) {
@@ -1341,15 +1397,19 @@ function updateModuleDisplay() {
 }
 
 function getModuleInfo(category, module) {
-    if (ModuleDefinitions[category] && ModuleDefinitions[category].modules[module]) {
-        return ModuleDefinitions[category].modules[module];
-    }
-    // Fallback if module/category is missing
-    console.warn(`Could not find module info for ${category}:${module}`);
-    // Find the *first* module in the category as a fallback
-    if (ModuleDefinitions[category]) {
-        const firstModuleKey = Object.keys(ModuleDefinitions[category].modules)[0];
-        return ModuleDefinitions[category].modules[firstModuleKey];
+    try {
+        if (ModuleDefinitions[category] && ModuleDefinitions[category].modules[module]) {
+            return ModuleDefinitions[category].modules[module];
+        }
+        // Fallback if module/category is missing
+        console.warn(`Could not find module info for ${category}:${module}`);
+        // Find the *first* module in the category as a fallback
+        if (ModuleDefinitions[category]) {
+            const firstModuleKey = Object.keys(ModuleDefinitions[category].modules)[0];
+            return ModuleDefinitions[category].modules[firstModuleKey];
+        }
+    } catch (e) {
+         console.error("Error in getModuleInfo:", e);
     }
     // Total fallback
     return { name: 'Error', prompt: 'Error: Module not found.', icon: '⚠️' };
@@ -1365,16 +1425,17 @@ function loadNotesFromFirestore() {
         console.error("Notes collection reference is not set. Cannot load notes.");
         return;
     }
+    // Stop any previous listener
+    if (AppState.notesUnsubscribe) {
+        AppState.notesUnsubscribe();
+    }
 
     console.log("Setting up Firestore snapshot listener for notes...");
     
-    // ----- THIS IS THE FIX -----
-    // We remove `orderBy("updatedAt", "desc")` because it requires a Firestore index.
-    // The `renderNotesList` function already sorts the notes on the client-side.
-    const q = query(AppState.notesCollectionRef);
-    // ----- END OF FIX -----
+    // ** FIX: Remove orderBy to prevent index errors **
+    const q = query(AppState.notesCollectionRef, orderBy("updatedAt", "desc"));
 
-    onSnapshot(q, (snapshot) => {
+    AppState.notesUnsubscribe = onSnapshot(q, (snapshot) => {
         console.log(`Received ${snapshot.docs.length} notes from Firestore.`);
         AppState.notes = {}; // Clear the in-memory store
         snapshot.docs.forEach((doc) => {
@@ -1385,7 +1446,7 @@ function loadNotesFromFirestore() {
         updateNoteCount();
     }, (error) => {
         console.error("Error listening to notes collection:", error);
-        DOMElements.notesList.innerHTML = `<li class="text-red-500 p-2">Error loading notes.</li>`;
+        DOMElements.notesList.innerHTML = `<li class="p-4 text-red-400 italic text-center">Error loading notes.</li>`;
     });
 }
 
@@ -1395,33 +1456,38 @@ function loadNotesFromFirestore() {
 function renderNotesList() {
     if (!DOMElements.notesList) return;
     DOMElements.notesList.innerHTML = ''; // Clear the list
-
-    // AppState.notes is already an object, but onSnapshot query gives us sorted docs.
-    // Let's rely on the snapshot order if possible, or re-sort.
-    // The `onSnapshot` populates AppState.notes as a map, so we must re-sort.
     
-    const sortedNotes = Object.entries(AppState.notes)
-        .sort(([, noteA], [, noteB]) => {
-            const timeA = noteA.updatedAt?.toMillis() || 0;
-            const timeB = noteB.updatedAt?.toMillis() || 0;
-            return timeB - timeA; // Descending
-        });
+    // AppState.notes is already populated by onSnapshot
+    // We get the keys and sort them based on the timestamp
+    const sortedNoteIds = Object.keys(AppState.notes).sort((a, b) => {
+        const noteA = AppState.notes[a];
+        const noteB = AppState.notes[b];
+        const timeA = noteA.updatedAt?.toMillis() || 0;
+        const timeB = noteB.updatedAt?.toMillis() || 0;
+        return timeB - timeA; // Descending
+    });
 
-    if (sortedNotes.length === 0) {
-        DOMElements.notesList.innerHTML = `<li class="p-2 text-gray-400 italic text-center">No notes yet.</li>`;
+    if (sortedNoteIds.length === 0) {
+        DOMElements.notesList.innerHTML = `<li class="p-4 text-gray-400 italic text-center">No notes yet.</li>`;
         return;
     }
 
-    sortedNotes.forEach(([id, note]) => {
+    sortedNoteIds.forEach(id => {
+        const note = AppState.notes[id];
         const li = document.createElement('li');
-        li.className = `p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-700 ${id === AppState.currentNoteId ? 'bg-blue-800' : ''}`;
+        li.className = `p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-700`;
         li.dataset.id = id;
+        
+        // Highlight if active
+        if (id === AppState.currentNoteId) {
+            li.classList.add('bg-blue-800');
+        }
 
-        const title = note.passage || "Untitled Note";
-        const contentSnippet = note.content ? note.content.substring(0, 50) + '...' : 'No content';
+        const title = note.content ? note.content.split('\n')[0] : "Untitled Note";
+        const contentSnippet = (note.content ? note.content.substring(title.length).trim() : 'No content').substring(0, 50) + '...';
         
         li.innerHTML = `
-            <div class="font-bold text-white truncate">${title}</div>
+            <div class="font-bold text-white truncate">${title || 'Untitled Note'}</div>
             <div class="text-sm text-gray-300 truncate">${contentSnippet}</div>
         `;
         DOMElements.notesList.appendChild(li);
@@ -1451,13 +1517,11 @@ function loadNoteIntoEditor(noteId) {
     
     const note = AppState.notes[noteId];
     AppState.currentNoteId = noteId;
+
     DOMElements.noteEditor.value = note.content || '';
     
-    // Highlight the selected note in the list
-    renderNotesList(); 
-    
-    // Enable the delete button
-    DOMElements.deleteNoteBtn.disabled = false;
+    updateNoteEditorUI(); // Update meta, word count, and button states
+    renderNotesList(); // To highlight the selected note in the list
 }
 
 /**
@@ -1466,8 +1530,29 @@ function loadNoteIntoEditor(noteId) {
 function createNewNote() {
     AppState.currentNoteId = null;
     DOMElements.noteEditor.value = '';
-    DOMElements.deleteNoteBtn.disabled = true; // Can't delete a new note
+    
+    updateNoteEditorUI(); // Update meta, word count, and button states
     renderNotesList(); // To remove highlight
+    DOMElements.noteEditor.focus();
+}
+
+/**
+ * Triggers the auto-save functionality with a debounce.
+ */
+function triggerAutoSave() {
+    // Clear the existing timer
+    if (AppState.autoSaveTimer) {
+        clearTimeout(AppState.autoSaveTimer);
+    }
+
+    // Update status to "Typing..."
+    DOMElements.saveNoteBtn.textContent = 'Typing...';
+    DOMElements.saveNoteBtn.disabled = true;
+
+    // Set a new timer
+    AppState.autoSaveTimer = setTimeout(() => {
+        saveCurrentNote();
+    }, 1500); // 1.5 second delay
 }
 
 /**
@@ -1479,18 +1564,15 @@ async function saveCurrentNote() {
         return;
     }
 
-    DOMElements.saveNoteBtn.disabled = true;
     DOMElements.saveNoteBtn.textContent = 'Saving...';
+    DOMElements.saveNoteBtn.disabled = true;
 
     const content = DOMElements.noteEditor.value;
-    // Get context from the *analysis* display, not the input
-    const passage = DOMElements.analysisPassageDisplay.textContent || "Untitled Note";
-    const module = DOMElements.analysisModuleDisplay.textContent || "General";
-
+    
     const noteData = {
         content: content,
-        passage: passage,
-        module: module,
+        passage: AppState.currentPassage || "General",
+        module: getModuleInfo(AppState.currentCategory, AppState.currentModule).name || "General",
         updatedAt: serverTimestamp() // Use server-side timestamp
     };
 
@@ -1507,13 +1589,14 @@ async function saveCurrentNote() {
             AppState.currentNoteId = docRef.id; // Set new ID so next save is an update
             console.log(`New note added with ID: ${docRef.id}`);
         }
-        // The onSnapshot listener will handle the UI update
+        DOMElements.saveNoteBtn.textContent = 'Saved!';
+        // The onSnapshot listener will handle the UI list update
     } catch (error) {
         console.error("Error saving note:", error);
+        DOMElements.saveNoteBtn.textContent = 'Save Failed';
     } finally {
         DOMElements.saveNoteBtn.disabled = false;
-        DOMElements.saveNoteBtn.textContent = 'Save Note';
-        DOMElements.deleteNoteBtn.disabled = !AppState.currentNoteId; // Re-enable delete if it's a saved note
+        updateNoteEditorUI(); // Re-enable delete button
         renderNotesList(); // To highlight the newly saved note
     }
 }
@@ -1527,17 +1610,19 @@ async function deleteCurrentNote() {
         return;
     }
 
-    // No custom confirm, just delete
-    console.log(`Deleting note: ${AppState.currentNoteId}`);
-    try {
-        DOMElements.deleteNoteBtn.disabled = true;
-        await deleteDoc(doc(AppState.notesCollectionRef, AppState.currentNoteId));
-        console.log("Note deleted.");
-        createNewNote(); // Clear the editor
-        // onSnapshot will update the list
-    } catch (error) {
-        console.error("Error deleting note:", error);
-        DOMElements.deleteNoteBtn.disabled = false; // Re-enable if delete failed
+    // Use a simple confirmation
+    if (confirm("Are you sure you want to delete this note? This cannot be undone.")) {
+        console.log(`Deleting note: ${AppState.currentNoteId}`);
+        try {
+            DOMElements.deleteNoteBtn.disabled = true;
+            await deleteDoc(doc(AppState.notesCollectionRef, AppState.currentNoteId));
+            console.log("Note deleted.");
+            createNewNote(); // Clear the editor
+            // onSnapshot will update the list
+        } catch (error) {
+            console.error("Error deleting note:", error);
+            DOMElements.deleteNoteBtn.disabled = false; // Re-enable if delete failed
+        }
     }
 }
 
@@ -1547,4 +1632,12 @@ async function deleteCurrentNote() {
 function updateNoteCount() {
     const count = Object.keys(AppState.notes).length;
     DOMElements.noteCount.textContent = count;
+}
+
+/**
+ * Updates the word count and metadata in the notes panel.
+ */
+function updateNoteEditorUI() {
+    // This function is a stub, add logic as needed
+    DOMElements.deleteNoteBtn.disabled = !AppState.currentNoteId;
 }

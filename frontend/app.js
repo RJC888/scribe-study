@@ -491,17 +491,19 @@ document.addEventListener('DOMContentLoaded', () => {
  * Initializes Firebase services and authentication.
  */
 async function initializeFirebaseAndAuth() {
-    try {
-        console.log("Initializing Firebase...");
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        setLogLevel('Debug');
+  try {
+    console.log("Initializing Firebase...");
 
-        // Store in AppState
-        AppState.app = app;
-        AppState.auth = auth;
-        AppState.db = db;
+    // ✅ Use the existing initialized app from the <head> script
+    const app = getApp();
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    setLogLevel('Debug');
+
+    // Store in AppState
+    AppState.app = app;
+    AppState.auth = auth;
+    AppState.db = db;
 
         // --- Authentication ---
         onAuthStateChanged(auth, async (user) => {

@@ -892,11 +892,9 @@ function processBibleData() {
 
 // ----------------------
 // BASIC UI INITIALIZER  (temporary fallback)
-// You can later replace this with your full UI builder
 function initApp() {
   console.log("✅ UI initialized manually (temporary fallback)");
 
-  // Make sure the app container is visible
   const appContainer =
     document.getElementById("app") ||
     document.querySelector(".main-content") ||
@@ -907,16 +905,28 @@ function initApp() {
     appContainer.style.display = "block";
   }
 
-  // Optionally trigger first-load actions
   if (typeof processBibleData === "function") processBibleData();
 }
 
 // ----------------------
-// SAFETY TRIGGER: runs once DOM is ready
-document.addEventListener("DOMContentLoaded", () => {
-  if (typeof initApp === "function") initApp();
-  else if (typeof initUI === "function") initUI();
-  else if (typeof buildUI === "function") buildUI();
-  else if (typeof renderUI === "function") renderUI();
-  else console.warn("⚠️ No UI initialization function found.");
+// BOOT SEQUENCE
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    // Cache DOM first
+    initializeAppListeners();
+
+    // Firebase + Bible data
+    await initializeFirebaseAndAuth();
+    initApp();
+
+    // Initial UI
+    setReadyState(
+      "Welcome to Scribe Study",
+      "Enter a passage or a question to begin.",
+      "📖"
+    );
+  } catch (err) {
+    console.error("Failed to initialize app:", err);
+    setErrorState("Failed to load app. Check console for errors.");
+  }
 });

@@ -204,7 +204,7 @@ let AppState = {
 // DOM Elements
 const modulesContainer = document.querySelector("#modulesContainer");
 const tagsContainer = document.querySelector("#tagsContainer");
-const outputContainer = document.querySelector("#analysisDisplay");
+const outputContainer = document.querySelector("#analysisDisplayDynamic");
 const passageInput = document.querySelector("#scriptureInput");
 const generateBtn = document.querySelector("#generateBtn");
 

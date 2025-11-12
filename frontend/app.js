@@ -212,7 +212,7 @@ async function initializeFirebaseAndAuth() {
         console.log(`👤 Logged in as ${user.uid}`);
         AppState.user = user;
 
-        // Create Firestore ref for user's notes
+           // Create Firestore ref for user's notes
         AppState.notesCollectionRef = db
           .collection("users")
           .doc(user.uid)
@@ -221,6 +221,7 @@ async function initializeFirebaseAndAuth() {
         // Load and render
         await loadNotesFromFirestore();
         renderNotes();
+
       } else {
         console.log("🚫 No user signed in");
         AppState.user = null;
@@ -231,21 +232,6 @@ async function initializeFirebaseAndAuth() {
     console.error("🔥 Firebase init error:", err);
   }
 }
-
-        try {
-          if (globalThis.__initial_auth_token) {
-            await auth.signInWithCustomToken(globalThis.__initial_auth_token);
-          } else {
-            await auth.signInAnonymously();
-          }
-          console.log("✅ Signed in successfully");
-        } catch (err) {
-          console.error("Auth error:", err);
-          setErrorState(`Authentication Failed: ${err.message || err.code || "Unknown error"}`);
-        }
-      }
-    });
-
     console.log("✅ Firebase Auth & Firestore ready (compat)");
   } catch (e) {
     console.error("Error initializing Firebase:", e);

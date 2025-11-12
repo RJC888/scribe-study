@@ -1,5 +1,8 @@
 // ===== FIREBASE IMPORTS (v10.13.0 to match index.html) =====
 
+import { ANALYSIS_STRUCTURE } from "./analysis/analysisConfig.js";
+import { loadMindmapRenderer } from "./analysis/renderers/mindmapRenderer.js";
+
 // ===== CONFIG PICKUP (robust) =====
 function loadFirebaseConfig() {
   if (window.firebaseConfig) return window.firebaseConfig;
@@ -184,6 +187,108 @@ function initFirebaseOnce() {
     setErrorState("Failed to initialize Firebase. Check your config and console.");
   }
 }
+
+import { ANALYSIS_STRUCTURE } from "./analysisConfig.js";
+import { loadMindmapRenderer } from "./renderers/mindmapRenderer.js";
+
+// ---------------------------------
+// Global App State
+// ---------------------------------
+let AppState = {
+  passage: "",
+  mainTab: "Devotional",
+  module: null,
+  tag: null,
+};
+
+// DOM Elements
+const modulesContainer = document.querySelector("#modulesContainer");
+const tagsContainer = document.querySelector("#tagsContainer");
+const outputContainer = document.querySelector("#analysisDisplay");
+const passageInput = document.querySelector("#scriptureInput");
+const generateBtn = document.querySelector("#generateBtn");
+
+// ---------------------------------
+// 1. Populate modules when Tab changes
+// ---------------------------------
+function loadModules(tabName) {
+  const tabData = ANALYSIS_STRUCTURE[tabName];
+  modulesContainer.innerHTML = "";
+
+  Object.keys(tabData.modules).forEach((mod) => {
+    const btn = document.createElement("button");
+    btn.classList.add("module-btn");
+    btn.textContent = mod;
+    btn.onclick = () => selectModule(tabName, mod);
+    modulesContainer.appendChild(btn);
+  });
+}
+
+// ---------------------------------
+// 2. Populate tags when Module selected
+// ---------------------------------
+function selectModule(tabName, moduleName) {
+  const moduleData = ANALYSIS_STRUCTURE[tabName].modules[moduleName];
+  tagsContainer.innerHTML = "";
+  AppState.module = moduleName;
+  AppState.tag = null;
+
+  // Show renderer placeholder
+  outputContainer.innerHTML = `<div class="renderer-status">Renderer: ${
+    moduleData.renderer || "text"
+  } (active)</div>`;
+
+  // If this module uses a special renderer
+  if (moduleData.renderer === "mindmap") {
+    loadMindmapRenderer(outputContainer, moduleData.tags);
+  }
+
+  moduleData.tags.forEach((tag) => {
+    const chip = document.createElement("span");
+    chip.classList.add("tag-chip");
+    chip.textContent = tag;
+    chip.onclick = () => {
+      AppState.tag = tag;
+      document
+        .querySelectorAll(".tag-chip")
+        .forEach((c) => c.classList.remove("selected"));
+      chip.classList.add("selected");
+    };
+    tagsContainer.appendChild(chip);
+  });
+}
+
+// ---------------------------------
+// 3. Generate Button
+// ---------------------------------
+generateBtn.onclick = () => {
+  AppState.passage = passageInput.value.trim();
+  if (!AppState.passage || !AppState.module || !AppState.tag) {
+    alert("Please select passage, module, and tag before generating.");
+    return;
+  }
+
+  const payload = {
+    passage: AppState.passage,
+    tab: AppState.mainTab,
+    module: AppState.module,
+    tag: AppState.tag,
+  };
+
+  outputContainer.innerHTML = `
+    <div class="analysis-result">
+      <h3>📖 ${payload.passage}</h3>
+      <p><strong>Category:</strong> ${payload.tab}</p>
+      <p><strong>Module:</strong> ${payload.module}</p>
+      <p><strong>Tag:</strong> ${payload.tag}</p>
+      <p>✨ Analysis generated here...</p>
+    </div>`;
+};
+
+// ---------------------------------
+// 4. Initialize
+// ---------------------------------
+loadModules(AppState.mainTab);
 
 async function initializeFirebaseAndAuth() {
   try {

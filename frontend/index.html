@@ -35,6 +35,14 @@
   <!-- ✅ Main App Script -->
   <script type="module" src="app.js" defer></script>
 </head>
+  
+<!-- ✅ Visualization Modules -->
+<script type="module" src="./formationEngine.js" defer></script>
+<script type="module" src="./modules/OMindmap.js" defer></script>
+<script type="module">
+  import { renderMindmap } from "./modules/OMindmap.js";
+  renderMindmap();
+</script>
 
 <body>
   <!-- Header -->

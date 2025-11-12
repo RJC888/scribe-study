@@ -35,14 +35,6 @@
   <!-- ✅ Main App Script -->
   <script type="module" src="app.js" defer></script>
 </head>
-  
-<!-- ✅ Visualization Modules -->
-<script type="module" src="./formationEngine.js" defer></script>
-<script type="module" src="./modules/OMindmap.js" defer></script>
-<script type="module">
-  import { renderMindmap } from "./modules/OMindmap.js";
-  renderMindmap();
-</script>
 
 <body>
   <!-- Header -->
@@ -107,4 +99,12 @@
             <div class="version-controls" id="versionControls" style="display:none;">
               <button class="version-btn" id="prevVersionBtn" disabled>◀ Previous</button>
               <span class="version-indicator" id="versionIndicator">Version 1 of 1</span>
-              <button class="version-btn" id="nextVersionBtn" disabled>N
+                <button class="version-btn" id="nextVersionBtn" disabled>Next ▶</button>
+            </div> <!-- closes version-controls -->
+          </div>   <!-- closes status-message -->
+        </div>     <!-- closes analysis-display -->
+
+        <!-- 👇 Add the mindmap mount point here -->
+        <div id="mindmap"></div>
+
+      </div>       <!-- closes results-main -->

@@ -64,15 +64,7 @@
       </div>
     </aside>
 
-  <!-- Main display area -->
-  <main class="content-area">
-    <!-- 👇 Place the mindmap container here -->
-    <div id="mindmap"></div>
-  </main>
-
-</div>
-  
-    <!-- Content Area -->
+    <!-- Main Content Area -->
     <main class="content-area">
       <div class="content-header">
         <div class="search-main">
@@ -82,9 +74,7 @@
         <div class="module-display" id="moduleDisplay">
           <span>📖</span><span id="currentModuleName">Spiritual Analysis</span>
         </div>
-        <div class="groq-badge">
-          ⚡ Powered by Groq
-        </div>
+        <div class="groq-badge">⚡ Powered by Groq</div>
       </div>
 
       <div class="results-main">
@@ -96,30 +86,28 @@
               Enter your passage above, then click a module. Analysis generates automatically.
             </p>
             <button class="generate-btn" id="generateBtn">Generate Analysis</button>
+
             <div class="version-controls" id="versionControls" style="display:none;">
               <button class="version-btn" id="prevVersionBtn" disabled>◀ Previous</button>
               <span class="version-indicator" id="versionIndicator">Version 1 of 1</span>
-                <button class="version-btn" id="nextVersionBtn" disabled>Next ▶</button>
-            </div> <!-- closes version-controls -->
-          </div>   <!-- closes status-message -->
-        </div>     <!-- closes analysis-display -->
+              <button class="version-btn" id="nextVersionBtn" disabled>Next ▶</button>
+            </div>
+          </div>
+        </div>
 
-        <!-- 👇 Add the mindmap mount point here -->
+        <!-- Mindmap mount point -->
         <div id="mindmap"></div>
+      </div>
+    </main>
+  </div>
 
-      </div>       <!-- closes results-main -->
-      </main>      <!-- closes content-area -->
-
-</div> <!-- closes main-container (if you have one wrapping everything) -->
-
-<!-- ✅ Visualization Modules -->
-<script type="module" src="./modules/OMindmap.js" defer></script>
-<script type="module">
-  import { renderMindmap } from "./modules/OMindmap.js";
-  renderMindmap();
-</script>
-
-  
+  <!-- ✅ Visualization Modules -->
+  <script type="module" src="./modules/OMindmap.js" defer></script>
+  <script type="module">
+    import { renderMindmap } from "./modules/OMindmap.js";
+    renderMindmap();
+  </script>
 </body>
+
 </html>
 

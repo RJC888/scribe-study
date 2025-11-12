@@ -880,8 +880,39 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// --- SAFETY TRIGGER ---
-// Ensures UI fully loads even if earlier modules or data lag
+// ----------------------
+// BIBLE DATA PROCESSING
+function processBibleData() {
+  const allBooks = [...BIBLE_DATA.testament.old.books, ...BIBLE_DATA.testament.new.books];
+  allBooks.forEach((book, index) => {
+    // (optional) populate dropdowns or internal maps here
+  });
+  console.log("✅ Bible data processed:", allBooks.length, "books loaded.");
+}
+
+// ----------------------
+// BASIC UI INITIALIZER  (temporary fallback)
+// You can later replace this with your full UI builder
+function initApp() {
+  console.log("✅ UI initialized manually (temporary fallback)");
+
+  // Make sure the app container is visible
+  const appContainer =
+    document.getElementById("app") ||
+    document.querySelector(".main-content") ||
+    document.body;
+
+  if (appContainer) {
+    appContainer.style.opacity = "1";
+    appContainer.style.display = "block";
+  }
+
+  // Optionally trigger first-load actions
+  if (typeof processBibleData === "function") processBibleData();
+}
+
+// ----------------------
+// SAFETY TRIGGER: runs once DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   if (typeof initApp === "function") initApp();
   else if (typeof initUI === "function") initUI();

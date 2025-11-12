@@ -156,36 +156,54 @@ function setLoadingState(isLoading, title = "Analyzing...") {
 }
 
 // ----------------------
-// FIREBASE INIT + AUTH
-async function initFirebaseOnce() {
-  // Avoid mismatched versions by using v10.13.0 everywhere (matched above).
-  let app;
-  if (getApps().length) {
-    app = getApp();
-  } else {
-    app = initializeApp(firebaseConfig);
+// ============================
+// ✅ FIREBASE INIT + AUTH (COMPAT VERSION)
+// ============================
+function initFirebaseOnce() {
+  try {
+    const config = loadFirebaseConfig();
+    if (!config) throw new Error("Missing Firebase config.");
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(config);
+      console.log("✅ Firebase initialized (compat)");
+    } else {
+      console.log("ℹ️ Firebase already initialized");
+    }
+  } catch (e) {
+    console.error("Error initializing Firebase:", e);
+    setErrorState("Failed to initialize Firebase. Check your config and console.");
   }
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  setLogLevel("debug");
-  await setPersistence(auth, browserLocalPersistence);
-  return { app, auth, db };
 }
 
 async function initializeFirebaseAndAuth() {
   try {
     console.log("Initializing Firebase...");
-    const { app, auth, db } = await initFirebaseOnce();
+    initFirebaseOnce();
+
+    const app = firebase.app();
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
     AppState.app = app;
     AppState.auth = auth;
     AppState.db = db;
 
-    onAuthStateChanged(auth, async (user) => {
+    // Enable persistence if available
+    try {
+      await firebase.firestore().enablePersistence({ synchronizeTabs: true });
+      console.log("✅ Firestore persistence enabled");
+    } catch (err) {
+      console.warn("⚠️ Persistence not available:", err.message);
+    }
+
+    // Auth state handling
+    auth.onAuthStateChanged(async (user) => {
       if (user) {
         AppState.userId = user.uid;
         const appId = (typeof globalThis.__app_id !== "undefined") ? globalThis.__app_id : "default-app-id";
         const collectionPath = `/artifacts/${appId}/users/${AppState.userId}/notes`;
-        AppState.notesCollectionRef = collection(AppState.db, collectionPath);
+        AppState.notesCollectionRef = db.collection(collectionPath);
         loadNotesFromFirestore();
         setReadyState("Ready to Study God's Word", "Enter a scripture passage or question, then choose an action.");
       } else {
@@ -194,18 +212,22 @@ async function initializeFirebaseAndAuth() {
           AppState.notesUnsubscribe();
           AppState.notesUnsubscribe = null;
         }
+
         try {
           if (globalThis.__initial_auth_token) {
-            await signInWithCustomToken(auth, globalThis.__initial_auth_token);
+            await auth.signInWithCustomToken(globalThis.__initial_auth_token);
           } else {
-            await signInAnonymously(auth);
+            await auth.signInAnonymously();
           }
+          console.log("✅ Signed in successfully");
         } catch (err) {
           console.error("Auth error:", err);
           setErrorState(`Authentication Failed: ${err.message || err.code || "Unknown error"}`);
         }
       }
     });
+
+    console.log("✅ Firebase Auth & Firestore ready (compat)");
   } catch (e) {
     console.error("Error initializing Firebase:", e);
     setErrorState("Failed to initialize Firebase. Check your config and console.");

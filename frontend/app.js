@@ -971,6 +971,16 @@ function initApp() {
 }
 
 // ----------------------
+// SAFETY TRIGGER: runs once DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof initApp === "function") initApp();
+  else if (typeof initUI === "function") initUI();
+  else if (typeof buildUI === "function") buildUI();
+  else if (typeof renderUI === "function") renderUI();
+  else console.warn("⚠️ No UI initialization function found.");
+});
+
+// ----------------------
 // BOOT SEQUENCE
 document.addEventListener("DOMContentLoaded", async () => {
   try {

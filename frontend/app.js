@@ -880,3 +880,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     setErrorState("Failed to load app. Check console for errors.");
   }
 });
+
+// --- SAFETY TRIGGER ---
+// Ensures UI fully loads even if earlier modules or data lag
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof initApp === "function") initApp();
+  else if (typeof initUI === "function") initUI();
+  else if (typeof buildUI === "function") buildUI();
+  else if (typeof renderUI === "function") renderUI();
+  else console.warn("⚠️ No UI initialization function found.");
+});

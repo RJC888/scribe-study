@@ -228,6 +228,28 @@ async function initializeFirebaseAndAuth() {
   }
 }
 
+// --- TEMP FIX until full data file restored ---
+const BIBLE_DATA = {
+  testament: {
+    old: {
+      name: "Old Testament",
+      books: [
+        { name: "Genesis", chapters: 50 },
+        { name: "Exodus", chapters: 40 },
+        // add more if you like — enough to keep UI functional
+      ]
+    },
+    new: {
+      name: "New Testament",
+      books: [
+        { name: "Matthew", chapters: 28 },
+        { name: "Mark", chapters: 16 },
+        // add more here as needed
+      ]
+    }
+  }
+};
+
 // ----------------------
 // BIBLE DATA PROCESSING
 function processBibleData() {

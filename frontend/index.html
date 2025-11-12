@@ -13,27 +13,27 @@
   <link rel="stylesheet" href="./styles/reflection-modal.css" />
 
   <!-- ✅ Firebase Initialization -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  <!-- ✅ Firebase Setup -->
+<script>
+  // Real Firebase project configuration
+  window.firebaseConfig = {
+    apiKey: "AIzaSyD1TJ4GTW7bjJNx5Z4SBEMfujTSaD3FWzY",
+    authDomain: "scribe-study.firebaseapp.com",
+    projectId: "scribe-study",
+    storageBucket: "scribe-study.firebasestorage.app",
+    messagingSenderId: "133274919715",
+    appId: "1:133274919715:web:c48490a98e28db939a2296",
+    measurementId: "G-GWXZ67WB98"
+  };
+</script>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyD1TJ4GTW7bjJNx5Z4SBEMfujTSaD3FWzY",
-      authDomain: "scribe-study.firebaseapp.com",
-      projectId: "scribe-study",
-      storageBucket: "scribe-study.appspot.com",
-      messagingSenderId: "133274919715",
-      appId: "1:133274919715:web:c48490a98e28db93a9a2296",
-      measurementId: "G-GWXZ67WB98"
-    };
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js"></script>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    console.log("✅ Firebase initialized successfully");
-  </script>
-
-  <!-- ✅ Main App Script -->
-  <script type="module" src="app.js" defer></script>
+<!-- Your main app -->
+<script src="app.js"></script>
 </head>
 
 <body>

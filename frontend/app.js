@@ -88,7 +88,6 @@ const AppState = {
 };
 
 // ===== BIBLE STRUCTURE DATA (exactly as you provided) =====
-const BIBLE_DATA = { /* -- snipped for brevity -- USE YOUR ORIGINAL BIBLE_DATA BLOCK HERE -- */ };
 
 // ----------------------
 // Utility: Safe query by id

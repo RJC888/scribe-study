@@ -1,32 +1,17 @@
 // ===== FIREBASE IMPORTS (v10.13.0 to match index.html) =====
 
 // ===== CONFIG PICKUP (robust) =====
-const DEFAULT_CONFIG = {
-  apiKey: "AIzaSyD1TJ4GTW7bjJNx5Z4SBEMfujTSaD3FWzY",
-  authDomain: "scribe-study.firebaseapp.com",
-  projectId: "scribe-study",
-  storageBucket: "scribe-study.appspot.com",
-  messagingSenderId: "133274919715",
-  appId: "1:133274919715:web:c48490a98e28db939a2296",
-  measurementId: "G-GWXZ67WB98"
-};
-
-// ===== LOAD FIREBASE CONFIG (robust fallback chain) =====
 function loadFirebaseConfig() {
-  try {
-    if (globalThis.__firebase_config) {
-      return JSON.parse(globalThis.__firebase_config);
-    }
-  } catch (e) {
-    console.warn("Failed to parse __firebase_config JSON:", e);
-  }
+  if (window.firebaseConfig) return window.firebaseConfig;
+  console.warn("⚠️ No window.firebaseConfig found. Check index.html.");
+  return null;
+}
 
-  if (globalThis.firebaseConfig) return globalThis.firebaseConfig;
-
-  console.warn(
-    "⚠️ Using DEFAULT Firebase config (consider exposing window.firebaseConfig in <head>)"
-  );
-  return DEFAULT_CONFIG;
+// ===== LOAD FIREBASE CONFIG (from index.html) =====
+function loadFirebaseConfig() {
+  if (window.firebaseConfig) return window.firebaseConfig;
+  console.warn("⚠️ No window.firebaseConfig found. Check index.html for config block.");
+  return null;
 }
 
 // ===== INITIALIZE FIREBASE (safe + synced with index.html) =====

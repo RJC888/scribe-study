@@ -2,61 +2,49 @@ name: Playwright Tests
 
 on:
   push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   test:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
-    timeout-minutes: 30
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-    - name: Install root dependencies
-      run: npm install
+      - name: Install root dependencies
+        run: npm install
 
-    - name: Install backend dependencies
-      run: npm run install-backend
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm install
 
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
+      - name: Start backend server
+        run: |
+          cd backend
+          npm start &
+          sleep 5
+        continue-on-error: true
 
-    # 🔥 Start backend dev server FIRST
-    - name: Start backend server
-      run: npm run dev &
-      env:
-        NODE_ENV: test
+      - name: Install Playwright
+        run: npx playwright install --with-deps
 
-    # 🕒 Allow backend to start up
-    - name: Wait for server to be ready
-      run: npx wait-on http://localhost:3000
+      - name: Run Playwright tests
+        run: npx playwright test --reporter=list
+        env:
+          CI: true
 
-    # 🧪 Now run Playwright tests
-    - name: Run Playwright Tests
-      run: npx playwright test
-
-    # 📦 Upload test artifacts
-    - name: Upload Playwright Test Report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
-
-    - name: Upload Traces
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: traces
-        path: test-results/**
-        retention-days: 30
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

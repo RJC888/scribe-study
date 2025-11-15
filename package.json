@@ -9,21 +9,10 @@
     "deploy": "vercel --prod",
     "test": "playwright test"
   },
-  "keywords": [
-    "bible",
-    "study",
-    "ai",
-    "theology",
-    "scripture"
-  ],
-  "author": "Ron Corbett",
-  "license": "COMMERCIAL",
   "devDependencies": {
-<<<<<<< HEAD
-    "@playwright/test": "^1.41.2"
-=======
-    "@playwright/test": "^1.56.1",
-    "firebase-tools": "^14.24.2"
->>>>>>> c766f69 (Add Playwright devDependency)
-  }
+    "@playwright/test": "^1.55.0"
+  },
+  "keywords": ["bible", "study", "ai", "theology", "scripture"],
+  "author": "Ron Corbett",
+  "license": "COMMERCIAL"
 }

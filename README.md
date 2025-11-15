@@ -1,5 +1,25 @@
 # 🕮 Scribe Study - Professional Bible Study Application
 
+<p align="left">
+
+  <!-- Playwright CI Status -->
+  <img src="https://github.com/RJC888/scribe-study/actions/workflows/playwright.yml/badge.svg" 
+       alt="Playwright Tests" />
+
+  <!-- Latest Commit -->
+  <img src="https://img.shields.io/github/last-commit/RJC888/scribe-study?color=4A5D4E&label=Last%20Commit" 
+       alt="Last Commit" />
+
+  <!-- Vercel Deployment -->
+  <img src="https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel" 
+       alt="Vercel Deployment" />
+
+  <!-- Node Version (important for Playwright + local consistency) -->
+  <img src="https://img.shields.io/node/v/@playwright/test?color=6D7C6E&label=Node.js" 
+       alt="Node Version" />
+
+</p>
+
 > **A comprehensive Bible study app with 24+ AI-powered analysis modules, including advanced Grammar Essentials and scholarly grammar analysis.**
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/scribe-study&env=GROQ_API_KEY&envDescription=Get%20your%20free%20Groq%20API%20key&envLink=https://console.groq.com)

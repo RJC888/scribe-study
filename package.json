@@ -6,9 +6,13 @@
     "install-backend": "cd backend && npm install",
     "start": "cd backend && npm start",
     "dev": "cd backend && npm run dev",
-    "deploy": "vercel --prod"
+    "deploy": "vercel --prod",
+    "test": "playwright test"
   },
   "keywords": ["bible", "study", "ai", "theology", "scripture"],
   "author": "Ron Corbett",
-  "license": "COMMERCIAL"
+  "license": "COMMERCIAL",
+  "devDependencies": {
+    "@playwright/test": "^1.41.2"
+  }
 }

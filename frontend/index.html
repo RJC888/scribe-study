@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Scribe Study</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- MAIN STYLES -->
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- TOP BAR: APP NAME + ACCOUNT/AUTH PLACEHOLDER -->
+  <header id="topBar">
+    <div id="appLogo">Scribe Study</div>
+    <div id="userControls">
+      <button id="authButton">Sign in / Account</button>
+    </div>
+  </header>
+
+  <!-- MAIN TABS (Devotional / Academic / Visual / etc.) -->
+  <nav id="mainTabs">
+    <!-- JS will populate tabs -->
+  </nav>
+
+  <!-- WELCOME PANEL (PER-TAB INTRO) -->
+  <section id="welcomePanel" class="hidden">
+    <h2 id="welcomeTitle"></h2>
+    <p id="welcomeDescription"></p>
+    <ul id="welcomeSubtabList"></ul>
+    <label class="welcomeSkip">
+      <input type="checkbox" id="skipWelcomeCheckbox" />
+      Skip this welcome screen next time
+    </label>
+    <button id="continueBtn">Continue →</button>
+  </section>
+
+  <!-- MAIN SHELL -->
+  <main id="mainShell">
+    <section id="mainPanel">
+      <!-- STANDARD STUDY MODE WORKSPACE (TIER 1 & 3) -->
+      <div id="workspace">
+        <!-- TOP: SCRIPTURE + ANALYSIS PANELS -->
+        <div id="topPanels">
+          <!-- SCRIPTURE PANEL -->
+          <div id="scripturePanel" class="panel top-panel">
+            <div class="panelHeader">
+              <span class="panelTitle">Scripture</span>
+              <button class="expandBtn" data-target="scripture">⇔</button>
+            </div>
+            <div id="scriptureContent">
+              <!-- You can put passage input + display inside here -->
+              <div id="pinnedPassageBar">
+                <span id="pinnedPassageRef">No passage selected</span>
+                <button id="togglePassageDrawerBtn">Show full passage ▼</button>
+              </div>
+              <div id="passageDrawer" class="hidden">
+                <div id="fullPassageText">
+                  <!-- Full passage text goes here -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ANALYSIS PANEL -->
+          <div id="analysisPanel" class="panel top-panel">
+            <div class="panelHeader">
+              <span class="panelTitle">Analysis / Search Results</span>
+              <button class="expandBtn" data-target="analysis">⇔</button>
+            </div>
+            <div id="analysisContent">
+              <!-- EXISTING IDs TO KEEP CURRENT app.js WORKING -->
+              <div id="analysisDisplay"></div>
+
+              <div id="visualizationContainer"></div>
+
+              <div id="versionNav">
+                <button id="prevVersionBtn">◀ Prev</button>
+                <span id="versionIndexLabel"></span>
+                <button id="nextVersionBtn">Next ▶</button>
+              </div>
+
+              <!-- OPTIONAL: BUTTON TO ENTER TIER 2 VISUALIZATION MODE -->
+              <div id="enterTier2Wrapper">
+                <button id="enterVisualizationModeBtn">
+                  Open Fullscreen Visualization (Tier 2)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTTOM: COLLAPSIBLE NOTES BAR + PANEL -->
+        <div id="notesBar">
+          <button id="expandNotesBtn">Study Notes ↑</button>
+        </div>
+
+        <div id="notesPanel" class="panel bottom-panel hidden">
+          <div class="panelHeader">
+            <span class="panelTitle">Study Notes</span>
+            <button id="collapseNotesBtn">↓ Collapse</button>
+          </div>
+          <div id="notesContent">
+            <!-- You can wire this to a textarea, rich editor, etc. -->
+            <textarea id="notesTextarea" rows="6" placeholder="Record your study notes here..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIER 2: FULLSCREEN VISUALIZATION MODE -->
+      <section id="visualizationMode" class="hidden">
+        <div id="visualizationTopBar">
+          <span id="visualizationPassageRef">[Passage for visualization]</span>
+          <button id="exitVisualizationBtn">Exit Visualization</button>
+        </div>
+
+        <div id="visualizationCanvas">
+          <!-- Tier 2 engine renders here in fullscreen -->
+        </div>
+
+        <div id="visualizationNav">
+          <button id="visualPrevBtn">◀ Prev</button>
+          <span id="visualIndexLabel">1 / 1</span>
+          <button id="visualNextBtn">Next ▶</button>
+        </div>
+
+        <div id="visualNotesBar">
+          <!-- Minimal notes hook in Tier 2 (optional future) -->
+          <span>Notes available below in Study Mode</span>
+        </div>
+      </section>
+
+      <!-- HELP + SUGGESTED QUESTIONS (STANDARD MODE) -->
+      <div id="helpAndSuggestionsRow">
+        <button id="helpPageBtn">Help Me Understand This Page</button>
+        <div id="suggestedQuestionsBar">
+          <!-- JS will generate suggested questions after searches -->
+        </div>
+      </div>
+
+      <!-- HELP POPUP -->
+      <div id="helpPopup" class="hidden">
+        <div id="helpPopupInner">
+          <h3>Need help understanding this?</h3>
+          <p>Ask any question about what you see on this page.</p>
+          <textarea id="helpQuestionInput" rows="3"></textarea>
+          <div class="helpActions">
+            <button id="helpSendBtn">Send Question →</button>
+            <button id="helpCloseBtn">Close</button>
+          </div>
+          <div id="helpResponse"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- TODO: Add Firebase scripts here (before app.js) if needed -->
+
+  <!-- MAIN APP SCRIPT (YOUR EXISTING LOGIC) -->
+  <script type="module" src="./app.js"></script>
+  <!-- UI LAYOUT LOGIC (BOUNDARIES, PANELS, TIER 2) -->
+  <script type="module" src="./ui-layout.js"></script>
+</body>
+</html>

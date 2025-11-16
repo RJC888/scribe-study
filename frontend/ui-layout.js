@@ -8,25 +8,48 @@ document.addEventListener("DOMContentLoaded", () => {
   const analysisPanel = document.getElementById("analysisPanel");
 
   document.querySelectorAll(".expandBtn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = btn.dataset.target;
-      if (!target) return;
+  btn.addEventListener("click", () => {
+    const target = btn.dataset.target;
 
-      if (target === "scripture") {
-        scripturePanel.classList.add("expanded");
-        scripturePanel.classList.remove("minimized");
-        analysisPanel.classList.add("minimized");
-        analysisPanel.classList.remove("expanded");
+    const scripturePanel = document.getElementById("scripturePanel");
+    const analysisPanel = document.getElementById("analysisPanel");
+
+    const NEUTRAL = () => {
+      scripturePanel.classList.remove("expanded", "minimized");
+      analysisPanel.classList.remove("expanded", "minimized");
+    };
+
+    if (target === "scripture") {
+      // If already expanded → reset to neutral 50/50
+      if (scripturePanel.classList.contains("expanded")) {
+        NEUTRAL();
+        return;
       }
 
-      if (target === "analysis") {
-        analysisPanel.classList.add("expanded");
-        analysisPanel.classList.remove("minimized");
-        scripturePanel.classList.add("minimized");
-        scripturePanel.classList.remove("expanded");
+      // Else expand Scripture
+      scripturePanel.classList.add("expanded");
+      scripturePanel.classList.remove("minimized");
+
+      analysisPanel.classList.add("minimized");
+      analysisPanel.classList.remove("expanded");
+    }
+
+    if (target === "analysis") {
+      // If already expanded → reset to neutral 50/50
+      if (analysisPanel.classList.contains("expanded")) {
+        NEUTRAL();
+        return;
       }
-    });
+
+      // Else expand Analysis
+      analysisPanel.classList.add("expanded");
+      analysisPanel.classList.remove("minimized");
+
+      scripturePanel.classList.add("minimized");
+      scripturePanel.classList.remove("expanded");
+    }
   });
+});
 
   // PASSAGE DRAWER TOGGLE
   const togglePassageDrawerBtn = document.getElementById("togglePassageDrawerBtn");

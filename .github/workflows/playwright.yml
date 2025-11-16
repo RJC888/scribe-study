@@ -1,20 +1,31 @@
-// playwright.config.js
-import { defineConfig } from '@playwright/test';
+name: Playwright Tests
 
-export default defineConfig({
-  timeout: 30000,
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
-  use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
-    headless: true,
-  },
+jobs:
+  test:
+    runs-on: ubuntu-latest
 
-  webServer: {
-    command: 'npx serve frontend -l 3000',
-    port: 3000,
-    timeout: 20000,
-    reuseExistingServer: !process.env.CI,
-  },
-});
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run tests
+        run: npx playwright test --reporter=list
+        env:
+          BASE_URL: http://localhost:3000

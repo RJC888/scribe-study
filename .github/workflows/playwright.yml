@@ -25,6 +25,11 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
+      - name: Start server
+        run: |
+          npx serve frontend -l 3000 &
+          sleep 5
+
       - name: Run tests
         run: npx playwright test --reporter=list
         env:

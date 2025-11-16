@@ -2,7 +2,9 @@ name: Playwright Tests
 
 on:
   push:
+    branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
 
 jobs:
   test:
@@ -12,26 +14,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
       - name: Install dependencies
-        working-directory: ./
         run: npm install
 
       - name: Install Playwright Browsers
-        working-directory: ./
         run: npx playwright install --with-deps
 
-      - name: Run Playwright tests
-        working-directory: ./
-        run: npx playwright test --reporter=list
+      # ⭐ NEW: Start a local web server
+      - name: Start server
+        run: |
+          npx serve frontend -l 3000 &
+          sleep 5
+        env:
+          PORT: 3000
 
-      - name: Upload Playwright report
+      # ⭐ NEW: Tell Playwright where the app is running
+      - name: Run tests
+        run: npx playwright test --reporter=list
+        env:
+          BASE_URL: http://localhost:3000
+
+      - name: Upload test report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: playwright-report/
+          path: playwright-report
+

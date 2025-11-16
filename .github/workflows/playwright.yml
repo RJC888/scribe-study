@@ -27,8 +27,9 @@ jobs:
 
       - name: Start server
         run: |
-          npx serve frontend -l 3000 &
-          sleep 5
+         npx serve -l 3000 frontend &
+         echo "Server starting on port 3000..."
+         sleep 8
 
       - name: Run tests
         run: npx playwright test --reporter=list

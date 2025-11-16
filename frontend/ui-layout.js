@@ -145,27 +145,79 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // SUGGESTED QUESTIONS (simple placeholder)
-  const suggestedQuestionsBar = document.getElementById("suggestedQuestionsBar");
-  if (suggestedQuestionsBar) {
-    const sample = [
-      "What is the main idea of this passage?",
-      "How does the structure support the meaning?",
-      "What is the role of this visualization?",
-      "How can I apply this today?"
-    ];
-    suggestedQuestionsBar.innerHTML = "";
-    sample.forEach((text) => {
+   /* -----------------------------------------------
+      DYNAMIC SUGGESTED QUESTIONS SYSTEM
+  ------------------------------------------------- */
+
+  function updateSuggestedQuestions(context) {
+    const bar = document.getElementById("suggestedQuestionsBar");
+    if (!bar) return;
+
+    bar.innerHTML = ""; // Clear previous suggestions
+
+    let suggestions = [];
+
+    // 1. Based on Mode (Devotional / Academic / Visual)
+    if (context.mode === "Academic") {
+      suggestions.push(
+        "What is the structure of this passage?",
+        "How does the author develop the argument?",
+        "What are the key Greek or Hebrew terms here?"
+      );
+    }
+
+    if (context.mode === "Devotional") {
+      suggestions.push(
+        "What does this teach about God's character?",
+        "How should this shape my heart today?",
+        "What is the main truth for my life?"
+      );
+    }
+
+    if (context.mode === "Visual") {
+      suggestions.push(
+        "Can you show the structure visually?",
+        "What patterns can I see in this text?",
+        "Show connections to other passages."
+      );
+    }
+
+    // 2. Based on Subtab
+    if (context.subtab === "Syntax") {
+      suggestions.push("Explain the syntax step-by-step.");
+    }
+    if (context.subtab === "Discourse") {
+      suggestions.push("Show the discourse flow.");
+    }
+
+    // 3. Based on AI output summary (optional)
+    if (context.aiOutputSummary?.includes("chiasm")) {
+      suggestions.push("Show the chiastic structure visually.");
+    }
+    if (context.aiOutputSummary?.includes("shift")) {
+      suggestions.push("Explain the theme shift.");
+    }
+
+    // 4. Based on last user question
+    if (context.lastUserQuestion) {
+      suggestions.push(`What follows from: "${context.lastUserQuestion}" ?`);
+    }
+
+    // Render suggestions
+    suggestions.forEach((text) => {
       const btn = document.createElement("button");
       btn.textContent = text;
-      btn.type = "button";
+      btn.className = "suggestedQuestionBtn";
       btn.addEventListener("click", () => {
-        if (helpQuestionInput && helpPopup) {
-          helpQuestionInput.value = text;
-          helpPopup.classList.remove("hidden");
-        }
+        const helpInput = document.getElementById("helpQuestionInput");
+        const helpPopup = document.getElementById("helpPopup");
+
+        if (helpInput) helpInput.value = text;
+        if (helpPopup) helpPopup.classList.remove("hidden");
       });
-      suggestedQuestionsBar.appendChild(btn);
+      bar.appendChild(btn);
     });
   }
-});
+
+  // Make available globally (so app.js can call it)
+  window.updateSuggestedQuestions = updateSuggestedQuestions;

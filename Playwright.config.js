@@ -7,9 +7,9 @@ export default defineConfig({
   },
 
   webServer: {
-    command: 'npx serve frontend -l 3000',
+    command: 'npx serve -l 3000 frontend',
     port: 3000,
-    timeout: 20000,
-    reuseExistingServer: !process.env.CI,
-  },
+    timeout: 30000,
+    reuseExistingServer: !process.env.CI
+  }
 });

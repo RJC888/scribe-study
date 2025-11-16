@@ -25,11 +25,24 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
+      - name: Diagnostics
+        run: |
+         echo "Current directory:"
+         pwd
+         echo "Listing root:"
+         ls -al
+         echo "Listing frontend:"
+         ls -al frontend || echo "No frontend directory found!"
+         echo "Serve version:"
+         npx serve --version || echo "Serve not found!"
+
       - name: Start server
         run: |
-         npx serve -l 3000 frontend &
-         echo "Server starting on port 3000..."
-         sleep 8
+         npx serve -l 3000 frontend > server.log 2>&1 &
+         echo "Attempted to start server..."
+         sleep 10
+         echo "Server log:"
+         cat server.log || echo "No server log found"
 
       - name: Run tests
         run: npx playwright test --reporter=list

@@ -221,3 +221,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Make available globally (so app.js can call it)
   window.updateSuggestedQuestions = updateSuggestedQuestions;
+});

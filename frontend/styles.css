@@ -289,7 +289,31 @@ button {
   align-items: center;
 }
 
-
 .panelHeader .expandBtn:hover {
   opacity: 1;
+}
+
+/* --- PASSAGE ACTION BUTTONS --- */
+#passageActions {
+  display: flex;
+  gap: 8px;
+}
+
+.passageBtn {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  background: #cfe7d1;        /* pastel green */
+  border: 1px solid #a6c8a3;  /* soft green borderline */
+  border-radius: 4px;
+  color: #234029;             /* deep readable green */
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.passageBtn:hover {
+  background: #b4d6b8;       /* slightly deeper pastel green */
+}
+
+.passageBtn:active {
+  background: #a6c8a3;
 }

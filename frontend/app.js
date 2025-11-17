@@ -97,7 +97,7 @@
     DOM.sidebarToggle = byId("sidebarToggle");
 
     // Use the Claude-style analysis section controls
-    DOM.scriptureInput = byId("passageInput") || byId("scriptureInput") || null;
+    DOM.scriptureInput = byId("passageInput") || null;
     DOM.studyBtn = byId("studyBtn");
 
 

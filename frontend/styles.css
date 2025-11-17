@@ -317,3 +317,12 @@ button {
 .passageBtn:active {
   background: #a6c8a3;
 }
+
+/* SCRIPTURE TEXT DISPLAY — ENABLE VISIBILITY + SCROLLING */
+#fullPassageText {
+  padding: 8px;
+  line-height: 1.5;
+  overflow-y: auto;
+  max-height: calc(100vh - 240px); /* adjust as needed */
+  white-space: normal;
+}

@@ -446,6 +446,75 @@ Write clearly and reverently. Do not include the full text of the passage itself
     }
   }
 
+  async function handleUnifiedStudy() {
+  const passage = getCurrentPassage();
+  if (!passage) {
+    setOutputStatus("Please enter a passage (e.g., John 3:16).", "⚠️");
+    return;
+  }
+
+  const version = (DOM.versionSelect && DOM.versionSelect.value) || "ESV";
+
+  // SCRIPTURE PROMPT
+  const scripturePrompt = `
+Provide the full Scripture text for the passage "${passage}" in the ${version} translation.
+Include verse numbers like [1], [2], etc.
+No commentary, no paraphrase, no summaries.
+  `.trim();
+
+  // ANALYSIS PROMPT
+  const analysisPrompt = `
+Analyze the passage: "${passage}" in ${version}.
+Provide:
+1. A brief summary of the passage.
+2. Key theological themes.
+3. Literary or structural features.
+4. Connections to the broader biblical storyline.
+5. Clear, Christ-centered application.
+  `.trim();
+
+  setLoadingState(true, \`Studying ${passage}...\`);
+
+  try {
+    // Run BOTH in parallel → much faster.
+    const [scriptureText, analysisText] = await Promise.all([
+      callAnalysisAPI(scripturePrompt, passage, "ScriptureText", version),
+      callAnalysisAPI(analysisPrompt, passage, "UnifiedAnalysis", version)
+    ]);
+
+    // LEFT PANEL — SET SCRIPTURE
+    const fullPassageText = document.getElementById("fullPassageText");
+    if (fullPassageText) {
+      fullPassageText.innerHTML = simpleMarkdown(scriptureText || "");
+      document.getElementById("pinnedPassageRef").textContent = passage;
+    }
+
+    // RIGHT PANEL — SET ANALYSIS
+    renderMarkdownContent(analysisText || "");
+
+    // Track last summary
+    AppState.lastAIOutputSummary = analysisText;
+
+    // SUGGESTED QUESTIONS
+    if (typeof window.updateSuggestedQuestions === "function") {
+      window.updateSuggestedQuestions({
+        mode: "UnifiedStudy",
+        subtab: null,
+        lastUserQuestion: null,
+        aiOutputSummary: analysisText
+      });
+    }
+
+  } catch (err) {
+    setOutputStatus(
+      err.message || "An error occurred during unified study.",
+      "⚠️"
+    );
+  } finally {
+    setLoadingState(false);
+  }
+}
+
     AppState.currentPassage = passage;
     AppState.currentMode = "Scripture"; // label for suggested-questions logic
     const version = (DOM.versionSelect && DOM.versionSelect.value) || "ESV";

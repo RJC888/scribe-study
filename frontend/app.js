@@ -606,18 +606,17 @@ Formatting rules:
       DOM.sidebarToggle.addEventListener("click", toggleSidebar);
     }
 
-    if (DOM.generateBtn) {
-      DOM.generateBtn.addEventListener("click", handleGenerateAnalysis);
-    }
+   if (DOM.studyBtn) {
+  DOM.studyBtn.addEventListener("click", handleUnifiedStudy);
+}
 
-    if (DOM.scriptureInput) {
-      DOM.scriptureInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
-          handleGenerateAnalysis();
-        }
-      });
+if (DOM.scriptureInput) {
+  DOM.scriptureInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      handleUnifiedStudy();
     }
-  }
+  });
+}
 
   document.addEventListener("DOMContentLoaded", () => {
     try {

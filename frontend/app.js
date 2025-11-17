@@ -428,15 +428,22 @@ Write clearly and reverently. Do not include the full text of the passage itself
         version
       );
       renderMarkdownContent(analysis || "No analysis returned.");
-    } catch (err) {
-      setOutputStatus(
-        err.message || "An error occurred while generating analysis.",
-        "⚠️"
-      );
-    } finally {
-      setLoadingState(false);
-    }
-  }
+ // ✅ NEW: Update dynamic suggested questions
+  updateSuggestedQuestions({
+    mode: AppState.currentMode || "Academic",
+    subtab: AppState.currentSubtab || null,
+    lastUserQuestion: AppState.lastUserQuestion || null,
+    aiOutputSummary: analysis || ""   // you can refine this later
+  });
+
+} catch (err) {
+  setOutputStatus(
+    err.message || "An error occurred while generating analysis.",
+    "⚠️"
+  );
+} finally {
+  setLoadingState(false);
+}
 
   async function handleDisplayScripture() {
     const passage = getCurrentPassage();
@@ -467,15 +474,22 @@ Formatting rules:
         version
       );
       renderMarkdownContent(text || "No text returned.");
-    } catch (err) {
-      setOutputStatus(
-        err.message || "An error occurred while loading Scripture text.",
-        "⚠️"
-      );
-    } finally {
-      setLoadingState(false);
-    }
-  }
+     // ✅ NEW: Update dynamic suggested questions
+  updateSuggestedQuestions({
+    mode: AppState.currentMode || "Academic",
+    subtab: AppState.currentSubtab || null,
+    lastUserQuestion: AppState.lastUserQuestion || null,
+    aiOutputSummary: analysis || ""   // you can refine this later
+  });
+
+} catch (err) {
+  setOutputStatus(
+    err.message || "An error occurred while generating analysis.",
+    "⚠️"
+  );
+} finally {
+  setLoadingState(false);
+}
 
   // ----------------------------
   // Extra Controls we create in JS

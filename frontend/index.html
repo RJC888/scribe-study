@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- MAIN STYLES -->
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <!-- TOP BAR: APP NAME + ACCOUNT/AUTH PLACEHOLDER -->
@@ -167,11 +167,15 @@
     </section>
   </main>
 
-  <!-- TODO: Add Firebase scripts here (before app.js) if needed -->
+<!-- Firebase Compat -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-  <!-- MAIN APP SCRIPT (YOUR EXISTING LOGIC) -->
-  <script type="module" src="./app.js"></script>
-  <!-- UI LAYOUT LOGIC (BOUNDARIES, PANELS, TIER 2) -->
-  <script type="module" src="./ui-layout.js"></script>
+<!-- Bible Formatting Engine -->
+<script src="formattingEngine.js"></script>
+
+<!-- Main App -->
+<script src="app.js"></script>
 </body>
 </html>

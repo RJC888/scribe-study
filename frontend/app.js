@@ -446,13 +446,6 @@ Write clearly and reverently. Do not include the full text of the passage itself
     }
   }
 
-  async function handleDisplayScripture() {
-    const passage = getCurrentPassage();
-    if (!passage) {
-      setOutputStatus("Please enter a passage to display (e.g., John 3:16).", "⚠️");
-      return;
-    }
-
     AppState.currentPassage = passage;
     AppState.currentMode = "Scripture"; // label for suggested-questions logic
     const version = (DOM.versionSelect && DOM.versionSelect.value) || "ESV";

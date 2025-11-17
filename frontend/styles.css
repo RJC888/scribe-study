@@ -221,3 +221,15 @@ button:disabled {
     font-size: 1.1rem;
   }
 }
+
+/* TEMP: Hide old V2 layout entirely */
+#mainShell,
+#workspace,
+#topPanels,
+#scripturePanel,
+#analysisPanel,
+#notesBar,
+#notesPanel,
+#visualizationMode {
+  display: none !important;
+}

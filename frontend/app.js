@@ -205,7 +205,7 @@ Do NOT add commentary or headings.
       const pinned = byId("pinnedPassageRef");
       if (pinned) pinned.textContent = passage;
 
-      renderMarkdownContent(scripture);
+      DOM.output.innerHTML = "";
 
       AppState.lastAIOutputSummary = scripture;
       AppState.currentMode = "Scripture";

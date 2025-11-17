@@ -624,7 +624,6 @@ if (DOM.scriptureInput) {
       hideLegacyPanelIfPresent();
       ensureVersionSelect();
       ensureZoomControls();
-      ensureDisplayScriptureButton();
       wireEvents();
       initFirebaseOnce();
 

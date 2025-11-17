@@ -1,0 +1,371 @@
+/* =============== */
+/* GLOBAL RESET    */
+/* =============== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #1f2933;
+  background-color: #f7fafc;
+}
+
+/* =============== */
+/* APP CONTAINER   */
+/* =============== */
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* =============== */
+/* SIDE PANE       */
+/* =============== */
+
+.side-pane {
+  width: 260px;
+  min-width: 260px;
+  background: #f3f4f6;
+  border-right: 1px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease;
+  z-index: 10;
+}
+
+.side-pane.open {
+  transform: translateX(0);
+}
+
+.side-pane.collapsed {
+  transform: translateX(-100%);
+}
+
+.pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid #d1d5db;
+  background: #e5e7eb;
+}
+
+.app-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: 0.02em;
+}
+
+.pane-close-btn {
+  border: none;
+  background: transparent;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #4b5563;
+}
+
+.pane-close-btn:hover {
+  color: #111827;
+}
+
+/* MAIN TABS */
+
+.main-tabs {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 6px;
+}
+
+.main-tab-btn {
+  text-align: left;
+  border-radius: 6px;
+  border: none;
+  padding: 8px 10px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #4b5563;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.main-tab-btn:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.main-tab-btn.active {
+  background: #111827;
+  color: #f9fafb;
+}
+
+/* =============== */
+/* PANE TOGGLE BTN */
+/* =============== */
+
+.pane-toggle-btn {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  transform: translateX(0);
+  border: none;
+  background: #111827;
+  color: #f9fafb;
+  padding: 8px 12px;
+  border-radius: 0 999px 999px 0;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0.8;
+  z-index: 20;
+}
+
+.pane-toggle-btn:hover {
+  opacity: 1;
+}
+
+/* =============== */
+/* MAIN DISPLAY    */
+/* =============== */
+
+.main-display {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #f9fafb;
+}
+
+/* BREADCRUMB BAR */
+
+.breadcrumb-bar {
+  min-height: 40px;
+  padding: 10px 18px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-bar span {
+  font-weight: 500;
+  color: #374151;
+}
+
+/* CONTENT AREA */
+
+.content-area {
+  flex: 1;
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+
+/* STATUS MESSAGE (initial) */
+
+.status-message {
+  max-width: 480px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px dashed #d1d5db;
+  background: #f9fafb;
+}
+
+.status-icon {
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+
+.status-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.status-text {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* =============== */
+/* WELCOME SCREEN  */
+/* =============== */
+
+.welcome {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e5e7eb;
+}
+
+.welcome-header {
+  margin-bottom: 12px;
+}
+
+.welcome-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+}
+
+.welcome-subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.mode-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  margin-top: 6px;
+}
+
+/* PASSAGE INPUT AREA */
+
+.passage-input-row {
+  margin-top: 16px;
+  margin-bottom: 18px;
+}
+
+.passage-input-row label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.passage-input-row input {
+  width: 100%;
+  max-width: 360px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.9rem;
+}
+
+.passage-input-row input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
+}
+
+/* SUBTAB GRID */
+
+.subtab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.subtab-card {
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  padding: 12px 12px 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.subtab-card:hover {
+  background: #ffffff;
+  border-color: #c4b5fd;
+  transform: translateY(-1px);
+}
+
+.subtab-card.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: #f3f4f6;
+  border-style: dashed;
+}
+
+.subtab-card.disabled:hover {
+  transform: none;
+  border-color: #e5e7eb;
+}
+
+.subtab-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #111827;
+}
+
+.subtab-desc {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ANALYSIS PLACEHOLDER VIEW */
+
+.analysis-wrapper {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px 22px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.analysis-header {
+  margin-bottom: 10px;
+}
+
+.analysis-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.analysis-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.analysis-section {
+  margin-top: 14px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.analysis-section h4 {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
+
+/* SMALL UTILITIES */
+
+.muted {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  margin-top: 6px;
+}

@@ -102,7 +102,7 @@
 
 
     // Output container: prefer the dynamic panel, fallback to legacy
-    DOM.output = byId("analysisDisplayDynamic") || byId("analysisDisplay");
+    DOM.output = byId("analysisDisplay");
   }
 
   // ----------------------------
@@ -628,17 +628,19 @@ if (DOM.scriptureInput) {
       initFirebaseOnce();
 
       // Initial welcome state
-      if (DOM.output) {
-        DOM.output.innerHTML = `
-          <div class="status-message">
-            <div class="status-icon">✨</div>
-            <div class="status-title">Ready to Study God's Word</div>
-            <p class="status-text">
-              Enter a passage above, then choose "Generate Analysis" or "Display Scripture Text."
-            </p>
-          </div>
-        `;
-      }
+     // Initial welcome state
+if (DOM.output) {
+  DOM.output.innerHTML = `
+    <div class="status-message">
+      <div class="status-icon">✨</div>
+      <div class="status-title">Ready to Study God's Word</div>
+      <p class="status-text">
+        Enter a passage above, then click "Study Passage."
+      </p>
+    </div>
+  `;
+}
+
     } catch (err) {
       console.error("Failed to initialize Scribe Study:", err);
       setOutputStatus("Failed to initialize app. Check console for details.", "⚠️");

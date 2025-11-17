@@ -283,6 +283,13 @@ button {
   cursor: pointer;
 }
 
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+
 .panelHeader .expandBtn:hover {
   opacity: 1;
 }

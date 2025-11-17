@@ -64,6 +64,12 @@
     currentPassage: "",
     currentVersion: "ESV",
     currentFontSize: "font-size-normal", // relies on analysis.css
+
+    // For dynamic suggested questions (used by ui-layout.js)
+    currentMode: "Academic",       // could later be "Devotional", "Visual", etc.
+    currentSubtab: null,           // e.g. "Syntax", "Discourse"
+    lastUserQuestion: null,        // from Help popup (future)
+    lastAIOutputSummary: ""        // simple summary or raw analysis text
   };
 
   // ----------------------------
@@ -199,19 +205,10 @@
   }
 
   function renderMarkdownContent(markdownText) {
-  if (!DOM.output) return;
-
-  DOM.output.innerHTML = simpleMarkdown(markdownText || "");
-  applyFontSize();
-
-  // NEW: update dynamic suggested questions
-  updateSuggestedQuestions({
-    mode: AppState.currentMode || "Academic",
-    subtab: AppState.currentSubtab || null,
-    lastUserQuestion: AppState.lastUserQuestion || null,
-    aiOutputSummary: (markdownText || "").slice(0, 300) // simple heuristic for now
-  });
-}
+    if (!DOM.output) return;
+    DOM.output.innerHTML = simpleMarkdown(markdownText || "");
+    applyFontSize();
+  }
 
   // ----------------------------
   // Sidebar (Collapsible Pane)
@@ -401,6 +398,7 @@
     }
 
     AppState.currentPassage = passage;
+    AppState.currentMode = "Academic"; // you can refine per tab later
     const version = (DOM.versionSelect && DOM.versionSelect.value) || "ESV";
 
     const prompt = `
@@ -427,23 +425,31 @@ Write clearly and reverently. Do not include the full text of the passage itself
         "General Analysis",
         version
       );
-      renderMarkdownContent(analysis || "No analysis returned.");
- // ✅ NEW: Update dynamic suggested questions
-  updateSuggestedQuestions({
-    mode: AppState.currentMode || "Academic",
-    subtab: AppState.currentSubtab || null,
-    lastUserQuestion: AppState.lastUserQuestion || null,
-    aiOutputSummary: analysis || ""   // you can refine this later
-  });
 
-} catch (err) {
-  setOutputStatus(
-    err.message || "An error occurred while generating analysis.",
-    "⚠️"
-  );
-} finally {
-  setLoadingState(false);
-}
+      // Render the analysis
+      renderMarkdownContent(analysis || "No analysis returned.");
+
+      // Store a simple summary (for now, just re-use the text)
+      AppState.lastAIOutputSummary = analysis || "";
+
+      // ✅ NEW: Update dynamic suggested questions, if helper is available
+      if (typeof window.updateSuggestedQuestions === "function") {
+        window.updateSuggestedQuestions({
+          mode: AppState.currentMode || "Academic",
+          subtab: AppState.currentSubtab || null,
+          lastUserQuestion: AppState.lastUserQuestion || null,
+          aiOutputSummary: AppState.lastAIOutputSummary || ""
+        });
+      }
+    } catch (err) {
+      setOutputStatus(
+        err.message || "An error occurred while generating analysis.",
+        "⚠️"
+      );
+    } finally {
+      setLoadingState(false);
+    }
+  }
 
   async function handleDisplayScripture() {
     const passage = getCurrentPassage();
@@ -453,6 +459,7 @@ Write clearly and reverently. Do not include the full text of the passage itself
     }
 
     AppState.currentPassage = passage;
+    AppState.currentMode = "Scripture"; // label for suggested-questions logic
     const version = (DOM.versionSelect && DOM.versionSelect.value) || "ESV";
 
     const prompt = `
@@ -473,23 +480,31 @@ Formatting rules:
         `Scripture Text (${version})`,
         version
       );
-      renderMarkdownContent(text || "No text returned.");
-     // ✅ NEW: Update dynamic suggested questions
-  updateSuggestedQuestions({
-    mode: AppState.currentMode || "Academic",
-    subtab: AppState.currentSubtab || null,
-    lastUserQuestion: AppState.lastUserQuestion || null,
-    aiOutputSummary: analysis || ""   // you can refine this later
-  });
 
-} catch (err) {
-  setOutputStatus(
-    err.message || "An error occurred while generating analysis.",
-    "⚠️"
-  );
-} finally {
-  setLoadingState(false);
-}
+      // Render the Scripture text
+      renderMarkdownContent(text || "No text returned.");
+
+      // Store simple "summary" (here just the text)
+      AppState.lastAIOutputSummary = text || "";
+
+      // ✅ NEW: Update dynamic suggested questions, if helper is available
+      if (typeof window.updateSuggestedQuestions === "function") {
+        window.updateSuggestedQuestions({
+          mode: AppState.currentMode || "Scripture",
+          subtab: AppState.currentSubtab || null,
+          lastUserQuestion: AppState.lastUserQuestion || null,
+          aiOutputSummary: AppState.lastAIOutputSummary || ""
+        });
+      }
+    } catch (err) {
+      setOutputStatus(
+        err.message || "An error occurred while loading Scripture text.",
+        "⚠️"
+      );
+    } finally {
+      setLoadingState(false);
+    }
+  }
 
   // ----------------------------
   // Extra Controls we create in JS

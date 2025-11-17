@@ -248,3 +248,28 @@ body {
 button {
   cursor: pointer;
 }
+
+#passageInputRow {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fafafa;
+  border-bottom: 1px solid #ddd;
+}
+
+#passageInputRow input {
+  flex: 1;
+  padding: 8px;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#passageInputRow button {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}

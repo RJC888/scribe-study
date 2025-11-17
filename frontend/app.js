@@ -199,10 +199,19 @@
   }
 
   function renderMarkdownContent(markdownText) {
-    if (!DOM.output) return;
-    DOM.output.innerHTML = simpleMarkdown(markdownText || "");
-    applyFontSize();
-  }
+  if (!DOM.output) return;
+
+  DOM.output.innerHTML = simpleMarkdown(markdownText || "");
+  applyFontSize();
+
+  // NEW: update dynamic suggested questions
+  updateSuggestedQuestions({
+    mode: AppState.currentMode || "Academic",
+    subtab: AppState.currentSubtab || null,
+    lastUserQuestion: AppState.lastUserQuestion || null,
+    aiOutputSummary: (markdownText || "").slice(0, 300) // simple heuristic for now
+  });
+}
 
   // ----------------------------
   // Sidebar (Collapsible Pane)

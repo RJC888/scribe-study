@@ -98,13 +98,9 @@
 
     // Use the Claude-style analysis section controls
     DOM.scriptureInput = byId("scriptureInput") || byId("passageInput") || null;
-    // Prefer the generate button inside the analysis-section
-    const analysisSection = document.querySelector(".analysis-section");
-    if (analysisSection) {
-      DOM.generateBtn = analysisSection.querySelector("#generateBtn");
-    } else {
-      DOM.generateBtn = byId("generateBtn");
-    }
+    DOM.generateBtn = byId("generateBtn");
+    DOM.displayScriptureBtn = byId("displayScriptureBtn");
+
 
     // Output container: prefer the dynamic panel, fallback to legacy
     DOM.output = byId("analysisDisplayDynamic") || byId("analysisDisplay");

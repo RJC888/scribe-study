@@ -273,3 +273,16 @@ button {
   border-radius: 4px;
   cursor: pointer;
 }
+
+.panelHeader .expandBtn {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  padding: 2px 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.panelHeader .expandBtn:hover {
+  opacity: 1;
+}

@@ -627,7 +627,6 @@ if (DOM.scriptureInput) {
       wireEvents();
       initFirebaseOnce();
 
-      // Initial welcome state
      // Initial welcome state
 if (DOM.output) {
   DOM.output.innerHTML = `

@@ -98,8 +98,7 @@
 
     // Use the Claude-style analysis section controls
     DOM.scriptureInput = byId("passageInput") || byId("scriptureInput") || null;
-    DOM.generateBtn = byId("generateBtn");
-    DOM.displayScriptureBtn = byId("displayScriptureBtn");
+    DOM.studyBtn = byId("studyBtn");
 
 
     // Output container: prefer the dynamic panel, fallback to legacy

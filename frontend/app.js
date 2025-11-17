@@ -473,7 +473,7 @@ Provide:
 5. Clear, Christ-centered application.
   `.trim();
 
-  setLoadingState(true, \`Studying ${passage}...\`);
+  setLoadingState(true, `Studying ${passage}...`);
 
   try {
     // Run BOTH in parallel → much faster.

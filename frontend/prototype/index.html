@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Scribe Study – Prototype Collapsible Pane UI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="appContainer" class="app-container">
+    <!-- LEFT COLLAPSIBLE PANE -->
+    <aside id="sidePane" class="side-pane open" aria-label="Study modes navigation">
+      <div class="pane-header">
+        <div class="app-title">Scribe Study • Prototype</div>
+        <button
+          id="paneCloseBtn"
+          class="pane-close-btn"
+          type="button"
+          title="Collapse study modes panel"
+          aria-label="Collapse study modes panel"
+        >
+          «
+        </button>
+      </div>
+
+      <nav id="mainTabs" class="main-tabs" aria-label="Main modes">
+        <button class="main-tab-btn active" type="button" data-mode="devotional">
+          Devotional
+        </button>
+        <button class="main-tab-btn" type="button" data-mode="academic">
+          Academic
+        </button>
+        <button class="main-tab-btn" type="button" data-mode="visual">
+          Visual
+        </button>
+        <button class="main-tab-btn" type="button" data-mode="linguistic">
+          Linguistic Tools
+        </button>
+        <button class="main-tab-btn" type="button" data-mode="compare">
+          Compare
+        </button>
+        <button class="main-tab-btn" type="button" data-mode="custom">
+          Custom
+        </button>
+      </nav>
+    </aside>
+
+    <!-- SMALL TOGGLE WHEN PANE IS COLLAPSED -->
+    <button
+      id="paneToggleBtn"
+      class="pane-toggle-btn"
+      type="button"
+      title="Open study modes"
+      aria-label="Open study modes"
+      style="display: none;"
+    >
+      ☰
+    </button>
+
+    <!-- MAIN / CENTER DISPLAY AREA -->
+    <main id="mainDisplay" class="main-display">
+      <div id="breadcrumbBar" class="breadcrumb-bar">
+        <!-- JS will populate breadcrumbs -->
+      </div>
+
+      <div id="contentArea" class="content-area">
+        <!-- JS will swap in welcome screens and analysis views -->
+        <div class="status-message">
+          <div class="status-icon">✨</div>
+          <div class="status-title">Loading Scribe Study Prototype…</div>
+          <p class="status-text">
+            If this message remains, check that <code>app.js</code> is loaded correctly.
+          </p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

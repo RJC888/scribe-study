@@ -9,7 +9,8 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- TOP BAR: APP NAME + ACCOUNT/AUTH PLACEHOLDER -->
+
+  <!-- TOP BAR: APP NAME + ACCOUNT/AUTH -->
   <header id="topBar">
     <div id="appLogo">Scribe Study</div>
     <div id="userControls">
@@ -17,26 +18,14 @@
     </div>
   </header>
 
-  <!-- MAIN TABS (Devotional / Academic / Visual / etc.) -->
-  <nav id="mainTabs">
-    <!-- JS will populate tabs -->
-  </nav>
-  
-<!-- PASSAGE INPUT ROW (Always Visible Above Panels) -->
-<section id="passageInputRow">
-  <input
-    id="passageInput"
-    type="text"
-    placeholder="Enter passage (e.g., John 3:16)"
-  />
+  <!-- MAIN TABS -->
+  <nav id="mainTabs"></nav>
 
-  <div id="passageActions">
-    <button id="scriptureOnlyBtn" class="passageBtn">Scripture Only</button>
-    <button id="unifiedStudyBtn" class="passageBtn">Unified Study (Text + Analysis)</button>
-  </div>
-</section>
+  <!-- PASSAGE INPUT (LEGACY V2 FEATURE — REPLACED BY headerBar) -->
+  <!-- Hidden to avoid conflict with v1 architecture -->
+  <section id="passageInputRow" class="hidden"></section>
 
-  <!-- WELCOME PANEL (PER-TAB INTRO) -->
+  <!-- WELCOME PANEL -->
   <section id="welcomePanel" class="hidden">
     <h2 id="welcomeTitle"></h2>
     <p id="welcomeDescription"></p>
@@ -48,134 +37,119 @@
     <button id="continueBtn">Continue →</button>
   </section>
 
-  <!-- MAIN SHELL -->
-  <main id="mainShell">
-    <section id="mainPanel">
-      <!-- STANDARD STUDY MODE WORKSPACE (TIER 1 & 3) -->
-      <div id="workspace">
-        <!-- TOP: SCRIPTURE + ANALYSIS PANELS -->
-        <div id="topPanels">
-          <!-- SCRIPTURE PANEL -->
-          <div id="scripturePanel" class="panel top-panel">
-            <div class="panelHeader">
-              <span class="panelTitle">Scripture</span>
-              <button class="expandBtn" data-target="scripture">⇔</button>
-            </div>
-            <div id="scriptureContent">
-              <!-- You can put passage input + display inside here -->
-              <div id="pinnedPassageBar">
-                <span id="pinnedPassageRef">No passage selected</span>
-                <button id="togglePassageDrawerBtn">Show full passage ▼</button>
-              </div>
-              <div id="passageDrawer" class="hidden">
-                <div id="fullPassageText">
-                  <!-- Full passage text goes here -->
-                </div>
-              </div>
-            </div>
-          </div>
+  <!-- ============================================================
+       NEW v1 HEADER BAR (PASSAGE + BUTTONS)
+       ============================================================ -->
+  <div id="headerBar">
+    <div class="app-title">Scribe Study</div>
 
-          <!-- ANALYSIS PANEL -->
-          <div id="analysisPanel" class="panel top-panel">
-            <div class="panelHeader">
-              <span class="panelTitle">Analysis / Search Results</span>
-              <button class="expandBtn" data-target="analysis">⇔</button>
-            </div>
-            <div id="analysisContent">
-              <!-- EXISTING IDs TO KEEP CURRENT app.js WORKING -->
-              <div id="analysisDisplay"></div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <input
+        type="text"
+        id="passageInput"
+        placeholder="Example: John 3:16"
+        style="padding:6px 10px; font-size:1rem; border:1px solid #ccc; border-radius:6px; width:200px;"
+      />
 
-              <div id="visualizationContainer"></div>
+      <button id="displayBtn">Display Scripture Text</button>
+      <button id="analysisBtn">Generate Analysis</button>
+    </div>
+  </div>
 
-              <div id="versionNav">
-                <button id="prevVersionBtn">◀ Prev</button>
-                <span id="versionIndexLabel"></span>
-                <button id="nextVersionBtn">Next ▶</button>
-              </div>
+  <!-- ============================================================
+       MAIN PANELS (v1 ARCHITECTURE)
+       Replaces old topPanels/scripturePanel/analysisPanel entirely
+       ============================================================ -->
+  <div id="mainPanels">
 
-              <!-- OPTIONAL: BUTTON TO ENTER TIER 2 VISUALIZATION MODE -->
-              <div id="enterTier2Wrapper">
-                <button id="enterVisualizationModeBtn">
-                  Open Fullscreen Visualization (Tier 2)
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="side-tabs">
+      <h3 style="margin-bottom:10px;">Tools</h3>
+      <p style="opacity:0.7;">(Coming soon)</p>
+    </div>
 
-        <!-- BOTTOM: COLLAPSIBLE NOTES BAR + PANEL -->
-        <div id="notesBar">
-          <button id="expandNotesBtn">Study Notes ↑</button>
-        </div>
-
-        <div id="notesPanel" class="panel bottom-panel hidden">
-          <div class="panelHeader">
-            <span class="panelTitle">Study Notes</span>
-            <button id="collapseNotesBtn">↓ Collapse</button>
-          </div>
-          <div id="notesContent">
-            <!-- You can wire this to a textarea, rich editor, etc. -->
-            <textarea id="notesTextarea" rows="6" placeholder="Record your study notes here..."></textarea>
-          </div>
-        </div>
+    <div id="primaryDisplay">
+      <div class="status-message">
+        <div class="status-icon">✨</div>
+        <div class="status-title">Ready to Study God's Word</div>
+        <p class="status-text">
+          Enter a passage above, then choose "Generate Analysis" or "Display Scripture Text."
+        </p>
       </div>
+    </div>
 
-      <!-- TIER 2: FULLSCREEN VISUALIZATION MODE -->
-      <section id="visualizationMode" class="hidden">
-        <div id="visualizationTopBar">
-          <span id="visualizationPassageRef">[Passage for visualization]</span>
-          <button id="exitVisualizationBtn">Exit Visualization</button>
-        </div>
+  </div>
 
-        <div id="visualizationCanvas">
-          <!-- Tier 2 engine renders here in fullscreen -->
-        </div>
+  <!-- ============================================================
+       NOTES PANEL (KEPT)
+       ============================================================ -->
+  <div id="notesBar">
+    <button id="expandNotesBtn">Study Notes ↑</button>
+  </div>
 
-        <div id="visualizationNav">
-          <button id="visualPrevBtn">◀ Prev</button>
-          <span id="visualIndexLabel">1 / 1</span>
-          <button id="visualNextBtn">Next ▶</button>
-        </div>
+  <div id="notesPanel" class="panel bottom-panel hidden">
+    <div class="panelHeader">
+      <span class="panelTitle">Study Notes</span>
+      <button id="collapseNotesBtn">↓ Collapse</button>
+    </div>
+    <div id="notesContent">
+      <textarea id="notesTextarea" rows="6" placeholder="Record your study notes here..."></textarea>
+    </div>
+  </div>
 
-        <div id="visualNotesBar">
-          <!-- Minimal notes hook in Tier 2 (optional future) -->
-          <span>Notes available below in Study Mode</span>
-        </div>
-      </section>
+  <!-- ============================================================
+       VISUALIZATION MODE (Tier 2)
+       (Preserved for Future Integration)
+       ============================================================ -->
+  <section id="visualizationMode" class="hidden">
+    <div id="visualizationTopBar">
+      <span id="visualizationPassageRef">[Passage for visualization]</span>
+      <button id="exitVisualizationBtn">Exit Visualization</button>
+    </div>
 
-      <!-- HELP + SUGGESTED QUESTIONS (STANDARD MODE) -->
-      <div id="helpAndSuggestionsRow">
-        <button id="helpPageBtn">Help Me Understand This Page</button>
-        <div id="suggestedQuestionsBar">
-          <!-- JS will generate suggested questions after searches -->
-        </div>
+    <div id="visualizationCanvas"></div>
+
+    <div id="visualizationNav">
+      <button id="visualPrevBtn">◀ Prev</button>
+      <span id="visualIndexLabel">1 / 1</span>
+      <button id="visualNextBtn">Next ▶</button>
+    </div>
+
+    <div id="visualNotesBar">
+      <span>Notes available below in Study Mode</span>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       HELP + SUGGESTIONS (unchanged)
+       ============================================================ -->
+  <div id="helpAndSuggestionsRow">
+    <button id="helpPageBtn">Help Me Understand This Page</button>
+    <div id="suggestedQuestionsBar"></div>
+  </div>
+
+  <!-- HELP POPUP -->
+  <div id="helpPopup" class="hidden">
+    <div id="helpPopupInner">
+      <h3>Need help understanding this?</h3>
+      <p>Ask any question about what you see on this page.</p>
+      <textarea id="helpQuestionInput" rows="3"></textarea>
+      <div class="helpActions">
+        <button id="helpSendBtn">Send Question →</button>
+        <button id="helpCloseBtn">Close</button>
       </div>
+      <div id="helpResponse"></div>
+    </div>
+  </div>
 
-      <!-- HELP POPUP -->
-      <div id="helpPopup" class="hidden">
-        <div id="helpPopupInner">
-          <h3>Need help understanding this?</h3>
-          <p>Ask any question about what you see on this page.</p>
-          <textarea id="helpQuestionInput" rows="3"></textarea>
-          <div class="helpActions">
-            <button id="helpSendBtn">Send Question →</button>
-            <button id="helpCloseBtn">Close</button>
-          </div>
-          <div id="helpResponse"></div>
-        </div>
-      </div>
-    </section>
-  </main>
+  <!-- ============================================================
+       SCRIPT ORDER (v1 REQUIRED)
+       ============================================================ -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-<!-- Firebase Compat -->
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <script src="formattingEngine.js"></script>
+  <script src="app.js"></script>
 
-<!-- Bible Formatting Engine -->
-<script src="formattingEngine.js"></script>
-
-<!-- Main App -->
-<script src="app.js"></script>
 </body>
 </html>

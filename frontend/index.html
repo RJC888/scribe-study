@@ -2,154 +2,80 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Scribe Study</title>
+  <title>Scribe Study – Prototype Collapsible Pane UI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- MAIN STYLES -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-
-  <!-- TOP BAR: APP NAME + ACCOUNT/AUTH -->
-  <header id="topBar">
-    <div id="appLogo">Scribe Study</div>
-    <div id="userControls">
-      <button id="authButton">Sign in / Account</button>
-    </div>
-  </header>
-
-  <!-- MAIN TABS -->
-  <nav id="mainTabs"></nav>
-
-  <!-- PASSAGE INPUT (LEGACY V2 FEATURE — REPLACED BY headerBar) -->
-  <!-- Hidden to avoid conflict with v1 architecture -->
-  <section id="passageInputRow" class="hidden"></section>
-
-  <!-- WELCOME PANEL -->
-  <section id="welcomePanel" class="hidden">
-    <h2 id="welcomeTitle"></h2>
-    <p id="welcomeDescription"></p>
-    <ul id="welcomeSubtabList"></ul>
-    <label class="welcomeSkip">
-      <input type="checkbox" id="skipWelcomeCheckbox" />
-      Skip this welcome screen next time
-    </label>
-    <button id="continueBtn">Continue →</button>
-  </section>
-
-  <!-- ============================================================
-       NEW v1 HEADER BAR (PASSAGE + BUTTONS)
-       ============================================================ -->
-  <div id="headerBar">
-    <div class="app-title">Scribe Study</div>
-
-    <div style="display:flex; gap:10px; align-items:center;">
-      <input
-        type="text"
-        id="passageInput"
-        placeholder="Example: John 3:16"
-        style="padding:6px 10px; font-size:1rem; border:1px solid #ccc; border-radius:6px; width:200px;"
-      />
-
-      <button id="displayBtn">Display Scripture Text</button>
-      <button id="analysisBtn">Generate Analysis</button>
-    </div>
-  </div>
-
-  <!-- ============================================================
-       MAIN PANELS (v1 ARCHITECTURE)
-       Replaces old topPanels/scripturePanel/analysisPanel entirely
-       ============================================================ -->
-  <div id="mainPanels">
-
-    <div class="side-tabs">
-      <h3 style="margin-bottom:10px;">Tools</h3>
-      <p style="opacity:0.7;">(Coming soon)</p>
-    </div>
-
-    <div id="primaryDisplay">
-      <div class="status-message">
-        <div class="status-icon">✨</div>
-        <div class="status-title">Ready to Study God's Word</div>
-        <p class="status-text">
-          Enter a passage above, then choose "Generate Analysis" or "Display Scripture Text."
-        </p>
+  <div id="appContainer" class="app-container">
+    <!-- LEFT COLLAPSIBLE PANE -->
+    <aside id="sidePane" class="side-pane open" aria-label="Study modes navigation">
+      <div class="pane-header">
+        <div class="app-title">Scribe Study • Prototype</div>
+        <button
+          id="paneCloseBtn"
+          class="pane-close-btn"
+          type="button"
+          title="Collapse study modes panel"
+          aria-label="Collapse study modes panel"
+        >
+          «
+        </button>
       </div>
-    </div>
 
-  </div>
+      <nav id="mainTabs" class="main-tabs" aria-label="Main modes">
+        <button class="main-tab-btn active" type="button" data-mode="devotional">
+          Devotional
+        </button>
+        <button class="main-tab-btn" type="button" data-mode="academic">
+          Academic
+        </button>
+        <button class="main-tab-btn" type="button" data-mode="visual">
+          Visual
+        </button>
+        <button class="main-tab-btn" type="button" data-mode="linguistic">
+          Linguistic Tools
+        </button>
+        <button class="main-tab-btn" type="button" data-mode="compare">
+          Compare
+        </button>
+        <button class="main-tab-btn" type="button" data-mode="custom">
+          Custom
+        </button>
+      </nav>
+    </aside>
 
-  <!-- ============================================================
-       NOTES PANEL (KEPT)
-       ============================================================ -->
-  <div id="notesBar">
-    <button id="expandNotesBtn">Study Notes ↑</button>
-  </div>
+    <!-- SMALL TOGGLE WHEN PANE IS COLLAPSED -->
+    <button
+      id="paneToggleBtn"
+      class="pane-toggle-btn"
+      type="button"
+      title="Open study modes"
+      aria-label="Open study modes"
+      style="display: none;"
+    >
+      ☰
+    </button>
 
-  <div id="notesPanel" class="panel bottom-panel hidden">
-    <div class="panelHeader">
-      <span class="panelTitle">Study Notes</span>
-      <button id="collapseNotesBtn">↓ Collapse</button>
-    </div>
-    <div id="notesContent">
-      <textarea id="notesTextarea" rows="6" placeholder="Record your study notes here..."></textarea>
-    </div>
-  </div>
-
-  <!-- ============================================================
-       VISUALIZATION MODE (Tier 2)
-       (Preserved for Future Integration)
-       ============================================================ -->
-  <section id="visualizationMode" class="hidden">
-    <div id="visualizationTopBar">
-      <span id="visualizationPassageRef">[Passage for visualization]</span>
-      <button id="exitVisualizationBtn">Exit Visualization</button>
-    </div>
-
-    <div id="visualizationCanvas"></div>
-
-    <div id="visualizationNav">
-      <button id="visualPrevBtn">◀ Prev</button>
-      <span id="visualIndexLabel">1 / 1</span>
-      <button id="visualNextBtn">Next ▶</button>
-    </div>
-
-    <div id="visualNotesBar">
-      <span>Notes available below in Study Mode</span>
-    </div>
-  </section>
-
-  <!-- ============================================================
-       HELP + SUGGESTIONS (unchanged)
-       ============================================================ -->
-  <div id="helpAndSuggestionsRow">
-    <button id="helpPageBtn">Help Me Understand This Page</button>
-    <div id="suggestedQuestionsBar"></div>
-  </div>
-
-  <!-- HELP POPUP -->
-  <div id="helpPopup" class="hidden">
-    <div id="helpPopupInner">
-      <h3>Need help understanding this?</h3>
-      <p>Ask any question about what you see on this page.</p>
-      <textarea id="helpQuestionInput" rows="3"></textarea>
-      <div class="helpActions">
-        <button id="helpSendBtn">Send Question →</button>
-        <button id="helpCloseBtn">Close</button>
+    <!-- MAIN / CENTER DISPLAY AREA -->
+    <main id="mainDisplay" class="main-display">
+      <div id="breadcrumbBar" class="breadcrumb-bar">
+        <!-- JS will populate breadcrumbs -->
       </div>
-      <div id="helpResponse"></div>
-    </div>
+
+      <div id="contentArea" class="content-area">
+        <!-- JS will swap in welcome screens and analysis views -->
+        <div class="status-message">
+          <div class="status-icon">✨</div>
+          <div class="status-title">Loading Scribe Study Prototype…</div>
+          <p class="status-text">
+            If this message remains, check that <code>app.js</code> is loaded correctly.
+          </p>
+        </div>
+      </div>
+    </main>
   </div>
 
-  <!-- ============================================================
-       SCRIPT ORDER (v1 REQUIRED)
-       ============================================================ -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-
-  <script src="formattingEngine.js"></script>
   <script src="app.js"></script>
-
 </body>
 </html>

@@ -2,78 +2,163 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Scribe Study – Prototype Collapsible Pane UI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scribe Study</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="appContainer" class="app-container">
-    <!-- LEFT COLLAPSIBLE PANE -->
-    <aside id="sidePane" class="side-pane open" aria-label="Study modes navigation">
-      <div class="pane-header">
-        <div class="app-title">Scribe Study • Prototype</div>
-        <button
-          id="paneCloseBtn"
-          class="pane-close-btn"
-          type="button"
-          title="Collapse study modes panel"
-          aria-label="Collapse study modes panel"
-        >
-          «
-        </button>
+  <div class="app-shell">
+    <!-- TOP HEADER -->
+    <header class="app-header">
+      <div class="header-left">
+        <h1 class="app-title">Scribe Study</h1>
+        <p class="app-subtitle">Scripture • Structure • Formation</p>
       </div>
-
-      <nav id="mainTabs" class="main-tabs" aria-label="Main modes">
-        <button class="main-tab-btn active" type="button" data-mode="devotional">
-          Devotional
-        </button>
-        <button class="main-tab-btn" type="button" data-mode="academic">
-          Academic
-        </button>
-        <button class="main-tab-btn" type="button" data-mode="visual">
-          Visual
-        </button>
-        <button class="main-tab-btn" type="button" data-mode="linguistic">
-          Linguistic Tools
-        </button>
-        <button class="main-tab-btn" type="button" data-mode="compare">
-          Compare
-        </button>
-        <button class="main-tab-btn" type="button" data-mode="custom">
-          Custom
-        </button>
-      </nav>
-    </aside>
-
-    <!-- SMALL TOGGLE WHEN PANE IS COLLAPSED -->
-    <button
-      id="paneToggleBtn"
-      class="pane-toggle-btn"
-      type="button"
-      title="Open study modes"
-      aria-label="Open study modes"
-      style="display: none;"
-    >
-      ☰
-    </button>
-
-    <!-- MAIN / CENTER DISPLAY AREA -->
-    <main id="mainDisplay" class="main-display">
-      <div id="breadcrumbBar" class="breadcrumb-bar">
-        <!-- JS will populate breadcrumbs -->
-      </div>
-
-      <div id="contentArea" class="content-area">
-        <!-- JS will swap in welcome screens and analysis views -->
-        <div class="status-message">
-          <div class="status-icon">✨</div>
-          <div class="status-title">Loading Scribe Study Prototype…</div>
-          <p class="status-text">
-            If this message remains, check that <code>app.js</code> is loaded correctly.
-          </p>
+      <div class="header-right">
+        <div class="current-passage-label">Current Passage:</div>
+        <div class="current-passage-value" id="currentPassageDisplay">
+          None loaded
         </div>
       </div>
-    </main>
+    </header>
+
+    <div class="app-body">
+      <!-- LEFT NAV / TOOL PANE (COLLAPSIBLE) -->
+      <aside
+        id="navPane"
+        class="nav-pane nav-pane-open"
+        aria-label="Study navigation"
+      >
+        <div class="nav-pane-header">
+          <div class="nav-pane-title">Study Modes</div>
+          <button
+            id="navPaneToggleBtn"
+            class="nav-toggle-btn"
+            type="button"
+            aria-label="Collapse navigation"
+            title="Collapse navigation"
+          >
+            «
+          </button>
+        </div>
+
+        <!-- MAIN MODES -->
+        <nav id="mainModeTabs" class="nav-main-tabs" aria-label="Main modes">
+          <button
+            type="button"
+            class="nav-tab-btn active"
+            data-mode="devotional"
+          >
+            Devotional
+          </button>
+          <button type="button" class="nav-tab-btn" data-mode="academic">
+            Academic
+          </button>
+          <button type="button" class="nav-tab-btn" data-mode="visual">
+            Visual
+          </button>
+          <button type="button" class="nav-tab-btn" data-mode="tools">
+            Tools
+          </button>
+        </nav>
+
+        <!-- PASSAGE INPUT (GLOBAL) -->
+        <div class="nav-section">
+          <div class="nav-section-title">Passage</div>
+          <label for="globalPassageInput" class="nav-label">
+            Enter reference:
+          </label>
+          <input
+            id="globalPassageInput"
+            class="nav-input"
+            type="text"
+            placeholder="e.g., John 3:16–21"
+            autocomplete="off"
+          />
+          <button
+            id="loadPassageBtn"
+            class="nav-primary-btn"
+            type="button"
+          >
+            Load Passage
+          </button>
+        </div>
+
+        <!-- QUICK ACTIONS / SUBTABS PLACEHOLDER -->
+        <div class="nav-section">
+          <div class="nav-section-title">Focus</div>
+          <div id="subModeButtons" class="nav-submode-group">
+            <!-- JS will populate context-specific subtabs here -->
+          </div>
+        </div>
+      </aside>
+
+      <!-- SMALL TOGGLE BUTTON WHEN NAV IS COLLAPSED -->
+      <button
+        id="navPaneCollapsedToggle"
+        class="nav-collapsed-toggle"
+        type="button"
+        aria-label="Open navigation"
+        title="Open navigation"
+      >
+        ☰
+      </button>
+
+      <!-- MAIN 3-PANE LAYOUT -->
+      <main class="pane-layout" aria-label="Study workspace">
+        <!-- SCRIPTURE PANE -->
+        <section id="scripturePane" class="pane pane-scripture">
+          <header class="pane-header">
+            <div class="pane-title">Scripture</div>
+            <div class="pane-subtitle" id="scripturePaneSubtitle">
+              Load a passage to display the text here.
+            </div>
+          </header>
+          <div
+            id="scriptureContent"
+            class="pane-body scripture-body"
+          >
+            <!-- JS will render formatted Scripture text here -->
+            <div class="pane-placeholder">
+              Enter a passage on the left, then choose a focus.
+            </div>
+          </div>
+        </section>
+
+        <!-- RESULTS / ANALYSIS PANE -->
+        <section id="resultsPane" class="pane pane-results">
+          <header class="pane-header">
+            <div class="pane-title">Study Results</div>
+            <div class="pane-subtitle" id="resultsPaneSubtitle">
+              Mode-specific analysis and summaries appear here.
+            </div>
+          </header>
+          <div id="resultsContent" class="pane-body results-body">
+            <div class="pane-placeholder">
+              Choose a Study Mode and Focus on the left to see structured
+              output here.
+            </div>
+          </div>
+        </section>
+
+        <!-- NOTES PANE -->
+        <section id="notesPane" class="pane pane-notes">
+          <header class="pane-header">
+            <div class="pane-title">Study Notes</div>
+            <div class="pane-subtitle">
+              Capture observations, questions, and applications.
+            </div>
+          </header>
+          <div class="pane-body notes-body">
+            <textarea
+              id="notesEditor"
+              class="notes-editor"
+              placeholder="Type your notes here…"
+            ></textarea>
+          </div>
+        </section>
+      </main>
+    </div>
   </div>
 
   <script src="app.js"></script>

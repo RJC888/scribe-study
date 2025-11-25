@@ -1,317 +1,129 @@
-/* =========================
-   GLOBAL
-========================= */
-
+/* CORE LAYOUT */
 body {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background-color: #f7f7f9;
+  background-color: #f5f5f5;
   color: #222;
+  height: 100vh;
   overflow: hidden;
 }
 
-.app-shell {
+#mainShell {
+  display: flex;
+  height: calc(100vh - 50px);
+  overflow: hidden;
+}
+
+#workspace {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  flex: 1;
+  overflow: hidden;
 }
 
-/* =========================
-   HEADER
-========================= */
+/* TOP TWO PANELS SIDE-BY-SIDE */
 
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  background: #1e1f22;
-  padding: 10px 16px;
-  color: #f1f1f1;
-  height: 56px;
-}
-
-.app-title {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.app-subtitle {
-  margin: 0;
-  font-size: 12px;
-  color: #c7c7cf;
-}
-
-.header-right {
-  text-align: right;
-  font-size: 12px;
-}
-
-.current-passage-label {
-  color: #bdbdc4;
-  margin-bottom: 2px;
-}
-
-.current-passage-value {
-  font-weight: 600;
-}
-
-/* =========================
-   BODY LAYOUT
-========================= */
-
-.app-body {
+#topPanels {
   display: flex;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
 }
 
-/* =========================
-   LEFT NAV PANE
-========================= */
-
-.nav-pane {
-  width: 240px;
-  background: #fcfcfd;
-  border-right: 1px solid #d6d6dc;
+.panel {
   display: flex;
   flex-direction: column;
-  transition: transform 0.25s ease;
-  z-index: 3;
+  border-right: 1px solid #ccc;
+  background: white;
 }
 
-.nav-pane-open {
-  transform: translateX(0);
+#scripturePanel {
+  flex: 1;
+  min-width: 40%;
+  max-width: 50%;
 }
 
-.nav-pane-collapsed {
-  transform: translateX(-100%);
+#analysisPanel {
+  flex: 1;
 }
 
-.nav-pane-header {
+/* PANEL HEADERS */
+
+.panelHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #dadade;
-  background: #efeff3;
+  background: #ececec;
+  padding: 8px 12px;
+  border-bottom: 1px solid #d3d3d3;
 }
 
-.nav-pane-title {
-  font-size: 14px;
+.panelTitle {
+  font-size: 15px;
   font-weight: 600;
 }
 
-.nav-toggle-btn {
+.expandBtn {
+  cursor: pointer;
+  font-size: 14px;
   background: none;
   border: none;
-  font-size: 16px;
-  cursor: pointer;
   color: #444;
-  padding: 2px 6px;
 }
 
-.nav-main-tabs {
-  display: flex;
-  flex-direction: column;
-  padding: 8px;
-  gap: 6px;
-}
+/* PANEL CONTENT */
 
-.nav-tab-btn {
-  border: none;
-  padding: 8px 10px;
-  text-align: left;
-  background: #fff;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  border: 1px solid transparent;
-}
-
-.nav-tab-btn:hover {
-  border-color: #bbb;
-  background: #f8f8fb;
-}
-
-.nav-tab-btn.active {
-  border-color: #3d6df6;
-  background: #e9efff;
-  font-weight: 600;
-}
-
-/* PANES COLLAPSED BUTTON */
-
-.nav-collapsed-toggle {
-  display: none;
-  position: absolute;
-  left: 0;
-  top: 60px;
-  z-index: 10;
-  background: #3d6df6;
-  color: #fff;
-  border: none;
-  border-radius: 0 8px 8px 0;
-  padding: 6px 10px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-/* NAV INPUT & SECTION */
-
-.nav-section {
-  padding: 10px;
-  border-bottom: 1px solid #dadade;
-}
-
-.nav-section-title {
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.nav-label {
-  display: block;
-  font-size: 11px;
-  color: #555;
-  margin-bottom: 2px;
-}
-
-.nav-input {
-  width: 100%;
-  padding: 6px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  margin-bottom: 7px;
-  font-size: 13px;
-}
-
-.nav-primary-btn {
-  width: 100%;
-  padding: 7px;
-  font-size: 13px;
-  background: #3d6df6;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.nav-primary-btn:hover {
-  background: #335ad7;
-}
-
-/* =========================
-   MAIN 3-PANE LAYOUT
-========================= */
-
-.pane-layout {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-  min-width: 0;
-}
-
-/* Individual Pane Styling */
-
-.pane {
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid #d6d6dc;
-  min-width: 200px;
-  overflow: hidden;
-}
-
-/* widths */
-.pane-scripture {
-  flex: 1;
-  max-width: 38%;
-  min-width: 32%;
-}
-
-.pane-results {
-  flex: 1;
-  max-width: 38%;
-  min-width: 32%;
-}
-
-.pane-notes {
-  flex-basis: 26%;
-  min-width: 260px;
-  border-right: none;
-}
-
-/* =========================
-   PANE CONTENT
-========================= */
-
-.pane-header {
-  padding: 8px 12px;
-  border-bottom: 1px solid #dadade;
-  background: #f2f3f5;
-}
-
-.pane-title {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.pane-subtitle {
-  font-size: 12px;
-  color: #666;
-}
-
-.pane-body {
+#scriptureContent,
+#analysisContent {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 10px;
-  background: #ffffff;
+  padding: 10px;
 }
 
-/* EMPTY MESSAGE PLACEHOLDER */
+/* NOTES BAR */
 
-.pane-placeholder {
-  font-size: 13px;
-  color: #777;
-  padding: 6px 0;
+#notesBar {
+  height: 26px;
+  background: #ddd;
+  text-align: center;
+  border-top: 1px solid #ccc;
 }
 
-/* =========================
-   NOTES EDITOR
-========================= */
+#notesBar button {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #d3d3d3;
+  cursor: pointer;
+}
 
-.notes-editor {
+/* BOTTOM NOTES PANEL */
+
+#notesPanel {
+  height: 190px;
+  background: #fefefe;
+  border-top: 1px solid #bbb;
+  display: flex;
+  flex-direction: column;
+}
+
+#notesPanel.hidden {
+  display: none;
+}
+
+#notesContent {
+  flex: 1;
+  padding: 8px;
+}
+
+#notesTextarea {
   width: 100%;
   height: 100%;
   resize: none;
+  font-size: 14px;
   border: none;
-  padding: 6px;
-  font-size: 13px;
-  font-family: inherit;
-  color: #222;
 }
 
-.notes-editor:focus {
+#notesTextarea:focus {
   outline: none;
-  background: #fff;
-}
-
-/* =========================
-   SCROLLBARS (MAC-FRIENDLY)
-========================= */
-
-.pane-body::-webkit-scrollbar {
-  width: 8px;
-}
-
-.pane-body::-webkit-scrollbar-thumb {
-  background: #c5c5ce;
-  border-radius: 6px;
-}
-
-.pane-body::-webkit-scrollbar-thumb:hover {
-  background: #a9a9b6;
 }

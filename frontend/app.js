@@ -199,13 +199,13 @@ function setMode(mode) {
   });
 
   // Render welcome screen for selected mode
-  renderWelcomeScreen(mode);
+  //renderWelcomeScreen(mode);
   updateBreadcrumb(); // Mode only for now; passage/subtab filled later
 }
 
-function renderWelcomeScreen(mode) {
+/function renderWelcomeScreen(mode) {
   const config = MODE_CONFIG[mode];
-  if (!config) return;
+  if (!config) return;/
 
   const subtabsHtml = config.subtabs
     .map(

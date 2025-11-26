@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
   cacheDom();
   attachGlobalEvents();
   // Set initial mode and welcome screen
-  setMode("devotional");
+  //setMode("devotional");
 });
 
 // Cache DOM elements once
@@ -256,7 +256,7 @@ function setMode(mode) {
 
   contentArea.innerHTML = html;
   setupTwoStepFlow(mode);
-}
+}/
 
 // ==============================
 // TWO-STEP FLOW LOGIC

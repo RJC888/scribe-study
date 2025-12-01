@@ -3,131 +3,97 @@
 // No Firebase, no AI calls – just layout & behavior.
 // =====================================================
 
+import { PROMPT_REGISTRY } from './promptRegistry.js';
+
 const AppState = {
   currentMode: "devotional",
   currentSubtab: null,
   currentPassage: "",
+  currentVersion: "web",
   paneOpen: true,
 };
 
-// Configuration for modes and subtabs (extendable later)
+// Make AppState accessible to other modules
+window.AppState = AppState;
+
+// Configuration for modules and subtabs (NEW STRUCTURE - 6 modules)
 const MODE_CONFIG = {
   devotional: {
     label: "Devotional",
-    description:
-      "Gentle, heart-focused reflection with worship-oriented prompts, micro-units, and spiritual application.",
+    description: "Spiritual depth and transformative reflection through Scripture",
     subtabs: [
-      {
-        id: "dev_micro_units",
-        title: "Devotional Micro-Units",
-        desc: "Break the passage into bite-sized units for prayerful meditation and response.",
-      },
-      {
-        id: "dev_gospel_lens",
-        title: "Gospel Lens",
-        desc: "Explore how this passage reveals Christ, the gospel, and personal transformation.",
-      },
+      { id: "spiritual_analysis", title: "Spiritual Analysis", desc: "Explore spiritual truths and divine principles", icon: "🙏" },
+      { id: "devotional_reflection", title: "Devotional Reflection", desc: "Personal meditation and prayerful response", icon: "📖" },
+      { id: "discipleship", title: "Discipleship", desc: "Growth in following Christ and obedience", icon: "👥" },
+      { id: "redemptive_focus", title: "Redemptive Focus", desc: "How Christ's redemption is revealed", icon: "✨" },
+      { id: "life_application", title: "Life Application", desc: "Practical transformation and living truth", icon: "💡" },
     ],
   },
-  academic: {
-    label: "Academic",
-    description:
-      "Text-driven analysis focused on structure, grammar, discourse, and historical-theological depth.",
+  "text-analysis": {
+    label: "Text Analysis",
+    description: "Structural, literary, and linguistic depth of Scripture",
     subtabs: [
-      {
-        id: "acad_syntax",
-        title: "Syntax Map",
-        desc: "Trace the clauses, connectors, and grammatical relationships in the passage.",
-      },
-      {
-        id: "acad_discourse",
-        title: "Discourse Flow",
-        desc: "Follow the argument, movements, and transitions at the discourse level.",
-      },
-      {
-        id: "acad_lexical",
-        title: "Lexical Focus",
-        desc: "Highlight key Hebrew/Greek terms, semantic domains, and lexical observations.",
-      },
+      { id: "overview", title: "Overview", desc: "High-level passage summary and context", icon: "🔍" },
+      { id: "structure", title: "Structure", desc: "Outline and organizational flow", icon: "📋" },
+      { id: "literary_devices", title: "Literary Devices", desc: "Metaphor, symbolism, and rhetorical patterns", icon: "🎨" },
+      { id: "discourse", title: "Discourse", desc: "Argument flow and logical progression", icon: "💬" },
+      { id: "semantic_outline", title: "Semantic Outline", desc: "Meaning-based structural breakdown", icon: "📊" },
+      { id: "key_words", title: "Key Words", desc: "Significant terms and their significance", icon: "🏷️" },
     ],
   },
-  visual: {
-    label: "Visual",
-    description:
-      "Imagery, charts, timelines, and diagrams that help the passage become visually memorable.",
+  "original-languages": {
+    label: "Original Languages",
+    description: "Greek, Hebrew, and linguistic depth",
     subtabs: [
-      {
-        id: "vis_diagram",
-        title: "Structural Diagram",
-        desc: "Generate a high-level visual structure of the passage's main movements.",
-      },
-      {
-        id: "vis_timeline",
-        title: "Timeline / Story Arc",
-        desc: "Map the events and turning points as a visual storyline.",
-      },
+      { id: "greek_hebrew", title: "Greek/Hebrew", desc: "Original language terms and meanings", icon: "Ἑ" },
+      { id: "morphology", title: "Morphology", desc: "Word forms, tenses, and grammatical structures", icon: "🔬" },
+      { id: "grammar_essentials", title: "Grammar Essentials ⭐", desc: "Essential grammatical patterns", icon: "📚" },
+      { id: "advanced_grammar", title: "Advanced Grammar ⭐", desc: "Complex grammatical constructions", icon: "🧠" },
+      { id: "verse_by_verse", title: "Verse-by-Verse", desc: "Detailed analysis of each phrase", icon: "📝" },
+      { id: "semantic_range", title: "Semantic Range", desc: "Range of meanings and usage", icon: "🌐" },
     ],
   },
-  linguistic: {
-    label: "Linguistic Tools",
-    description:
-      "Language-level tools like morphology, parsing, and word relationships for deeper exegesis.",
+  context: {
+    label: "Context",
+    description: "Historical, cultural, and theological background",
     subtabs: [
-      {
-        id: "ling_morphology",
-        title: "Morphology",
-        desc: "Focus on forms, parsing, and verbal aspects in the original languages.",
-      },
-      {
-        id: "ling_collocations",
-        title: "Collocations & Phrases",
-        desc: "Identify key repeated phrases, collocations, and patterns.",
-      },
+      { id: "historical_cultural", title: "Historical-Cultural", desc: "First-century world and customs", icon: "🏛️" },
+      { id: "geographical", title: "Geographical", desc: "Maps, places, and travel routes", icon: "🗺️" },
+      { id: "theological", title: "Theological", desc: "Theological themes and tensions", icon: "⛪" },
+      { id: "cross_references", title: "Cross-References", desc: "Related passages and parallels", icon: "🔗" },
+      { id: "literary_context", title: "Literary", desc: "Book setting and narrative context", icon: "📖" },
     ],
   },
-  compare: {
-    label: "Compare",
-    description:
-      "Compare passages, translations, or parallel texts for harmony and contrast.",
+  "jewish-background": {
+    label: "Jewish Background",
+    description: "Second Temple Judaism and Jewish thought",
     subtabs: [
-      {
-        id: "cmp_translations",
-        title: "Translation Comparison",
-        desc: "Compare multiple English (or other language) translations side by side.",
-      },
-      {
-        id: "cmp_parallels",
-        title: "Parallel Passages",
-        desc: "Identify related or parallel texts for cross-reference study.",
-      },
+      { id: "second_temple", title: "Second Temple", desc: "Temple period practices and beliefs", icon: "🕌" },
+      { id: "rabbinic", title: "Rabbinic", desc: "Rabbinic interpretation and tradition", icon: "📜" },
+      { id: "dead_sea_scrolls", title: "Dead Sea Scrolls", desc: "DSS parallels and insights", icon: "🏜️" },
+      { id: "pseudepigrapha", title: "Pseudepigrapha", desc: "Jewish apocryphal literature", icon: "📚" },
     ],
   },
-  custom: {
-    label: "Custom",
-    description:
-      "User-defined presets and saved analysis flows tailored to recurring study patterns.",
+  teaching: {
+    label: "Teaching",
+    description: "Resources for teaching and proclaiming Scripture",
     subtabs: [
-      {
-        id: "cst_my_template",
-        title: "My Template",
-        desc: "Run a saved combination of prompts you regularly use.",
-      },
-      {
-        id: "cst_experiment",
-        title: "Experiment Mode",
-        desc: "Prototype and test new prompt combinations safely.",
-      },
+      { id: "sermon_outline", title: "Sermon Outline", desc: "Structured outline for preaching", icon: "🎤" },
+      { id: "lesson_plan", title: "Lesson Plan", desc: "Educational lesson structure", icon: "✏️" },
+      { id: "discussion_questions", title: "Discussion Questions", desc: "Questions for group study", icon: "❓" },
+      { id: "illustrations", title: "Illustrations", desc: "Stories and examples for teaching", icon: "📚" },
+      { id: "teaching_points", title: "Teaching Points", desc: "Key takeaways and insights", icon: "⭐" },
     ],
   },
 };
 
-// DOM references
-let sidePane;
-let paneToggleBtn;
-let paneCloseBtn;
-let breadcrumbBar;
-let contentArea;
+// DOM references (NEW MODAL SYSTEM)
 let mainTabButtons;
+let subtabModal;
+let subtabModalOverlay;
+let subtabModalCloseBtn;
+let subtabModalTitle;
+let subtabGrid;
 
 // ==============================
 // INITIALIZATION
@@ -136,76 +102,137 @@ let mainTabButtons;
 document.addEventListener("DOMContentLoaded", () => {
   cacheDom();
   attachGlobalEvents();
+  initializeVersionSelector();
+  initializePassageInput();
+  initializePassageDrawer();
+  initializeZoomControls();
   // Set initial mode and welcome screen
   //setMode("devotional");
 });
 
 // Cache DOM elements once
 function cacheDom() {
-  sidePane = document.getElementById("sidePane");
-  paneToggleBtn = document.getElementById("paneToggleBtn");
-  paneCloseBtn = document.getElementById("paneCloseBtn");
-  breadcrumbBar = document.getElementById("breadcrumbBar");
-  contentArea = document.getElementById("contentArea");
   mainTabButtons = Array.from(
-    document.querySelectorAll("#mainTabs .main-tab-btn")
+    document.querySelectorAll("#moduleTabsBar .module-tab")
   );
+  subtabModal = document.getElementById("subtabModal");
+  subtabModalOverlay = document.getElementById("subtabModalOverlay");
+  subtabModalCloseBtn = document.getElementById("subtabModalCloseBtn");
+  subtabModalTitle = document.getElementById("subtabModalTitle");
+  subtabGrid = document.getElementById("subtabGrid");
 }
 
-// Attach listeners for pane toggling and main tab clicks
+// Attach listeners for module tabs and modal
 function attachGlobalEvents() {
-  // Main tab buttons: set mode and show welcome screen
+  // Module tab buttons: show subtab modal
   mainTabButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
-      const mode = btn.dataset.mode;
-      setMode(mode);
-      // If user clicks a tab while pane is collapsed, open it so they can see context.
-      if (!AppState.paneOpen) {
-        openSidePane();
-      }
+      const module = btn.dataset.module;
+      showSubtabModal(module);
     });
   });
 
-  // Close (collapse) pane from inside
-  if (paneCloseBtn) {
-    paneCloseBtn.addEventListener("click", () => {
-      collapseSidePane();
+  // Close modal via X button
+  if (subtabModalCloseBtn) {
+    subtabModalCloseBtn.addEventListener("click", () => {
+      closeSubtabModal();
     });
   }
 
-  // Toggle button when pane is collapsed
-  if (paneToggleBtn) {
-    paneToggleBtn.addEventListener("click", () => {
-      openSidePane();
+  // Close modal when clicking overlay
+  if (subtabModalOverlay) {
+    subtabModalOverlay.addEventListener("click", () => {
+      closeSubtabModal();
     });
   }
 }
 
 // ==============================
-// MODE + WELCOME SCREEN LOGIC
+// MODE + MODAL LOGIC
 // ==============================
 
-function setMode(mode) {
-  if (!MODE_CONFIG[mode]) {
-    console.warn("Unknown mode:", mode);
+function showSubtabModal(module) {
+  console.log('🔍 showSubtabModal called for:', module);
+  const config = MODE_CONFIG[module];
+  if (!config) {
+    console.warn('Unknown module:', module);
     return;
   }
-  AppState.currentMode = mode;
-  AppState.currentSubtab = null;
-
-  // Update tab button active states
-  mainTabButtons.forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.mode === mode);
-  });
-
-  // Render welcome screen for selected mode
-  //renderWelcomeScreen(mode);
-  updateBreadcrumb(); // Mode only for now; passage/subtab filled later
+  
+  AppState.currentMode = module;
+  console.log('✓ Module config found:', config.label);
+  
+  // Update modal title
+  if (subtabModalTitle) {
+    subtabModalTitle.textContent = config.label;
+    console.log('📝 Modal title set to:', config.label);
+  }
+  
+  // Populate subtab grid
+  if (subtabGrid) {
+    console.log('📊 Populating subtab grid with', config.subtabs.length, 'subtabs');
+    subtabGrid.innerHTML = config.subtabs.map(subtab => `
+      <div class="subtab-card-item" data-subtab="${subtab.id}">
+        <div class="subtab-card-icon">${subtab.icon || '📖'}</div>
+        <div class="subtab-card-title">${subtab.title}</div>
+        <div class="subtab-card-desc">${subtab.desc}</div>
+        <div class="subtab-depth-buttons">
+          <button class="depth-btn dig-in" data-depth="dig-in">📝 Dig In</button>
+          <button class="depth-btn deep-dive" data-depth="deep-dive">🔍 Deep Dive</button>
+        </div>
+      </div>
+    `).join('');
+    console.log('✓ Subtab grid populated');
+    
+    // Attach click listeners to depth buttons
+    const depthButtons = subtabGrid.querySelectorAll('.depth-btn');
+    console.log('🔗 Attaching listeners to', depthButtons.length, 'depth buttons');
+    depthButtons.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation(); // Prevent card click
+        const card = btn.closest('.subtab-card-item');
+        const subtabId = card.dataset.subtab;
+        const depth = btn.dataset.depth;
+        const passage = AppState.currentPassage;
+        
+        if (!passage) {
+          alert('Please enter a passage in the Scripture panel first');
+          return;
+        }
+        
+        // Close modal
+        closeSubtabModal();
+        
+        // Run analysis with depth
+        try {
+          const { runAnalysis } = await import('./analysisEngine.js');
+          await runAnalysis(module, subtabId, passage, depth);
+        } catch (err) {
+          console.error('❌ Error running analysis:', err);
+          alert('Error running analysis. Check console for details.');
+        }
+      });
+    });
+  }
+  
+  // Show modal
+  if (subtabModal) {
+    console.log('🎬 Showing modal');
+    subtabModal.classList.remove('hidden');
+  } else {
+    console.warn('⚠️ subtabModal element not found');
+  }
 }
 
-/function renderWelcomeScreen(mode) {
+function closeSubtabModal() {
+  if (subtabModal) {
+    subtabModal.classList.add('hidden');
+  }
+}
+
+function renderWelcomeScreen(mode) {
   const config = MODE_CONFIG[mode];
-  if (!config) return;/
+  if (!config) return;
 
   const subtabsHtml = config.subtabs
     .map(
@@ -256,7 +283,7 @@ function setMode(mode) {
 
   contentArea.innerHTML = html;
   setupTwoStepFlow(mode);
-}/
+}
 
 // ==============================
 // TWO-STEP FLOW LOGIC
@@ -287,23 +314,31 @@ function setupTwoStepFlow(mode) {
     });
   });
 
-  // Attach click listeners to subtabs (Step 2)
+    // Attach click listeners to subtabs (Step 2)
   subtabCards.forEach((card) => {
-    card.addEventListener("click", () => {
+    card.addEventListener("click", async () => {
       if (card.classList.contains("disabled")) return;
 
       const subtabId = card.dataset.subtab;
       AppState.currentSubtab = subtabId;
 
-      // At this point, two-step is satisfied:
-      //  1) Passage entered
-      //  2) SubTab chosen
-      // So we:
-      //  - Render analysis placeholder
-      //  - Update breadcrumb
-      //  - Auto-collapse the side pane
-      runAnalysisPlaceholder(AppState.currentMode, subtabId, AppState.currentPassage);
+      // Get the passage text
+      const passageText = passageInput.value.trim();
+      if (!passageText) {
+        alert("Please enter a passage first");
+        return;
+      }
+
+      // Import and run analysis
+      const { runAnalysis } = await import('./analysisEngine.js');
+      
+      // Call the analysis engine
+      await runAnalysis(AppState.currentMode, subtabId, passageText);
+      
+      // Update breadcrumb
       updateBreadcrumb();
+      
+      // Auto-collapse the side pane
       collapseSidePane();
     });
   });
@@ -361,56 +396,228 @@ function runAnalysisPlaceholder(mode, subtabId, passage) {
 // BREADCRUMB LOGIC
 // ==============================
 
+// Update breadcrumb/status display
 function updateBreadcrumb() {
-  const modeConfig = MODE_CONFIG[AppState.currentMode];
-  const modeLabel = modeConfig ? modeConfig.label : AppState.currentMode;
-
-  let subtabLabel = "";
-  if (AppState.currentSubtab && modeConfig) {
-    const sub = modeConfig.subtabs.find(
-      (s) => s.id === AppState.currentSubtab
-    );
-    if (sub) subtabLabel = sub.title;
-  }
-
+  const config = MODE_CONFIG[AppState.currentMode];
+  const modeLabel = config ? config.label : AppState.currentMode;
   const passage = AppState.currentPassage;
 
-  let text = "";
-  if (modeLabel) {
-    text += `<span>${modeLabel}</span>`;
-  }
-  if (subtabLabel) {
-    text += ` &nbsp;→&nbsp; <span>${subtabLabel}</span>`;
-  }
-  if (passage) {
-    text += ` &nbsp;|&nbsp; <span>${passage}</span>`;
-  }
-
-  breadcrumbBar.innerHTML = text || "Select a mode to begin.";
+  console.log('📍 Mode:', modeLabel, '| Passage:', passage);
 }
 
 // ==============================
-// PANE COLLAPSE / EXPAND
+// PANE / MODAL HELPERS
 // ==============================
 
 function collapseSidePane() {
-  if (!sidePane) return;
-  sidePane.classList.add("collapsed");
-  sidePane.classList.remove("open");
-  AppState.paneOpen = false;
-
-  if (paneToggleBtn) {
-    paneToggleBtn.style.display = "block";
+  if (subtabModal) {
+    subtabModal.classList.add('hidden');
   }
 }
 
 function openSidePane() {
-  if (!sidePane) return;
-  sidePane.classList.remove("collapsed");
-  sidePane.classList.add("open");
-  AppState.paneOpen = true;
+  // Not needed in new modal system
+}
 
-  if (paneToggleBtn) {
-    paneToggleBtn.style.display = "none";
+// ==============================
+// MODULE TAB MODAL LOGIC
+// ==============================
+
+function initializeModuleTabModal() {
+  // Modal system is now initialized via attachGlobalEvents()
+}
+
+// ==============================
+async function initializePassageInput() {
+  try {
+    const passageInput = document.getElementById("passageInput");
+    console.log('📄 Initializing passage input:', !!passageInput);
+    
+    if (!passageInput) return;
+    
+    // Import analysis engine at initialization time
+    let fetchAndDisplayScripture = null;
+    try {
+      const module = await import('./analysisEngine.js');
+      fetchAndDisplayScripture = module.fetchAndDisplayScripture;
+    } catch (e) {
+      console.error('⚠️ Could not load analysisEngine:', e);
+    }
+    
+    passageInput.addEventListener("input", (e) => {
+      try {
+        if (AppState && typeof AppState === 'object') {
+          AppState.currentPassage = e.target.value.trim();
+          console.log('✍️ Passage updated:', AppState.currentPassage);
+        }
+      } catch (err) {
+        console.error('❌ Error updating passage:', err);
+      }
+    });
+    
+    passageInput.addEventListener("keypress", (e) => {
+      try {
+        if (e.key === "Enter") {
+          const passage = AppState?.currentPassage;
+          console.log('⏎ Enter pressed on passage input:', passage);
+          
+          if (passage && fetchAndDisplayScripture) {
+            const fullPassageText = document.getElementById('fullPassageText');
+            const passageDrawer = document.getElementById('passageDrawer');
+            if (fullPassageText) {
+              console.log('📖 Fetching Scripture independently for:', passage);
+              // Show loading state
+              fullPassageText.innerHTML = '<div style="padding: 12px; color: #666; font-style: italic;">⏳ Loading Scripture...</div>';
+              // Auto-expand the passage drawer
+              if (passageDrawer) {
+                console.log('📂 Expanding passage drawer');
+                passageDrawer.classList.remove('hidden');
+              }
+              console.log('🔄 Calling fetchAndDisplayScripture...');
+              fetchAndDisplayScripture(passage, fullPassageText);
+            } else {
+              console.warn('⚠️ fullPassageText element not found');
+            }
+          } else {
+            console.warn('⚠️ Missing passage or fetchAndDisplayScripture. passage:', passage, 'fn:', !!fetchAndDisplayScripture);
+          }
+          
+          // Focus on first module tab
+          const firstTab = document.querySelector(".module-tab");
+          if (firstTab) {
+            firstTab.focus();
+          }
+        }
+      } catch (err) {
+        console.error('❌ Error on Enter key:', err);
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error initializing passage input:', error);
   }
+}
+
+// ==============================
+// PASSAGE DRAWER TOGGLE
+// ==============================
+function initializePassageDrawer() {
+  const toggleBtn = document.getElementById('togglePassageDrawerBtn');
+  const passageDrawer = document.getElementById('passageDrawer');
+  
+  if (!toggleBtn || !passageDrawer) return;
+  
+  toggleBtn.addEventListener('click', () => {
+    console.log('🔀 Toggle passage drawer clicked');
+    passageDrawer.classList.toggle('hidden');
+    // Update button text
+    if (passageDrawer.classList.contains('hidden')) {
+      toggleBtn.textContent = 'Show full passage ▼';
+    } else {
+      toggleBtn.textContent = 'Hide full passage ▲';
+    }
+  });
+}
+
+// ==============================
+// VERSION SELECTOR INITIALIZATION
+// ==============================
+function initializeVersionSelector() {
+  try {
+    const versionSelector = document.getElementById('versionSelector');
+    if (!versionSelector) {
+      console.warn('⚠️ versionSelector element not found');
+      return;
+    }
+    
+    // Restore saved version from localStorage
+    const savedVersion = localStorage.getItem('bibleVersion') || 'web';
+    versionSelector.value = savedVersion;
+    if (AppState && typeof AppState === 'object') {
+      AppState.currentVersion = savedVersion;
+    }
+    console.log('📖 Restored Bible version from storage:', savedVersion);
+    
+    // Listen for version changes
+    versionSelector.addEventListener('change', async (e) => {
+      try {
+        const newVersion = e.target.value;
+        if (AppState && typeof AppState === 'object') {
+          AppState.currentVersion = newVersion;
+        }
+        localStorage.setItem('bibleVersion', newVersion);
+        console.log('📖 Bible version changed to:', newVersion);
+        
+        // Re-fetch current passage in new version
+        const passage = AppState?.currentPassage;
+        if (passage) {
+          const fullPassageText = document.getElementById('fullPassageText');
+          if (fullPassageText) {
+            fullPassageText.innerHTML = '<div style="padding: 12px; color: #666; font-style: italic;">⏳ Loading Scripture in new version...</div>';
+            try {
+              const { fetchAndDisplayScripture } = await import('./analysisEngine.js');
+              if (fetchAndDisplayScripture) {
+                fetchAndDisplayScripture(passage, fullPassageText);
+              }
+            } catch (importError) {
+              console.error('⚠️ Failed to import analysisEngine:', importError);
+            }
+          }
+        }
+      } catch (changeError) {
+        console.error('❌ Error handling version change:', changeError);
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error initializing version selector:', error);
+  }
+}
+
+// ==============================
+// ZOOM CONTROLS INITIALIZATION
+// ==============================
+const ZoomState = {
+  level: 100, // percentage
+};
+
+function initializeZoomControls() {
+  const zoomDecreaseBtn = document.getElementById("zoomDecreaseBtn");
+  const zoomIncreaseBtn = document.getElementById("zoomIncreaseBtn");
+  const zoomLevel = document.getElementById("zoomLevel");
+  
+  if (!zoomDecreaseBtn || !zoomIncreaseBtn) return;
+  
+  function updateZoom() {
+    zoomLevel.textContent = ZoomState.level + "%";
+    
+    // Apply zoom to both Scripture and Analysis content
+    const scriptureContent = document.getElementById("scriptureContent");
+    const analysisContent = document.getElementById("analysisContent");
+    
+    const zoomFactor = ZoomState.level / 100;
+    
+    if (scriptureContent) {
+      scriptureContent.style.fontSize = (13 * zoomFactor) + "px";
+    }
+    
+    if (analysisContent) {
+      analysisContent.style.fontSize = (13 * zoomFactor) + "px";
+    }
+  }
+  
+  zoomDecreaseBtn.addEventListener("click", () => {
+    if (ZoomState.level > 60) {
+      ZoomState.level -= 10;
+      updateZoom();
+    }
+  });
+  
+  zoomIncreaseBtn.addEventListener("click", () => {
+    if (ZoomState.level < 150) {
+      ZoomState.level += 10;
+      updateZoom();
+    }
+  });
+  
+  // Initialize zoom display
+  updateZoom();
 }

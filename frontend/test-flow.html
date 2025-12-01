@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test API Flow</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f7;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h1 { color: #1e1f22; }
+    h2 { color: #3d6df6; margin-top: 20px; }
+    input, textarea, select {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0;
+      border: 1px solid #c0c2c9;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 8px 4px 8px 0;
+      background: #3d6df6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover {
+      background: #2d5ce0;
+    }
+    .result {
+      background: #f9f9fb;
+      padding: 16px;
+      border-radius: 4px;
+      margin-top: 16px;
+      border-left: 4px solid #3d6df6;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .error {
+      color: #dc2626;
+      border-left-color: #dc2626;
+    }
+    .success {
+      color: #059669;
+      border-left-color: #059669;
+    }
+    .loading {
+      color: #666;
+      font-style: italic;
+    }
+    .test-case {
+      background: #f0f4ff;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #dbe5ff;
+    }
+    .test-case:hover {
+      background: #e7eeff;
+    }
+    pre {
+      background: #1e1f22;
+      color: #00ff00;
+      padding: 12px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Scribe Study - API Test Flow</h1>
+    <p>This page helps you debug the analysis flow by testing the API directly.</p>
+  </div>
+
+  <div class="container">
+    <h2>Step 1: Test Health Check</h2>
+    <button onclick="testHealth()">Check Backend Status</button>
+    <div id="healthResult" class="result" style="display:none;"></div>
+  </div>
+
+  <div class="container">
+    <h2>Step 2: Test Analysis API</h2>
+    <label>Passage:</label>
+    <input type="text" id="passage" value="John 3:16" placeholder="e.g., John 3:16">
+    
+    <label>Module:</label>
+    <select id="module">
+      <option value="devotional">Devotional</option>
+      <option value="text-analysis">Text Analysis</option>
+      <option value="original-languages">Original Languages</option>
+      <option value="context">Context</option>
+      <option value="jewish-background">Jewish Background</option>
+      <option value="teaching">Teaching</option>
+    </select>
+
+    <label>Subtab:</label>
+    <select id="subtab">
+      <option value="spiritual_analysis">Spiritual Analysis</option>
+      <option value="overview">Overview</option>
+    </select>
+
+    <label>Depth:</label>
+    <select id="depth">
+      <option value="dig-in">Dig In (Summary)</option>
+      <option value="deep-dive">Deep Dive (Thorough)</option>
+    </select>
+
+    <button onclick="testAnalysis()">Run Analysis</button>
+    <div id="analysisResult" class="result" style="display:none;"></div>
+  </div>
+
+  <div class="container">
+    <h2>Quick Test Cases</h2>
+    <div class="test-case" onclick="quickTest('John 3:16', 'devotional', 'spiritual_analysis', 'dig-in')">
+      📖 <strong>Devotional - John 3:16 (Summary)</strong><br>
+      <small>Test spiritual analysis with Dig In depth</small>
+    </div>
+    <div class="test-case" onclick="quickTest('Romans 3:23-24', 'text-analysis', 'overview', 'deep-dive')">
+      📚 <strong>Text Analysis - Romans 3:23-24 (Thorough)</strong><br>
+      <small>Test overview with Deep Dive depth</small>
+    </div>
+    <div class="test-case" onclick="quickTest('Psalm 23', 'original-languages', 'greek_hebrew', 'dig-in')">
+      Ἑ <strong>Original Languages - Psalm 23 (Summary)</strong><br>
+      <small>Test Greek/Hebrew analysis</small>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>📊 Console Logs</h2>
+    <pre id="consoleLogs"></pre>
+  </div>
+
+  <script>
+    // Capture console logs
+    const consoleLogs = [];
+    const originalLog = console.log;
+    console.log = function(...args) {
+      originalLog(...args);
+      consoleLogs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
+      document.getElementById('consoleLogs').textContent = consoleLogs.slice(-50).join('\n');
+      document.getElementById('consoleLogs').parentElement.scrollTop = document.getElementById('consoleLogs').parentElement.scrollHeight;
+    };
+
+    async function testHealth() {
+      const resultDiv = document.getElementById('healthResult');
+      resultDiv.style.display = 'block';
+      resultDiv.className = 'result loading';
+      resultDiv.textContent = '⏳ Checking backend...';
+
+      try {
+        const response = await fetch('/api/health');
+        const data = await response.json();
+        
+        if (response.ok) {
+          resultDiv.className = 'result success';
+          resultDiv.innerHTML = `
+            <strong>✅ Backend is healthy!</strong><br>
+            Status: ${data.status}<br>
+            Message: ${data.message}<br>
+            API Key configured: ${data.hasApiKey ? '✅ Yes' : '❌ No'}
+          `;
+          console.log('✅ Health check passed:', data);
+        } else {
+          resultDiv.className = 'result error';
+          resultDiv.textContent = '❌ Backend error: ' + JSON.stringify(data);
+          console.log('❌ Health check failed:', data);
+        }
+      } catch (error) {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = '❌ Connection failed: ' + error.message;
+        console.log('❌ Health check error:', error);
+      }
+    }
+
+    async function testAnalysis() {
+      const passage = document.getElementById('passage').value;
+      const module = document.getElementById('module').value;
+      const subtab = document.getElementById('subtab').value;
+      const depth = document.getElementById('depth').value;
+
+      await runAnalysisTest(passage, module, subtab, depth);
+    }
+
+    function quickTest(passage, module, subtab, depth) {
+      document.getElementById('passage').value = passage;
+      document.getElementById('module').value = module;
+      document.getElementById('subtab').value = subtab;
+      document.getElementById('depth').value = depth;
+      runAnalysisTest(passage, module, subtab, depth);
+    }
+
+    async function runAnalysisTest(passage, module, subtab, depth) {
+      const resultDiv = document.getElementById('analysisResult');
+      resultDiv.style.display = 'block';
+      resultDiv.className = 'result loading';
+      resultDiv.innerHTML = `<strong>⏳ Analyzing passage...</strong><br>
+        Passage: ${passage}<br>
+        Module: ${module} > ${subtab}<br>
+        Depth: ${depth}`;
+
+      console.log('📡 Starting analysis test:', { passage, module, subtab, depth });
+
+      try {
+        // Build prompt (matching frontend logic)
+        let depthPrefix = depth === 'dig-in' 
+          ? 'Provide a brief executive summary with key points:\n\n'
+          : 'Provide a thorough, detailed analysis:\n\n';
+        
+        const customPrompt = `${depthPrefix}Analyze this passage:\n\n${passage}`;
+
+        console.log('📝 Calling API with prompt:', customPrompt.substring(0, 100) + '...');
+
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: customPrompt,
+            passage: passage,
+            moduleName: `${module}-${subtab}`,
+            temperature: 0.7,
+            maxTokens: 2000,
+            depth: depth
+          })
+        });
+
+        console.log('📨 Response received:', response.status, response.ok);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          resultDiv.className = 'result error';
+          resultDiv.innerHTML = `<strong>❌ API Error (${response.status})</strong><br>${JSON.stringify(errorData, null, 2)}`;
+          console.log('❌ API error:', errorData);
+          return;
+        }
+
+        const data = await response.json();
+        console.log('✅ API response received:', data);
+
+        if (!data.success) {
+          resultDiv.className = 'result error';
+          resultDiv.textContent = '❌ Analysis failed: ' + JSON.stringify(data);
+          return;
+        }
+
+        resultDiv.className = 'result success';
+        resultDiv.innerHTML = `
+          <strong>✅ Analysis Complete!</strong><br>
+          <strong>Passage:</strong> ${data.passage}<br>
+          <strong>Module:</strong> ${data.moduleName}<br>
+          <strong>Model:</strong> ${data.model}<br>
+          <strong>Timestamp:</strong> ${data.timestamp}<br>
+          <hr>
+          <strong>Analysis:</strong><br>
+          ${data.analysis.replace(/\n/g, '<br>')}
+        `;
+        console.log('✅ Analysis displayed successfully');
+
+      } catch (error) {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = '❌ Request failed: ' + error.message;
+        console.log('❌ Fetch error:', error);
+      }
+    }
+
+    // Initial log
+    console.log('🧪 Test page loaded. Testing API endpoints...');
+  </script>
+</body>
+</html>

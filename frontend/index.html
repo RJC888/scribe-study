@@ -5,8 +5,14 @@
   <title>Scribe Study</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- GOOGLE FONTS: Scripture Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Noto+Sans+Hebrew:wght@400;700&family=Noto+Sans+Greek:wght@400;700&display=swap" rel="stylesheet" />
+
   <!-- MAIN STYLES -->
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/styles/visualizations.css" />
 </head>
 <body>
   <!-- TOP BAR: APP NAME + ACCOUNT/AUTH PLACEHOLDER -->
@@ -21,6 +27,25 @@
   <nav id="mainTabs">
     <!-- JS will populate tabs -->
   </nav>
+
+  <!-- MODULE TABS BAR (6 main modules) -->
+  <nav id="moduleTabsBar">
+    <button class="module-tab" data-module="devotional">Devotional</button>
+    <button class="module-tab" data-module="text-analysis">Text Analysis</button>
+    <button class="module-tab" data-module="original-languages">Original Languages</button>
+    <button class="module-tab" data-module="context">Context</button>
+    <button class="module-tab" data-module="jewish-background">Jewish Background</button>
+    <button class="module-tab" data-module="teaching">Teaching</button>
+  </nav>
+
+  <!-- CONTROL BAR: Navigation -->
+  <div id="controlBar">
+    <div id="navControls">
+      <button id="prevVersionBtn">◀ Prev</button>
+      <span id="versionIndexLabel"></span>
+      <button id="nextVersionBtn">Next ▶</button>
+    </div>
+  </div>
 
   <!-- WELCOME PANEL (PER-TAB INTRO) -->
   <section id="welcomePanel" class="hidden">
@@ -45,10 +70,40 @@
           <div id="scripturePanel" class="panel top-panel">
             <div class="panelHeader">
               <span class="panelTitle">Scripture</span>
+              <div id="scriptureHeaderControls">
+                <select id="versionSelector">
+                  <option value="kjv" selected>King James Version</option>
+                  <option value="net">NET Bible</option>
+                  <option value="asv">American Standard Version</option>
+                  <option value="lsv">Literal Standard Version</option>
+                  <option value="fbv">Free Bible Version</option>
+                  <option value="bsb">Berean Study Bible</option>
+                  <option value="t4t">Translation for Translators</option>
+                  <option value="emtv">English Majority Text Version</option>
+                  <option value="rv">Revised Version 1885</option>
+                  <option value="ojps">JPS TaNaKH 1917</option>
+                  <option value="engbrent">Brenton Septuagint</option>
+                  <option value="tcent">Text-Critical NT</option>
+                </select>
+                <div id="zoomControls">
+                  <button id="zoomDecreaseBtn">−</button>
+                  <span id="zoomLevel">100%</span>
+                  <button id="zoomIncreaseBtn">+</button>
+                </div>
+              </div>
               <button class="expandBtn" data-target="scripture">⇔</button>
             </div>
             <div id="scriptureContent">
-              <!-- You can put passage input + display inside here -->
+              <!-- PASSAGE INPUT ROW -->
+              <div id="passageInputRow">
+                <input
+                  id="passageInput"
+                  type="text"
+                  placeholder="Verse (John 3:16), range (John 3:1-18), topic (grace, mercy) or question (what is grace?)"
+                  autocomplete="off"
+                />
+              </div>
+              <!-- PINNED PASSAGE BAR -->
               <div id="pinnedPassageBar">
                 <span id="pinnedPassageRef">No passage selected</span>
                 <button id="togglePassageDrawerBtn">Show full passage ▼</button>
@@ -72,19 +127,6 @@
               <div id="analysisDisplay"></div>
 
               <div id="visualizationContainer"></div>
-
-              <div id="versionNav">
-                <button id="prevVersionBtn">◀ Prev</button>
-                <span id="versionIndexLabel"></span>
-                <button id="nextVersionBtn">Next ▶</button>
-              </div>
-
-              <!-- OPTIONAL: BUTTON TO ENTER TIER 2 VISUALIZATION MODE -->
-              <div id="enterTier2Wrapper">
-                <button id="enterVisualizationModeBtn">
-                  Open Fullscreen Visualization (Tier 2)
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -103,6 +145,16 @@
             <!-- You can wire this to a textarea, rich editor, etc. -->
             <textarea id="notesTextarea" rows="6" placeholder="Record your study notes here..."></textarea>
           </div>
+        </div>
+
+        <!-- VISUALIZATION BUTTON ROW -->
+        <div id="visualizationRow">
+          <button id="enterVisualizationModeBtn">Open Fullscreen Visualization (Tier 2)</button>
+        </div>
+
+        <!-- HELP BUTTON ROW -->
+        <div id="helpButtonRow">
+          <button id="helpPageBtn">Help Me Understand This Page</button>
         </div>
       </div>
 
@@ -129,14 +181,6 @@
         </div>
       </section>
 
-      <!-- HELP + SUGGESTED QUESTIONS (STANDARD MODE) -->
-      <div id="helpAndSuggestionsRow">
-        <button id="helpPageBtn">Help Me Understand This Page</button>
-        <div id="suggestedQuestionsBar">
-          <!-- JS will generate suggested questions after searches -->
-        </div>
-      </div>
-
       <!-- HELP POPUP -->
       <div id="helpPopup" class="hidden">
         <div id="helpPopupInner">
@@ -148,6 +192,22 @@
             <button id="helpCloseBtn">Close</button>
           </div>
           <div id="helpResponse"></div>
+        </div>
+      </div>
+
+      <!-- SUBTAB MODAL (Opens when module tab is clicked) -->
+      <div id="subtabModal" class="hidden">
+        <div id="subtabModalOverlay"></div>
+        <div id="subtabModalContent">
+          <div id="subtabModalHeader">
+            <h2 id="subtabModalTitle"></h2>
+            <button id="subtabModalCloseBtn">✕</button>
+          </div>
+          <div id="subtabModalBody">
+            <div id="subtabGrid" class="subtab-grid">
+              <!-- JS will populate subtab cards here -->
+            </div>
+          </div>
         </div>
       </div>
     </section>

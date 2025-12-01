@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 // ===== MIDDLEWARE =====
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
-app.use(express.static('frontend')); // Serve frontend files
+app.use(express.static('../frontend')); // Serve frontend files
 
 // Rate limiting - prevent abuse
 const limiter = rateLimit({
@@ -33,6 +33,59 @@ app.get('/api/health', (req, res) => {
         status: 'ok', 
         message: 'Scribe Study API is running',
         hasApiKey: !!GROQ_API_KEY 
+    });
+});
+// ===== PROMPT REGISTRY ENDPOINT =====
+app.get('/api/prompt-config/:mode/:subtab', (req, res) => {
+    const { mode, subtab } = req.params;
+    
+    // Simple prompt registry (matches frontend)
+    const promptRegistry = {
+        devotional: {
+            micro_units: {
+                id: 'dev_micro_units',
+                title: 'Devotional Micro-Units',
+                description: 'Break passage into bite-sized units for prayerful meditation',
+                temperature: 0.5,
+                maxTokens: 2000
+            },
+            gospel_lens: {
+                id: 'dev_gospel_lens',
+                title: 'Gospel Lens',
+                description: 'Explore how this passage reveals Christ and the gospel',
+                temperature: 0.6,
+                maxTokens: 2000
+            }
+        },
+        academic: {
+            syntax: {
+                id: 'acad_syntax',
+                title: 'Syntax Analysis',
+                description: 'Trace the clauses, connectors, and grammatical relationships',
+                temperature: 0.5,
+                maxTokens: 3000
+            },
+            discourse: {
+                id: 'acad_discourse',
+                title: 'Discourse Flow',
+                description: 'Follow the argument, movements, and transitions',
+                temperature: req.body.temperature || 0.7,
+                maxTokens: 2500
+            }
+        }
+    };
+    
+    const config = promptRegistry[mode]?.[subtab];
+    
+    if (!config) {
+        return res.status(404).json({ error: 'Prompt configuration not found' });
+    }
+    
+    res.json({
+        success: true,
+        config: config,
+        mode: mode,
+        subtab: subtab
     });
 });
 
@@ -69,7 +122,7 @@ app.post('/api/analyze', async (req, res) => {
                         content: prompt
                     }
                 ],
-                temperature: 0.7,
+                temperature: req.body.temperature || 0.7,
                 max_tokens: 4096,
                 stream: false
             })

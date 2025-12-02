@@ -319,3 +319,79 @@ export function getSubtabsForMode(mode) {
 export function isValidModeSubtab(mode, subtab) {
   return !!PROMPT_REGISTRY[mode]?.[subtab];
 }
+
+// ============================================================
+// VISUALIZATION PROMPTS (Dynamic meditation generation)
+// ============================================================
+export const VISUALIZATION_PROMPTS = {
+  'devotional-spiritual-analysis': {
+    id: 'devotional-spiritual-analysis',
+    title: 'Spiritual Meditation Visualization',
+    description: 'Generate meditation card visualization for Scripture passage',
+    systemRole: 'You are generating structured meditation card data for Scripture visualization. Your response MUST be ONLY valid JSON with no additional text.',
+    meditationTemplate: `You are creating meditation card data for a Scripture passage visualization.
+
+Return ONLY valid JSON (no other text) with this exact structure:
+
+{
+  "subtitle": "One-line devotional theme or spiritual truth",
+  "cards": [
+    {
+      "icon": "single emoji character",
+      "theme": "Short theme name (2-4 words)",
+      "description": "Spiritual insight (1-2 sentences max)"
+    }
+  ],
+  "meditationPrompt": "A single reflection question to guide meditation"
+}
+
+REQUIREMENTS:
+- Return ONLY JSON, nothing else before or after
+- Create 4-6 meditation cards capturing main spiritual truths
+- Use appropriate emojis (one per card)
+- Keep descriptions brief but spiritually deep
+- Match the contemplative tone of Psalm 23
+- Focus on themes of God's character, care, redemption, and transformation
+
+Scripture passage:
+{PASSAGE_TEXT}
+
+Passage reference: {PASSAGE_REF}`
+  },
+  
+  'devotional-spiritual-analysis-deep-dive': {
+    id: 'devotional-spiritual-analysis-deep-dive',
+    title: 'Deep Dive Spiritual Visualization',
+    description: 'Generate thorough deep-dive meditation card visualization',
+    systemRole: 'You are generating structured deep-dive meditation card data. Your response MUST be ONLY valid JSON with detailed spiritual insights.',
+    meditationTemplate: `You are creating DEEP DIVE meditation card data for a Scripture passage—thorough, contemplative, and spiritually rich.
+
+Return ONLY valid JSON (no other text) with this exact structure:
+
+{
+  "subtitle": "Extended spiritual theme (1-2 lines) revealing layers of meaning",
+  "cards": [
+    {
+      "icon": "single emoji character",
+      "theme": "Short theme name (2-4 words)",
+      "description": "Deep spiritual insight (2-3 sentences) exploring theological depth"
+    }
+  ],
+  "meditationPrompt": "A profound reflection question inviting deep contemplation"
+}
+
+REQUIREMENTS:
+- Return ONLY JSON, nothing else before or after
+- Create 5-8 meditation cards for deep exploration
+- Use symbolic/meaningful emojis
+- Descriptions are DEEPER and longer than basic meditation
+- Explore theological implications, redemptive themes, and transformational truth
+- Match the contemplative depth of James 3:1-8 (power of words, tongue control, wisdom)
+- Include cards about: consequences, wisdom, self-control, transformation, redemption
+
+Scripture passage:
+{PASSAGE_TEXT}
+
+Passage reference: {PASSAGE_REF}`
+  }
+};

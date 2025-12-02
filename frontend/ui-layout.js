@@ -88,16 +88,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const exitVisualizationBtn = document.getElementById("exitVisualizationBtn");
 
   function enterVisualizationMode() {
-    if (!workspace || !visualizationMode) return;
-    workspace.classList.add("hidden");
+    if (!visualizationMode) return;
     visualizationMode.classList.remove("hidden");
     // TODO: hook your Tier 2 engine to #visualizationCanvas
   }
 
   function exitVisualizationModeFn() {
-    if (!workspace || !visualizationMode) return;
+    if (!visualizationMode) return;
     visualizationMode.classList.add("hidden");
-    workspace.classList.remove("hidden");
   }
 
   if (enterVisualizationBtn) {

@@ -9,6 +9,9 @@ import { CharacterMapVisualizer } from "./CharacterMapVisualizer.js";
 import { ParallelismVisualizer } from "./ParallelismVisualizer.js";
 import { ChiasmVisualizer } from "./ChiasmVisualizer.js";
 import { OMindmap } from "../modules/OMindmap.js";
+import { SymbolChartVisualizer } from "./SymbolChartVisualizer.js";
+import { ContrastTableVisualizer } from "./ContrastTableVisualizer.js";
+import { IntertextualLinksVisualizer } from "./IntertextualLinksVisualizer.js";
 
 export class VisualizationEngine {
   constructor() {
@@ -18,6 +21,9 @@ export class VisualizationEngine {
       parallelism: ParallelismVisualizer,
       chiasm: ChiasmVisualizer,
       mindmap: OMindmap,
+      symbolChart: SymbolChartVisualizer,
+      contrastTable: ContrastTableVisualizer,
+      intertextualLinks: IntertextualLinksVisualizer,
     };
 
     // Genre-to-visualization mappings
@@ -57,8 +63,8 @@ export class VisualizationEngine {
     // Prompt-based ranking adjustments
     this.promptBoosters = {
       devotional: { mindmap: 1.5, symbolChart: 1.3, imageCluster: 1.2 },
-      academic: { structureOutline: 1.5, contrastTable: 1.4, chiasm: 1.2 },
-      teaching: { timeline: 1.5, characterMap: 1.4, mindmap: 1.1 },
+      academic: { structureOutline: 1.5, contrastTable: 1.4, chiasm: 1.2, intertextualLinks: 1.3 },
+      teaching: { timeline: 1.5, characterMap: 1.4, mindmap: 1.1, contrastTable: 1.2 },
     };
 
     this.currentCarousel = [];

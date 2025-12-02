@@ -15,9 +15,12 @@
   <link rel="stylesheet" href="/styles/visualizations.css" />
 </head>
 <body>
-  <!-- TOP BAR: APP NAME + ACCOUNT/AUTH PLACEHOLDER -->
+  <!-- TOP BAR: APP NAME + SERVER STATUS + ACCOUNT/AUTH PLACEHOLDER -->
   <header id="topBar">
     <div id="appLogo">Scribe Study</div>
+    <div id="serverStatusWidget">
+      <span id="serverStatusIndicator" class="status-disconnected" title="Checking server...">⚪ Checking...</span>
+    </div>
     <div id="userControls">
       <button id="authButton">Sign in / Account</button>
     </div>
@@ -71,9 +74,23 @@
             <div class="panelHeader">
               <span class="panelTitle">Scripture</span>
               <div id="scriptureHeaderControls">
+                <button id="languageToggleBtn" style="
+                  padding: 6px 12px;
+                  background: #3d6df6;
+                  color: white;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  font-size: 12px;
+                  font-weight: 600;
+                  white-space: nowrap;
+                  margin-left: 16px;
+                  margin-right: 12px;
+                ">🔤 Original Languages</button>
                 <select id="versionSelector">
                   <option value="kjv" selected>King James Version</option>
                   <option value="net">NET Bible</option>
+                  <option value="net-notes">NET Bible with Notes</option>
                   <option value="asv">American Standard Version</option>
                   <option value="lsv">Literal Standard Version</option>
                   <option value="fbv">Free Bible Version</option>
@@ -84,6 +101,10 @@
                   <option value="ojps">JPS TaNaKH 1917</option>
                   <option value="engbrent">Brenton Septuagint</option>
                   <option value="tcent">Text-Critical NT</option>
+                  <optgroup label="--- Original Languages ---">
+                  <option value="hebrew">Hebrew (Original OT)</option>
+                  <option value="greek">Koine Greek (Original NT)</option>
+                  </optgroup>
                 </select>
                 <div id="zoomControls">
                   <button id="zoomDecreaseBtn">−</button>
@@ -99,20 +120,27 @@
                 <input
                   id="passageInput"
                   type="text"
-                  placeholder="Verse (John 3:16), range (John 3:1-18), topic (grace, mercy) or question (what is grace?)"
+                  placeholder="Book (Matthew), passage (3:16), topic (grace, mercy), or question (what is grace?)..."
                   autocomplete="off"
+                  autocorrect="off"
+                  autocapitalize="off"
+                  spellcheck="false"
+                  data-form-type="other"
+                  data-lpignore="true"
+                  aria-autocomplete="list"
+                  aria-haspopup="listbox"
+                  name="bible-passage-search-field"
                 />
+                <ul id="passageSuggestions" class="autocomplete-dropdown hidden" role="listbox"></ul>
+                <div id="topicSuggestionsBar" class="topic-suggestions hidden"></div>
               </div>
               <!-- PINNED PASSAGE BAR -->
               <div id="pinnedPassageBar">
                 <span id="pinnedPassageRef">No passage selected</span>
-                <button id="togglePassageDrawerBtn">Show full passage ▼</button>
+                <button id="helpPageBtn">Help Me Understand...</button>
               </div>
-              <div id="passageDrawer" class="hidden">
-                <div id="fullPassageText">
-                  <!-- Full passage text goes here -->
-                </div>
-              </div>
+              <!-- SCRIPTURE DISPLAY AREA -->
+              <div id="fullPassageText"></div>
             </div>
           </div>
 
@@ -120,6 +148,14 @@
           <div id="analysisPanel" class="panel top-panel">
             <div class="panelHeader">
               <span class="panelTitle">Analysis / Search Results</span>
+              <div id="analysisHeaderControls">
+                <button class="analysis-depth-btn active" data-depth="dig-in" title="Concise summary">
+                  📝
+                </button>
+                <button class="analysis-depth-btn" data-depth="deep-dive" title="Thorough deep dive">
+                  🔍
+                </button>
+              </div>
               <button class="expandBtn" data-target="analysis">⇔</button>
             </div>
             <div id="analysisContent">
@@ -149,12 +185,7 @@
 
         <!-- VISUALIZATION BUTTON ROW -->
         <div id="visualizationRow">
-          <button id="enterVisualizationModeBtn">Open Fullscreen Visualization (Tier 2)</button>
-        </div>
-
-        <!-- HELP BUTTON ROW -->
-        <div id="helpButtonRow">
-          <button id="helpPageBtn">Help Me Understand This Page</button>
+          <button id="enterVisualizationModeBtn">Open Fullscreen Visualization</button>
         </div>
       </div>
 
@@ -181,17 +212,59 @@
         </div>
       </section>
 
-      <!-- HELP POPUP -->
-      <div id="helpPopup" class="hidden">
-        <div id="helpPopupInner">
-          <h3>Need help understanding this?</h3>
-          <p>Ask any question about what you see on this page.</p>
-          <textarea id="helpQuestionInput" rows="3"></textarea>
-          <div class="helpActions">
-            <button id="helpSendBtn">Send Question →</button>
-            <button id="helpCloseBtn">Close</button>
+      <!-- HELP MODAL (Full-screen centered modal like subtabModal) -->
+      <div id="helpModal" class="hidden">
+        <div id="helpModalOverlay"></div>
+        <div id="helpModalContent">
+          <!-- Header with title, history toggle, and close button -->
+          <div id="helpModalHeader">
+            <div id="helpModalTitleSection">
+              <h2 id="helpModalTitle">Help Me Understand</h2>
+            </div>
+            <div id="helpModalControls">
+              <label id="historyToggleLabel" class="historyToggle">
+                <input type="checkbox" id="historyToggleCheckbox" checked />
+                <span>Remember my questions</span>
+              </label>
+              <button id="helpHistoryBtn" class="helpIconBtn">📜 History</button>
+              <button id="helpModalCloseBtn">✕</button>
+            </div>
           </div>
-          <div id="helpResponse"></div>
+          
+          <!-- Main body: scrollable conversation area + input area -->
+          <div id="helpModalBody">
+            <!-- Conversation history area -->
+            <div id="helpConversationArea">
+              <!-- Q&A pairs will be appended here -->
+            </div>
+          </div>
+          
+          <!-- Footer: question input and send button -->
+          <div id="helpModalFooter">
+            <textarea 
+              id="helpQuestionInput" 
+              rows="2" 
+              placeholder="Ask any question about this passage or what you're seeing..."
+            ></textarea>
+            <button id="helpSendBtn">Send Question →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- HELP HISTORY MODAL -->
+      <div id="helpHistoryModal" class="hidden">
+        <div id="helpHistoryModalOverlay"></div>
+        <div id="helpHistoryModalContent">
+          <div id="helpHistoryModalHeader">
+            <h2>Question History</h2>
+            <button id="helpHistoryModalCloseBtn">✕</button>
+          </div>
+          <div id="helpHistoryModalBody">
+            <!-- History items will be populated here -->
+            <div id="helpHistoryList" class="helpHistoryList">
+              <!-- Q&A pairs will be appended here -->
+            </div>
+          </div>
         </div>
       </div>
 
@@ -212,6 +285,29 @@
       </div>
     </section>
   </main>
+
+  <!-- SERVER STATUS MODAL -->
+  <div id="serverStatusModal" class="hidden">
+    <div id="serverStatusModalOverlay"></div>
+    <div id="serverStatusModalContent">
+      <div id="serverStatusModalHeader">
+        <h2>Server Status</h2>
+        <button id="serverStatusCloseBtn">✕</button>
+      </div>
+      <div id="serverStatusModalBody">
+        <div id="serverStatusDisplay">
+          <!-- Status content will be inserted here -->
+        </div>
+        <div id="serverActionButtons">
+          <button id="retryServerBtn" class="btn-primary">🔄 Retry Connection</button>
+          <button id="openTerminalBtn" class="btn-secondary">💻 Open Terminal to Start Server</button>
+        </div>
+        <div id="serverDebugInfo" style="display: none; margin-top: 16px; padding: 12px; background: #f5f5f5; border-radius: 4px; font-family: monospace; font-size: 11px; max-height: 150px; overflow-y: auto; color: #666;">
+          <!-- Debug info will be shown here -->
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- TODO: Add Firebase scripts here (before app.js) if needed -->
 

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>James 3:1-8 - Deep Dive Meditation Visualization</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Cormorant+Garamond:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Merriweather', serif;
+      background: linear-gradient(135deg, #f5e6d3 0%, #e8d4b8 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 56px;
+      color: #8b4513;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: #666;
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+
+    .model-badge {
+      display: inline-block;
+      background: #d4a574;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Meditation Journey - Deep Dive Cards */
+    .meditation-journey {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 50px;
+    }
+
+    .meditation-card {
+      background: white;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+      border-left: 6px solid #8b4513;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .meditation-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+    }
+
+    .meditation-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, rgba(139, 69, 19, 0.08) 0%, transparent 100%);
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .meditation-card:hover::before {
+      opacity: 1;
+    }
+
+    .card-icon {
+      font-size: 40px;
+      margin-bottom: 14px;
+    }
+
+    .card-verse {
+      font-size: 13px;
+      color: #999;
+      margin-bottom: 8px;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-theme {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      color: #8b4513;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .card-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #333;
+    }
+
+    /* Theme Colors - Deep Dive Themed */
+    .meditation-card.theme-power {
+      border-left-color: #d32f2f;
+    }
+
+    .meditation-card.theme-consequence {
+      border-left-color: #ff9800;
+    }
+
+    .meditation-card.theme-wisdom {
+      border-left-color: #4caf50;
+    }
+
+    .meditation-card.theme-control {
+      border-left-color: #2196f3;
+    }
+
+    .meditation-card.theme-danger {
+      border-left-color: #9c27b0;
+    }
+
+    .meditation-card.theme-redemption {
+      border-left-color: #00bcd4;
+    }
+
+    .meditation-card.theme-transformation {
+      border-left-color: #3f51b5;
+    }
+
+    .meditation-card.theme-victory {
+      border-left-color: #ffc107;
+    }
+
+    /* Full Passage Section */
+    .full-passage {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+      margin-bottom: 40px;
+    }
+
+    .passage-header {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #8b4513;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      padding-bottom: 12px;
+      border-bottom: 3px solid #d4a574;
+    }
+
+    .verse {
+      display: flex;
+      margin-bottom: 16px;
+      line-height: 1.9;
+    }
+
+    .verse-num {
+      flex: 0 0 50px;
+      color: #8b4513;
+      font-weight: 700;
+      text-align: right;
+      margin-right: 14px;
+      font-size: 13px;
+    }
+
+    .verse-text {
+      flex: 1;
+      color: #333;
+      font-size: 16px;
+    }
+
+    /* Meditation Prompt */
+    .meditation-prompt {
+      background: linear-gradient(135deg, #fff9f5 0%, #ffe8d6 100%);
+      border-left: 6px solid #8b4513;
+      padding: 28px;
+      border-radius: 12px;
+      line-height: 1.8;
+      color: #333;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 12px rgba(139, 69, 19, 0.1);
+    }
+
+    .meditation-prompt strong {
+      display: block;
+      margin-bottom: 14px;
+      color: #8b4513;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    /* Key Insights Box */
+    .key-insights {
+      background: linear-gradient(135deg, #f5f5f5 0%, #fffbf8 100%);
+      border: 2px solid #d4a574;
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 40px;
+    }
+
+    .insights-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      color: #8b4513;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+
+    .insights-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .insights-list li {
+      margin-bottom: 12px;
+      padding-left: 24px;
+      position: relative;
+      color: #444;
+      line-height: 1.6;
+    }
+
+    .insights-list li:before {
+      content: "✦";
+      position: absolute;
+      left: 0;
+      color: #d4a574;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 40px;
+      }
+
+      .meditation-journey {
+        grid-template-columns: 1fr;
+      }
+
+      .full-passage {
+        padding: 20px;
+      }
+
+      .meditation-prompt {
+        padding: 20px;
+      }
+
+      .key-insights {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="model-badge">Deep Dive Visualization Model</div>
+      <h1>James 3:1-8</h1>
+      <p class="subtitle">The Power and Peril of the Tongue – A Deep Dive into Words, Wisdom, and Redemption</p>
+    </header>
+
+    <!-- Key Insights -->
+    <div class="key-insights">
+      <div class="insights-title">📖 Understanding James 3:1-8</div>
+      <ul class="insights-list">
+        <li>The tongue has immense power—it can bless or curse, create or destroy</li>
+        <li>Teachers face particular accountability because words carry eternal weight</li>
+        <li>No one has fully tamed the tongue—this requires divine transformation</li>
+        <li>Self-control begins with understanding the destructive potential of unguarded speech</li>
+        <li>True wisdom manifests in careful, thoughtful, redemptive communication</li>
+      </ul>
+    </div>
+
+    <!-- Meditation Journey - Deep Dive Cards -->
+    <div class="meditation-journey">
+      <div class="meditation-card theme-power">
+        <div class="card-icon">🔥</div>
+        <div class="card-verse">James 3:6</div>
+        <div class="card-theme">Fire & Corruption</div>
+        <div class="card-text">The tongue is compared to a world of unrighteousness—a fire that ignites from hell itself. Like an untended fire, our words consume relationships, reputations, and souls if left unchecked. This metaphor reveals the spiritual danger of thoughtless speech and the cosmic battle over our words.</div>
+      </div>
+
+      <div class="meditation-card theme-consequence">
+        <div class="card-icon">⚖️</div>
+        <div class="card-verse">James 3:1-2</div>
+        <div class="card-theme">Teachers' Accountability</div>
+        <div class="card-text">Teachers receive stricter judgment because their words carry amplified influence. James isn't discouraging teaching but calling leaders to soberness about the weight of words. Every teacher, pastor, and influencer must remember: "We all stumble in many ways. Anyone who is never at fault in what they say is perfect."</div>
+      </div>
+
+      <div class="meditation-card theme-danger">
+        <div class="card-icon">☠️</div>
+        <div class="card-verse">James 3:8</div>
+        <div class="card-theme">Untamed Evil</div>
+        <div class="card-text">The tongue is "a restless evil, full of deadly poison." This stark language reveals the spiritual reality: without God's grace, our speech is destructive by nature. James's point cuts deep—we cannot fix ourselves. Redemption requires surrender to Christ and the Holy Spirit's work in transforming our hearts.</div>
+      </div>
+
+      <div class="meditation-card theme-control">
+        <div class="card-icon">🎯</div>
+        <div class="card-verse">James 3:3-4</div>
+        <div class="card-theme">Small Things, Big Impact</div>
+        <div class="card-text">A tiny rudder steers a massive ship. A small bit controls a horse. So too the tongue—tiny in size but vast in consequence. This teaches us that true strength isn't found in big gestures but in mastering the small, daily choices. Small speech acts compound into patterns that shape souls.</div>
+      </div>
+
+      <div class="meditation-card theme-wisdom">
+        <div class="card-icon">🧠</div>
+        <div class="card-verse">James 3:2</div>
+        <div class="card-theme">Wisdom in Silence</div>
+        <div class="card-text">Spiritual maturity begins with restraint. Those who can bridle their tongues show they're moving toward perfection—not through constant speaking, but through careful, intentional words. Wisdom knows when to speak, when to stay silent, and what words actually heal rather than harm.</div>
+      </div>
+
+      <div class="meditation-card theme-redemption">
+        <div class="card-icon">🙏</div>
+        <div class="card-verse">James 3:1-8 (Whole)</div>
+        <div class="card-theme">The Redemption Path</div>
+        <div class="card-text">James doesn't end in despair. By revealing the tongue's corruption, he invites us to confession and transformation. The Holy Spirit can renew our speech from the inside out. Every confession of careless words, every choice to speak life—these are acts of redemption in progress, signs we're being conformed to Christ's character.</div>
+      </div>
+
+      <div class="meditation-card theme-transformation">
+        <div class="card-icon">✨</div>
+        <div class="card-verse">Related: Proverbs 15:4</div>
+        <div class="card-theme">Healing Speech</div>
+        <div class="card-text">"The soothing tongue is a tree of life." The same organ that can destroy can also heal. This contrast shows the potential for transformation. When Spirit-led, our words become channels of grace, encouragement, and divine healing. The choice is ours—will we speak life or death?</div>
+      </div>
+
+      <div class="meditation-card theme-victory">
+        <div class="card-icon">👑</div>
+        <div class="card-verse">James 3:7-8</div>
+        <div class="card-theme">The Paradox: Wild Yet Tamed</div>
+        <div class="card-text">Every kind of animal has been tamed by mankind, "but no human being can tame the tongue." This paradox invites us beyond self-effort into divine transformation. Our victory isn't in willpower alone but in surrender—asking God to guard our hearts so that our words become His words, our speech His testimony.</div>
+      </div>
+    </div>
+
+    <!-- Full Passage -->
+    <div class="full-passage">
+      <div class="passage-header">Full Passage (KJV)</div>
+      
+      <div class="verse">
+        <span class="verse-num">1</span><span class="verse-text">My brethren, be not many masters, knowing that we shall receive the greater condemnation.</span>
+      </div>
+      
+      <div class="verse">
+        <span class="verse-num">2</span><span class="verse-text">For in many things we offend all. If any man offend not in word, the same is a perfect man, and able also to bridle the whole body.</span>
+      </div>
+      
+      <div class="verse">
+        <span class="verse-num">3</span><span class="verse-text">Behold, we put bits in the horses' mouths, that they may obey us; and we turn about their whole body.</span>
+      </div>
+      
+      <div class="verse">
+        <span class="verse-num">4</span><span class="verse-text">Behold also the ships, which though they be so great, and are driven of fierce winds, yet are they turned about with a very small helm, whithersoever the governor listeth.</span>
+      </div>
+      
+      <div class="verse">
+        <span class="verse-num">5</span><span class="verse-text">Even so the tongue is a little member, and boasteth great things. Behold, how great a matter a little fire kindleth!</span>
+      </div>
+      
+      <div class="verse">
+        <span class="verse-num">6</span><span class="verse-text">And the tongue is a fire, a world of iniquity: so is the tongue among our members, that it defileth the whole body, and setteth on fire the course of nature; and it is set on fire of hell.</span>
+      </div>
+      
+      <div class="verse">
+        <span class="verse-num">7</span><span class="verse-text">For every kind of beasts, and of birds, and of serpents, and of things in the sea, is tamed, and hath been tamed of mankind:</span>
+      </div>
+      
+      <div class="verse">
+        <span class="verse-num">8</span><span class="verse-text">But the tongue can no man tame; it is an unruly evil, full of deadly poison.</span>
+      </div>
+    </div>
+
+    <!-- Meditation Prompt -->
+    <div class="meditation-prompt">
+      <strong>💭 Deep Reflection & Meditation</strong>
+      What words have I spoken this week that I wish I could take back? And conversely, what words have I spoken—or failed to speak—that could have brought healing? Invite the Holy Spirit to illuminate both the words that reveal my need for transformation and the words that show His grace already at work within me. What would it mean for me to surrender my tongue fully to Him, trusting His wisdom over my own impulse?
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.meditation-card').forEach(card => {
+      card.addEventListener('click', function() {
+        this.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+          this.style.transform = '';
+        }, 300);
+      });
+    });
+
+    console.log('✨ James 3:1-8 Deep Dive Meditation Visualization Loaded');
+  </script>
+</body>
+</html>

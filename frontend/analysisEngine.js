@@ -281,7 +281,21 @@ function displayPassageInScripturePanel(passage) {
  * Using: https://github.com/wldeh/bible-api (200+ versions, no API key needed)
  * Original languages: Hebrew OT (hbo-wlc) and Greek NT (grc-tcgnt)
  */
+
+// Track ongoing fetch to cancel if a new one starts
+let currentFetchController = null;
+
 export async function fetchAndDisplayScripture(passage, container) {
+  // Cancel any ongoing fetch
+  if (currentFetchController) {
+    currentFetchController.abort();
+    currentFetchController = null;
+  }
+  
+  // Create new abort controller for this fetch
+  const controller = new AbortController();
+  currentFetchController = controller;
+  
   try {
     // Get current version from app state (default to kjv)
     const selectedVersion = window.AppState?.currentVersion || 'kjv';
@@ -299,13 +313,12 @@ export async function fetchAndDisplayScripture(passage, container) {
     let copyrightNotice = '';
     let originalText = '';
     
-    // NET Bible uses a different API (labs.bible.org)
-    if (selectedVersion === 'net') {
+    // NET Bible and NET Bible with Notes use labs.bible.org API
+    if (selectedVersion === 'net' || selectedVersion === 'net-notes') {
       const netPassage = `${book}+${chapter}:${startVerse}-${endVerse}`;
       const netUrl = `https://labs.bible.org/api/?passage=${netPassage}&type=json`;
       console.log('📡 Fetching from NET Bible API:', netUrl);
       
-      const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
       
       const response = await fetch(netUrl, { signal: controller.signal });
@@ -318,14 +331,38 @@ export async function fetchAndDisplayScripture(passage, container) {
       const data = await response.json();
       if (Array.isArray(data)) {
         englishText = data.map(v => `${v.verse}. ${v.text}`).join('\n\n');
+        // If user selected NET with Notes, fetch notes from backend
+        if (selectedVersion === 'net-notes') {
+          try {
+            const notesResponse = await fetch('/api/net-notes', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ passage: `${book} ${chapter}:${startVerse}-${endVerse}` })
+            });
+            if (notesResponse.ok) {
+              const notesData = await notesResponse.json();
+              if (notesData.notes) {
+                englishText += `\n\n[Study Notes]\n${notesData.notes}`;
+              }
+            }
+          } catch (notesError) {
+            console.log('ℹ️ NET notes not available:', notesError.message);
+          }
+        }
       } else {
         throw new Error('Invalid response from NET Bible API');
       }
       
-      versionLabel = 'NET';
+      versionLabel = selectedVersion === 'net-notes' ? 'NET (w/ Notes)' : 'NET';
       copyrightNotice = `<p style="font-size: 10px; color: #666; margin-top: 12px; border-top: 1px solid #ddd; padding-top: 8px;">
         Scripture quoted by permission. Quotations designated (<a href="https://netbible.org" target="_blank" style="color: #0066cc;">NET</a>) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C.
       </p>`;
+    } else if (selectedVersion === 'hebrew' || selectedVersion === 'greek') {
+      // Original languages - display original text only
+      originalText = await fetchOriginalLanguages(book, chapter, startVerse, endVerse, selectedVersion === 'hebrew' ? 'hebrew' : 'greek');
+      englishText = originalText;
+      versionLabel = selectedVersion === 'hebrew' ? 'Hebrew' : 'Koine Greek';
+      copyrightNotice = '';
     } else {
       // Use wldeh Bible API for other versions
       // NOTE: Version Availability
@@ -358,7 +395,6 @@ export async function fetchAndDisplayScripture(passage, container) {
       console.log('📡 Fetching chapter from Bible API:', chapterUrl);
       console.log('🔢 Looking for verses from', startVerse, 'to', endVerse);
       
-      const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
       
       const chapterResponse = await fetch(chapterUrl, { signal: controller.signal });
@@ -404,19 +440,29 @@ export async function fetchAndDisplayScripture(passage, container) {
     console.log('✅ Scripture fetched successfully');
     
   } catch (error) {
+    // Silently ignore abort errors (they happen when user changes version mid-fetch)
+    if (error.name === 'AbortError') {
+      console.log('ℹ️ Fetch cancelled (version changed or new request started)');
+      return;
+    }
+    
     console.error('❌ Error fetching scripture:', error);
-    const errorMsg = error.name === 'AbortError' ? 'Request timeout (8 seconds)' : error.message;
     container.innerHTML = `
       <div style="padding: 12px; background: #fef2f2; border-radius: 4px; color: #991b1b; border: 1px solid #fecaca;">
         <p><strong>⚠️ Error loading Scripture</strong></p>
         <p style="font-size: 12px; margin: 8px 0 0 0;">
-          ${errorMsg}
+          ${error.message}
         </p>
         <p style="font-size: 11px; margin: 8px 0 0 0; color: #7f1d1d;">
           Using free Bible API. Check your internet connection and ensure passage format is correct (e.g., "John 3:16", "Psalm 23").
         </p>
       </div>
     `;
+  } finally {
+    // Clear the controller reference if this was the active fetch
+    if (currentFetchController === controller) {
+      currentFetchController = null;
+    }
   }
 }
 
@@ -432,7 +478,8 @@ function parsePassageReference(passage) {
     '1 samuel': '1-samuel', '2 samuel': '2-samuel', '1 kings': '1-kings', '2 kings': '2-kings',
     '1 chronicles': '1-chronicles', '2 chronicles': '2-chronicles', 'ezra': 'ezra',
     'nehemiah': 'nehemiah', 'esther': 'esther', 'job': 'job', 'psalms': 'psalms', 'psalm': 'psalms',
-    'proverbs': 'proverbs', 'ecclesiastes': 'ecclesiastes', 'isaiah': 'isaiah', 'jeremiah': 'jeremiah',
+    'proverbs': 'proverbs', 'ecclesiastes': 'ecclesiastes', 'song of songs': 'song-of-songs', 'song of solomon': 'song-of-songs',
+    'canticles': 'song-of-songs', 'isaiah': 'isaiah', 'jeremiah': 'jeremiah',
     'lamentations': 'lamentations', 'ezekiel': 'ezekiel', 'daniel': 'daniel', 'hosea': 'hosea',
     'joel': 'joel', 'amos': 'amos', 'obadiah': 'obadiah', 'jonah': 'jonah', 'micah': 'micah',
     'nahum': 'nahum', 'habakkuk': 'habakkuk', 'zephaniah': 'zephaniah', 'haggai': 'haggai',
@@ -449,7 +496,7 @@ function parsePassageReference(passage) {
     'gen': 'genesis', 'ex': 'exodus', 'lev': 'leviticus', 'num': 'numbers', 'deut': 'deuteronomy',
     'josh': 'joshua', 'judg': 'judges', '1 sam': '1-samuel', '2 sam': '2-samuel', '1 kgs': '1-kings', '2 kgs': '2-kings',
     '1 chr': '1-chronicles', '2 chr': '2-chronicles', 'ps': 'psalms', 'psa': 'psalms', 'prov': 'proverbs',
-    'ecc': 'ecclesiastes', 'isa': 'isaiah', 'jer': 'jeremiah', 'lam': 'lamentations', 'ezek': 'ezekiel', 'dan': 'daniel',
+    'ecc': 'ecclesiastes', 'ss': 'song-of-songs', 'so': 'song-of-songs', 'song': 'song-of-songs', 'isa': 'isaiah', 'jer': 'jeremiah', 'lam': 'lamentations', 'ezek': 'ezekiel', 'dan': 'daniel',
     'matt': 'matthew', 'mr': 'mark', 'mk': 'mark', 'lk': 'luke', 'jn': 'john',
     'cor': '1-corinthians', 'i cor': '1-corinthians', 'ii cor': '2-corinthians', '1 cor': '1-corinthians', '2 cor': '2-corinthians',
     'rom': 'romans', 'gal': 'galatians', 'eph': 'ephesians', 'phil': 'philippians', 'col': 'colossians',
@@ -527,10 +574,91 @@ async function fetchOriginalLanguages(book, chapter, startVerse, endVerse) {
     const version = isOT ? 'hbo-wlc' : 'grc-tcgnt'; // Hebrew for OT, Greek for NT
     const languageLabel = isOT ? 'Hebrew (OT)' : 'Koine Greek (NT)';
     
-    console.log(`🔤 Fetching ${languageLabel} (${version}) for ${book} ${chapter}`);
+    // API requires Hebrew/Greek book names, not English
+    // Hebrew OT book names (hbo-wlc)
+    const hebrewBookNames = {
+      'genesis': 'בראשית',
+      'exodus': 'שמות',
+      'leviticus': 'ויקרא',
+      'numbers': 'במדבר',
+      'deuteronomy': 'דברים',
+      'joshua': 'יהושע',
+      'judges': 'שופטים',
+      'ruth': 'רות',
+      '1-samuel': 'שמואלא',
+      '2-samuel': 'שמואלב',
+      '1-kings': 'מלכיםא',
+      '2-kings': 'מלכיםב',
+      '1-chronicles': 'דבריהימיםא',
+      '2-chronicles': 'דבריהימיםב',
+      'ezra': 'עזרא',
+      'nehemiah': 'נחמיה',
+      'esther': 'אסתר',
+      'job': 'איוב',
+      'psalms': 'תהילים',
+      'proverbs': 'מִשְׁלֵי',
+      'ecclesiastes': 'קֹהֶלֶת',
+      'song-of-solomon': 'שירהשירים',
+      'isaiah': 'ישעה',
+      'jeremiah': 'ירמיה',
+      'lamentations': 'איכה',
+      'ezekiel': 'יחזקאל',
+      'daniel': 'דניאל',
+      'hosea': 'הושע',
+      'joel': 'יואל',
+      'amos': 'עמוס',
+      'obadiah': 'עבדיה',
+      'jonah': 'יונה',
+      'micah': 'מיכה',
+      'nahum': 'נחום',
+      'habakkuk': 'חבקוק',
+      'zephaniah': 'צפניה',
+      'haggai': 'חגי',
+      'zechariah': 'זכריה',
+      'malachi': 'מלאכי'
+    };
     
-    const chapterUrl = `https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/${version}/books/${book}/chapters/${chapter}.json?t=${Date.now()}`;
+    // Greek NT book names (grc-tcgnt)
+    const greekBookNames = {
+      'matthew': 'καταματθαιον',
+      'mark': 'καταμαρκον',
+      'luke': 'καταλουκαν',
+      'john': 'καταιωαννην',
+      'acts': 'πραξειςαποστολων',
+      'romans': 'προςρωμαιους',
+      '1-corinthians': 'προςκορινθιουςα',
+      '2-corinthians': 'προςκορινθιουςβ',
+      'galatians': 'προςγαλατας',
+      'ephesians': 'προςεφεσιους',
+      'philippians': 'προςφιλιππησιους',
+      'colossians': 'προςκολοσσαεις',
+      '1-thessalonians': 'προςθεσσαλονικειςα',
+      '2-thessalonians': 'προςθεσσαλονικειςβ',
+      '1-timothy': 'προςτιμοθεονα',
+      '2-timothy': 'προςτιμοθεονβ',
+      'titus': 'προςτιτον',
+      'philemon': 'προςφιλημονα',
+      'hebrews': 'προςεβραιους',
+      'james': 'ιακωβου',
+      '1-peter': 'πετρουα',
+      '2-peter': 'πετρουβ',
+      '1-john': 'ιωαννουα',
+      '2-john': 'ιωαννουβ',
+      '3-john': 'ιωαννουγ',
+      'jude': 'ιουδα',
+      'revelation': 'αποκαλυψιςιωαννου'
+    };
     
+    // Get the correct book name for the API
+    const apiBookName = isOT ? hebrewBookNames[book] : greekBookNames[book];
+    
+    if (!apiBookName) {
+      console.warn(`⚠️ No ${languageLabel} book name mapping for: ${book}`);
+      return `[${languageLabel} not available for ${book}]`;
+    }
+    
+    console.log(`🔤 Fetching ${languageLabel} (${version}) for ${book} → ${apiBookName} ${chapter}`);
+    const chapterUrl = `https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/${version}/books/${apiBookName}/chapters/${chapter}.json?t=${Date.now()}`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
     
@@ -579,65 +707,82 @@ async function fetchOriginalLanguages(book, chapter, startVerse, endVerse) {
  * Display Scripture with toggle between English and original languages
  */
 function displayScriptureWithToggle(passage, englishText, originalText, container, versionLabel, copyrightNotice = '') {
+  // Convert double line breaks to single for tighter verse spacing
+  const formattedEnglish = englishText.replace(/\n\n/g, '\n').replace(/\n/g, '<br>');
+  
+  // Clean Greek text: remove all textual apparatus notation
+  // Remove: verse refs (13:2), dashes (--- or ―), abbreviations (ANT CT PCK etc), percentages, duplicates
+  let cleanedOriginal = originalText
+    .replace(/\s+---\s+/g, ' ')  // Remove "---" separators
+    .replace(/\s+―\s+/g, ' ')   // Remove long dashes
+    .replace(/\s+[A-Z]{2,}\s+/g, ' ')  // Remove 2+ letter abbreviations (ANT, CT, PCK, TH, WH, etc.)
+    .replace(/\s+\d+:\d+\s+/g, ' ')  // Remove verse references like "13:2"
+    .replace(/\s+\d+\.?\d*%\s+/g, ' ')  // Remove percentages
+    .replace(/([α-ωά-ώΐΰ]+)\s+\1\s+/g, '$1 ')  // Remove duplicate Greek words
+    .replace(/\s{2,}/g, ' ')  // Remove extra whitespace
+    .trim();
+  
+  const formattedOriginal = cleanedOriginal.replace(/\n\n/g, '\n').replace(/\n/g, '<br>');
+  
+  // Update the pinned passage bar to show the passage reference
+  const pinnedBar = document.getElementById('pinnedPassageBar');
+  const pinnedRef = document.getElementById('pinnedPassageRef');
+  pinnedRef.innerHTML = `<strong>${passage}</strong><br><span style="font-size: 11px; color: #666;">Version: ${versionLabel}</span>`;
+  
   const html = `
-    <div style="padding: 12px; background: #f9f9fb; border-radius: 4px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">
-        <p style="margin: 0;"><strong>${passage}</strong><br><span style="font-size: 11px; color: #666;">Version: ${versionLabel}</span></p>
-        <button id="languageToggleBtn" style="
-          padding: 6px 12px;
-          background: #3d6df6;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 12px;
-          font-weight: 600;
-          white-space: nowrap;
-        ">🔤 Original Languages</button>
-      </div>
-      
+    <div style="margin: 0; padding: 0; background: transparent;">
       <div id="scriptureEnglish" style="
-        font-size: 15px;
-        line-height: 1.8;
+        font-size: 17px;
+        line-height: 1.6;
         color: #222;
         display: block;
         font-family: 'Merriweather', Georgia, serif;
-      ">${englishText.replace(/\n/g, '<br>')}</div>
+        margin-top: -70px;
+      ">${formattedEnglish}</div>
       
       <div id="scriptureOriginal" style="
-        font-size: 15px;
-        line-height: 1.8;
+        font-size: 22px;
+        line-height: 1.7;
         color: #222;
         display: none;
         font-family: 'Noto Sans Hebrew', 'Noto Sans Greek', serif;
         border-top: 1px solid #e5e7eb;
-        padding-top: 12px;
-        margin-top: 12px;
-      ">${originalText.replace(/\n/g, '<br>')}</div>
+        padding-top: 4px;
+        margin-top: -95px;
+        direction: auto;
+      ">${formattedOriginal}</div>
       ${copyrightNotice}
     </div>
   `;
   
   container.innerHTML = html;
   
-  // Add toggle functionality
+  // Show the language toggle button in header
   const toggleBtn = document.getElementById('languageToggleBtn');
   const englishDiv = document.getElementById('scriptureEnglish');
   const originalDiv = document.getElementById('scriptureOriginal');
   
-  let showingOriginal = false;
-  
-  toggleBtn.addEventListener('click', () => {
-    showingOriginal = !showingOriginal;
+  if (toggleBtn) {
+    toggleBtn.classList.add('visible');
+    let showingOriginal = false;
     
-    if (showingOriginal) {
-      englishDiv.style.display = 'none';
-      originalDiv.style.display = 'block';
-      toggleBtn.textContent = '🔤 English';
-    } else {
-      englishDiv.style.display = 'block';
-      originalDiv.style.display = 'none';
-      toggleBtn.textContent = '🔤 Original Languages';
-    }
-  });
+    // Remove any existing listeners by cloning
+    const newBtn = toggleBtn.cloneNode(true);
+    toggleBtn.parentNode.replaceChild(newBtn, toggleBtn);
+    const newToggleBtn = newBtn;
+    
+    newToggleBtn.addEventListener('click', () => {
+      showingOriginal = !showingOriginal;
+      
+      if (showingOriginal) {
+        englishDiv.style.display = 'none';
+        originalDiv.style.display = 'block';
+        newToggleBtn.textContent = '🔤 English';
+      } else {
+        englishDiv.style.display = 'block';
+        originalDiv.style.display = 'none';
+        newToggleBtn.textContent = '🔤 Original Languages';
+      }
+    });
+  }
 }

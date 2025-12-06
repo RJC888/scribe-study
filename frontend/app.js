@@ -109,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initializePassageInput();
   initializeAnalysisDepthControls();
   initializeZoomControls();
+  initializeAnalysisTabs();
   initializeVisualizationMode();
   initializeHelpModal();
   // Set initial mode and welcome screen
@@ -1007,6 +1008,83 @@ function initializeAnalysisDepthControls() {
 // ==============================
 // VISUALIZATION MODE (TIER 2)
 // ==============================
+function initializeAnalysisTabs() {
+  const tabButtons = document.querySelectorAll('.analysis-tab-btn');
+  const tabPanes = document.querySelectorAll('.analysis-tab-pane');
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tabName = btn.dataset.tab;
+      
+      // Update active button
+      tabButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      // Update active pane
+      tabPanes.forEach(pane => pane.classList.remove('active'));
+      const activePane = document.getElementById(tabName + 'TabContent');
+      if (activePane) {
+        activePane.classList.add('active');
+      }
+      
+      // Initialize explorers on first load
+      if (tabName === 'scripture-explorer' && !window.scriptureExplorerInitialized) {
+        await initializeScriptureExplorer();
+        window.scriptureExplorerInitialized = true;
+      } else if (tabName === 'topical-explorer' && !window.topicalExplorerInitialized) {
+        await initializeTopicalExplorer();
+        window.topicalExplorerInitialized = true;
+      }
+    });
+  });
+}
+
+async function initializeScriptureExplorer() {
+  try {
+    const { default: ScriptureExplorer } = await import('./modules/ScriptureExplorer.js');
+    const container = document.getElementById('scriptureExplorerPanel');
+    if (!container) return;
+    
+    // Render into the container
+    container.innerHTML = ScriptureExplorer.render();
+    await ScriptureExplorer.init();
+  } catch (error) {
+    console.error('❌ Error initializing Scripture Explorer:', error);
+    const container = document.getElementById('scriptureExplorerPanel');
+    if (container) {
+      container.innerHTML = '<p style="color: red;">Error loading Scripture Explorer</p>';
+    }
+  }
+}
+
+async function initializeTopicalExplorer() {
+  try {
+    const { OrbitalTopicExplorer } = await import('./modules/OrbitalTopicExplorer.js');
+    const container = document.getElementById('topicalExplorerPanel');
+    if (!container) return;
+    
+    const explorer = new OrbitalTopicExplorer();
+    await explorer.init();
+    
+    // Instead of using the modal, render directly into container
+    container.innerHTML = explorer.render();
+    explorer.bindEvents();
+    
+    // Load initial topics
+    if (explorer.torreyData?.topics?.length) {
+      explorer.renderTopicGrid(explorer.torreyData.topics.slice(0, 12));
+    }
+  } catch (error) {
+    console.error('❌ Error initializing Topical Explorer:', error);
+    const container = document.getElementById('topicalExplorerPanel');
+    if (container) {
+      container.innerHTML = '<p style="color: red;">Error loading Topical Explorer</p>';
+    }
+  }
+}
+
+}
+
 function initializeVisualizationMode() {
   const enterVisualizationBtn = document.getElementById('enterVisualizationModeBtn');
   const exitVisualizationBtn = document.getElementById('exitVisualizationBtn');

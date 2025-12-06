@@ -1,0 +1,69 @@
+{
+  "_meta": {
+    "source": "Curated verse-level descriptions and discourse divisions",
+    "description": "Tier 3 - Micro units with brief theological descriptions for deep study",
+    "format": "Verse ranges with brief explanations of content and theological significance",
+    "coverage": "Primarily Gospels and selected OT passages",
+    "generated": "2025-12-06"
+  },
+  "John": {
+    "3": [
+      {
+        "ref": "3:1-2",
+        "description": "Nicodemus, a Pharisee, visits Jesus at night and acknowledges His divine authority."
+      },
+      {
+        "ref": "3:3",
+        "description": "Jesus states that one must be 'born again' to see God's kingdom."
+      },
+      {
+        "ref": "3:4",
+        "description": "Nicodemus misunderstands and takes the phrase literally."
+      },
+      {
+        "ref": "3:5-8",
+        "description": "Jesus explains spiritual rebirth by the Spirit, comparing it to the wind."
+      },
+      {
+        "ref": "3:9-12",
+        "description": "Nicodemus struggles to understand; Jesus contrasts earthly and heavenly truths."
+      },
+      {
+        "ref": "3:13-15",
+        "description": "Jesus speaks of His heavenly authority and foreshadows His crucifixion."
+      },
+      {
+        "ref": "3:16",
+        "description": "God's love expressed through giving His Son for eternal life to believers."
+      },
+      {
+        "ref": "3:17",
+        "description": "Jesus came to save, not condemn, the world."
+      },
+      {
+        "ref": "3:18",
+        "description": "Belief brings life; unbelief brings self-condemnation."
+      },
+      {
+        "ref": "3:19-21",
+        "description": "Light vs. darkness: people respond based on their deeds and motives."
+      },
+      {
+        "ref": "3:22-24",
+        "description": "Jesus and His disciples baptize; John the Baptist is still active."
+      },
+      {
+        "ref": "3:25-26",
+        "description": "A dispute leads John's disciples to report Jesus' growing influence."
+      },
+      {
+        "ref": "3:27-30",
+        "description": "John the Baptist affirms Jesus' supremacy ('He must increase, I must decrease')."
+      },
+      {
+        "ref": "3:31-36",
+        "description": "A final testimony: Jesus is from above, speaks God's words, and belief in Him gives life."
+      }
+    ]
+  }
+}

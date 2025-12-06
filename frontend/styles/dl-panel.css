@@ -1,0 +1,582 @@
+/**
+ * dl-panel.css - Discourse & Literary Analysis Panel Styles
+ * 
+ * Split-pane layout for side-by-side Discourse (left) and Literary (right) analysis
+ * Integrated into the Analysis display area
+ */
+
+/* ============================================
+   D-L Analysis Panel Container
+   ============================================ */
+
+.dl-analysis-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: linear-gradient(135deg, #0f172a 0%, #1a202c 100%);
+  color: #e0e7ff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Panel Header */
+.dl-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(90deg, #1e3a8a 0%, #3730a3 100%);
+  border-bottom: 2px solid #4f46e5;
+  flex-shrink: 0;
+}
+
+.dl-panel-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #f0f9ff;
+}
+
+.dl-pericope-ref {
+  flex: 1;
+  margin-left: 12px;
+  font-size: 14px;
+  color: #a5b4fc;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+.dl-close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f0f9ff;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.dl-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================
+   Split-Pane Container
+   ============================================ */
+
+.dl-split-container {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  flex: 1;
+  min-height: 300px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+/* ============================================
+   Individual Panes (Discourse & Literary)
+   ============================================ */
+
+.dl-pane {
+  display: flex;
+  flex-direction: column;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(79, 70, 229, 0.15);
+  overflow: hidden;
+}
+
+.dl-pane-header {
+  padding: 14px 16px;
+  background: rgba(30, 58, 138, 0.3);
+  border-bottom: 1px solid rgba(79, 70, 229, 0.2);
+  flex-shrink: 0;
+}
+
+.dl-pane-header h4 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e0e7ff;
+}
+
+.dl-pane-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #a5b4fc;
+  opacity: 0.8;
+}
+
+.dl-pane-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  gap: 8px;
+}
+
+/* Discourse Pane */
+.discourse-pane {
+  border-right: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+.discourse-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.discourse-marker {
+  background: rgba(79, 70, 229, 0.1);
+  border-left: 4px solid #4f46e5;
+  border-radius: 4px;
+  padding: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.discourse-marker:hover {
+  background: rgba(79, 70, 229, 0.2);
+  border-left-color: #6366f1;
+  transform: translateX(4px);
+}
+
+.marker-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c7d2fe;
+  margin-bottom: 4px;
+}
+
+.marker-greek {
+  display: inline-block;
+  font-family: 'SBL BibLit', serif;
+  font-size: 14px;
+  color: #f0f9ff;
+  background: rgba(15, 23, 42, 0.5);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-right: 8px;
+}
+
+.marker-function {
+  display: inline-block;
+  font-size: 11px;
+  color: #a5b4fc;
+  background: rgba(165, 180, 252, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.marker-description {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.discourse-note {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+  padding: 12px;
+  border-top: 1px solid rgba(79, 70, 229, 0.1);
+  margin-top: 8px;
+}
+
+/* Literary Pane */
+.literary-pane {
+  border-left: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+.literary-structure {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.literary-item {
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 4px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.literary-item:hover {
+  background: rgba(99, 102, 241, 0.15);
+}
+
+.literary-ref {
+  display: block;
+  font-size: 12px;
+  color: #a5b4fc;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  margin-bottom: 4px;
+}
+
+.literary-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #e0e7ff;
+  line-height: 1.4;
+}
+
+.literary-device {
+  display: inline-block;
+  font-size: 11px;
+  color: #f0f9ff;
+  background: rgba(71, 85, 245, 0.3);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-top: 6px;
+}
+
+/* ============================================
+   Split-Pane Divider
+   ============================================ */
+
+.dl-divider {
+  width: 2px;
+  background: linear-gradient(180deg, transparent 0%, rgba(79, 70, 229, 0.3) 50%, transparent 100%);
+  cursor: col-resize;
+  transition: background 0.2s ease;
+}
+
+.dl-divider:hover {
+  background: linear-gradient(180deg, transparent 0%, rgba(79, 70, 229, 0.5) 50%, transparent 100%);
+}
+
+/* ============================================
+   Verse Sections Grid (Clickable)
+   ============================================ */
+
+.dl-verse-sections {
+  flex-shrink: 0;
+  background: rgba(15, 23, 42, 0.7);
+  border-top: 1px solid rgba(79, 70, 229, 0.2);
+  padding: 14px 16px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.dl-sections-header {
+  margin-bottom: 10px;
+}
+
+.dl-sections-header h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0e7ff;
+}
+
+.dl-sections-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: #a5b4fc;
+}
+
+.dl-sections-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.verse-section-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  background: rgba(79, 70, 229, 0.2);
+  border: 1px solid rgba(79, 70, 229, 0.3);
+  color: #e0e7ff;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.verse-section-btn:hover {
+  background: rgba(79, 70, 229, 0.4);
+  border-color: rgba(79, 70, 229, 0.5);
+  color: #f0f9ff;
+}
+
+.verse-section-btn:active {
+  background: rgba(79, 70, 229, 0.5);
+  transform: scale(0.97);
+}
+
+/* ============================================
+   Micro Unit Buttons (Tier 3 - with descriptions)
+   ============================================ */
+
+.micro-unit-btn {
+  width: 100%;
+  padding: 12px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: #e0e7ff;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  margin-bottom: 8px;
+}
+
+.micro-unit-btn:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #f0f9ff;
+  transform: translateX(4px);
+}
+
+.micro-unit-btn:active {
+  background: rgba(99, 102, 241, 0.3);
+  transform: scale(0.98);
+}
+
+.micro-ref {
+  display: block;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 12px;
+  color: #a5b4fc;
+  margin-bottom: 4px;
+}
+
+.micro-desc {
+  display: block;
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+/* ============================================
+   Dropdown & Nested Pericopes (in ScriptureExplorer)
+   ============================================ */
+
+.division-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 0;
+  transition: all 0.2s ease;
+}
+
+.division-header:hover {
+  color: #93c5fd;
+}
+
+.dropdown-arrow {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(79, 70, 229, 0.1);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  border-radius: 3px;
+  color: #a5b4fc;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dropdown-arrow:hover {
+  background: rgba(79, 70, 229, 0.2);
+  border-color: rgba(79, 70, 229, 0.3);
+  color: #c7d2fe;
+}
+
+.dropdown-arrow.expanded {
+  color: #4f46e5;
+}
+
+.pericopes-list {
+  margin-left: 24px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    transform: translateY(0);
+  }
+}
+
+.pericope-btn {
+  padding: 10px 12px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: #c7d2fe;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.pericope-btn:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #e0e7ff;
+  transform: translateX(4px);
+}
+
+.pericope-btn.selected {
+  background: rgba(79, 70, 229, 0.3);
+  border-color: rgba(79, 70, 229, 0.5);
+  color: #f0f9ff;
+  box-shadow: 0 0 12px rgba(79, 70, 229, 0.3);
+}
+
+.pericope-range {
+  display: block;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 11px;
+  color: #a5b4fc;
+}
+
+.pericope-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #e0e7ff;
+  line-height: 1.3;
+}
+
+.pericope-ref {
+  display: block;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+.empty-pericopes {
+  padding: 12px;
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
+}
+
+/* ============================================
+   Placeholder & Error States
+   ============================================ */
+
+.dl-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 13px;
+  color: #94a3b8;
+  text-align: center;
+  padding: 16px;
+  min-height: 120px;
+}
+
+.dl-panel-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 13px;
+  color: #ef4444;
+  text-align: center;
+  padding: 16px;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .dl-split-container {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .dl-pane {
+    min-height: 200px;
+  }
+
+  .discourse-pane {
+    border-right: none;
+    border-bottom: 1px solid rgba(79, 70, 229, 0.2);
+  }
+
+  .literary-pane {
+    border-left: none;
+  }
+
+  .dl-divider {
+    display: none;
+  }
+
+  .dl-pane-content {
+    max-height: 250px;
+  }
+
+  .dl-verse-sections {
+    max-height: 120px;
+  }
+}
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+
+.dl-pane-content::-webkit-scrollbar,
+.dl-verse-sections::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dl-pane-content::-webkit-scrollbar-track,
+.dl-verse-sections::-webkit-scrollbar-track {
+  background: rgba(79, 70, 229, 0.1);
+}
+
+.dl-pane-content::-webkit-scrollbar-thumb,
+.dl-verse-sections::-webkit-scrollbar-thumb {
+  background: rgba(79, 70, 229, 0.3);
+  border-radius: 3px;
+}
+
+.dl-pane-content::-webkit-scrollbar-thumb:hover,
+.dl-verse-sections::-webkit-scrollbar-thumb:hover {
+  background: rgba(79, 70, 229, 0.5);
+}

@@ -13,6 +13,9 @@
   <!-- MAIN STYLES -->
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/styles/visualizations.css" />
+  <link rel="stylesheet" href="/styles/analysis.css" />
+  <link rel="stylesheet" href="/styles/dl-panel.css" />
+  <link rel="stylesheet" href="/styles/orbital-topics.css" />
 </head>
 <body>
   <!-- TOP BAR: APP NAME + SERVER STATUS + ACCOUNT/AUTH PLACEHOLDER -->
@@ -158,11 +161,34 @@
               </div>
               <button class="expandBtn" data-target="analysis">⇔</button>
             </div>
+            
+            <!-- ANALYSIS TABS -->
+            <div id="analysisTabs" class="analysis-tabs-bar">
+              <button class="analysis-tab-btn active" data-tab="analysis">📊 Analysis</button>
+              <button class="analysis-tab-btn" data-tab="scripture-explorer">📖 Scripture Explorer</button>
+              <button class="analysis-tab-btn" data-tab="topical-explorer">🌌 Topical Explorer</button>
+            </div>
+            
             <div id="analysisContent">
-              <!-- EXISTING IDs TO KEEP CURRENT app.js WORKING -->
-              <div id="analysisDisplay"></div>
-
-              <div id="visualizationContainer"></div>
+              <!-- TAB 1: ANALYSIS DISPLAY -->
+              <div id="analysisTabContent" class="analysis-tab-pane active">
+                <div id="analysisDisplay"></div>
+                <div id="visualizationContainer"></div>
+              </div>
+              
+              <!-- TAB 2: SCRIPTURE EXPLORER -->
+              <div id="scriptureExplorerTabContent" class="analysis-tab-pane hidden">
+                <div id="scriptureExplorerPanel">
+                  <!-- Scripture Explorer will render here -->
+                </div>
+              </div>
+              
+              <!-- TAB 3: TOPICAL EXPLORER -->
+              <div id="topicalExplorerTabContent" class="analysis-tab-pane hidden">
+                <div id="topicalExplorerPanel">
+                  <!-- Orbital Topic Explorer will render here -->
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -182,14 +208,9 @@
             <textarea id="notesTextarea" rows="6" placeholder="Record your study notes here..."></textarea>
           </div>
         </div>
-
-        <!-- VISUALIZATION BUTTON ROW -->
-        <div id="visualizationRow">
-          <button id="enterVisualizationModeBtn">Open Fullscreen Visualization</button>
-        </div>
       </div>
 
-      <!-- TIER 2: FULLSCREEN VISUALIZATION MODE -->
+      <!-- HELP HISTORY MODAL -->
       <section id="visualizationMode" class="hidden">
         <div id="visualizationTopBar">
           <span id="visualizationPassageRef">[Passage for visualization]</span>

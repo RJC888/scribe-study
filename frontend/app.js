@@ -155,6 +155,16 @@ function attachGlobalEvents() {
     }
   }
 
+  // =========================================================
+  // DARK MODE TOGGLE
+  // =========================================================
+  initializeDarkMode();
+
+  // =========================================================
+  // FAVORITES SYSTEM
+  // =========================================================
+  initializeFavorites();
+
   // Module tab buttons: show subtab modal
   mainTabButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -1735,4 +1745,187 @@ Status: Connection refused or timeout
   console.log('✅ Server status widget initialized');
 }
 
+// =========================================================
+// DARK MODE TOGGLE
+// =========================================================
+function initializeDarkMode() {
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  if (!darkModeToggle) return;
 
+  // Check for saved preference or system preference
+  const savedDarkMode = localStorage.getItem('darkMode');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  if (savedDarkMode === 'true' || (savedDarkMode === null && prefersDark)) {
+    document.body.classList.add('dark-mode');
+    darkModeToggle.textContent = '☀️';
+  } else {
+    darkModeToggle.textContent = '🌙';
+  }
+
+  darkModeToggle.addEventListener('click', () => {
+    const isDark = document.body.classList.toggle('dark-mode');
+    darkModeToggle.textContent = isDark ? '☀️' : '🌙';
+    localStorage.setItem('darkMode', isDark);
+    console.log('🌓 Dark mode:', isDark ? 'ON' : 'OFF');
+  });
+
+  console.log('✅ Dark mode toggle initialized');
+}
+
+// =========================================================
+// FAVORITES SYSTEM
+// =========================================================
+const FavoritesManager = {
+  favorites: [],
+
+  init() {
+    this.loadFavorites();
+    this.renderFavorites();
+  },
+
+  loadFavorites() {
+    try {
+      const saved = localStorage.getItem('scribeFavorites');
+      this.favorites = saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      this.favorites = [];
+    }
+  },
+
+  saveFavorites() {
+    localStorage.setItem('scribeFavorites', JSON.stringify(this.favorites));
+  },
+
+  addFavorite(type, title, data = {}) {
+    const id = `fav_${Date.now()}`;
+    const favorite = { id, type, title, data, addedAt: new Date().toISOString() };
+    this.favorites.push(favorite);
+    this.saveFavorites();
+    this.renderFavorites();
+    return id;
+  },
+
+  removeFavorite(id) {
+    this.favorites = this.favorites.filter(f => f.id !== id);
+    this.saveFavorites();
+    this.renderFavorites();
+  },
+
+  isFavorited(type, title) {
+    return this.favorites.some(f => f.type === type && f.title === title);
+  },
+
+  renderFavorites() {
+    const list = document.getElementById('favoritesList');
+    if (!list) return;
+
+    if (this.favorites.length === 0) {
+      list.innerHTML = '<p class="empty-favorites">No favorites yet. Click ☆ on any panel to add.</p>';
+      return;
+    }
+
+    list.innerHTML = this.favorites.map(fav => `
+      <div class="favorite-item" data-id="${fav.id}" data-type="${fav.type}">
+        <span class="fav-icon">${this.getTypeIcon(fav.type)}</span>
+        <span class="fav-title">${fav.title}</span>
+        <button class="remove-fav" data-id="${fav.id}">✕</button>
+      </div>
+    `).join('');
+
+    // Bind remove buttons
+    list.querySelectorAll('.remove-fav').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.removeFavorite(btn.dataset.id);
+      });
+    });
+
+    // Bind click to navigate
+    list.querySelectorAll('.favorite-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const fav = this.favorites.find(f => f.id === item.dataset.id);
+        if (fav) this.openFavorite(fav);
+      });
+    });
+  },
+
+  getTypeIcon(type) {
+    const icons = {
+      scripture: '📖',
+      analysis: '📊',
+      topic: '🌌',
+      passage: '📜'
+    };
+    return icons[type] || '⭐';
+  },
+
+  openFavorite(fav) {
+    console.log('Opening favorite:', fav);
+    // Close sidebar
+    document.getElementById('favoritesSidebar')?.classList.add('hidden');
+    
+    // Navigate based on type
+    if (fav.type === 'passage' && fav.data?.reference) {
+      const passageInput = document.getElementById('passageInput');
+      if (passageInput) {
+        passageInput.value = fav.data.reference;
+        passageInput.dispatchEvent(new Event('input'));
+      }
+    }
+  }
+};
+
+function initializeFavorites() {
+  FavoritesManager.init();
+
+  // Toggle sidebar
+  const favoritesToggle = document.getElementById('favoritesToggle');
+  const favoritesSidebar = document.getElementById('favoritesSidebar');
+  const closeFavorites = document.getElementById('closeFavorites');
+
+  if (favoritesToggle && favoritesSidebar) {
+    favoritesToggle.addEventListener('click', () => {
+      favoritesSidebar.classList.toggle('hidden');
+    });
+  }
+
+  if (closeFavorites && favoritesSidebar) {
+    closeFavorites.addEventListener('click', () => {
+      favoritesSidebar.classList.add('hidden');
+    });
+  }
+
+  // Star buttons on panels
+  document.querySelectorAll('.favorite-star').forEach(star => {
+    const panel = star.dataset.panel;
+    
+    // Check if already favorited
+    if (FavoritesManager.isFavorited(panel, panel)) {
+      star.classList.add('favorited');
+      star.textContent = '★';
+    }
+
+    star.addEventListener('click', () => {
+      const title = panel.charAt(0).toUpperCase() + panel.slice(1) + ' Panel';
+      
+      if (star.classList.contains('favorited')) {
+        // Remove from favorites
+        const fav = FavoritesManager.favorites.find(f => f.type === panel);
+        if (fav) FavoritesManager.removeFavorite(fav.id);
+        star.classList.remove('favorited');
+        star.textContent = '☆';
+      } else {
+        // Add to favorites
+        FavoritesManager.addFavorite(panel, title);
+        star.classList.add('favorited');
+        star.textContent = '★';
+      }
+    });
+  });
+
+  console.log('✅ Favorites system initialized');
+}
+
+// Make FavoritesManager available globally
+window.FavoritesManager = FavoritesManager;

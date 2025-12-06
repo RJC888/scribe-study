@@ -25,6 +25,8 @@
       <span id="serverStatusIndicator" class="status-disconnected" title="Checking server...">⚪ Checking...</span>
     </div>
     <div id="userControls">
+      <button id="darkModeToggle" class="icon-btn" title="Toggle Dark Mode">🌙</button>
+      <button id="favoritesToggle" class="icon-btn" title="View Favorites">⭐</button>
       <button id="authButton">Sign in / Account</button>
     </div>
   </header>
@@ -96,7 +98,8 @@
           <!-- SCRIPTURE PANEL -->
           <div id="scripturePanel" class="panel top-panel">
             <div class="panelHeader">
-              <span class="panelTitle">Scripture</span>
+              <button class="favorite-star" data-panel="scripture" title="Add to favorites">☆</button>
+              <span class="panelTitle">Scripture Text (KJV)</span>
               <div id="scriptureHeaderControls">
                 <button id="languageToggleBtn" style="
                   padding: 6px 12px;
@@ -171,6 +174,7 @@
           <!-- ANALYSIS PANEL -->
           <div id="analysisPanel" class="panel top-panel">
             <div class="panelHeader">
+              <button class="favorite-star" data-panel="analysis" title="Add to favorites">☆</button>
               <span class="panelTitle">Analysis / Search Results</span>
               <button class="expandBtn" data-target="analysis">⇔</button>
             </div>
@@ -221,7 +225,23 @@
             <textarea id="notesTextarea" rows="6" placeholder="Record your study notes here..."></textarea>
           </div>
         </div>
+        
+        <!-- VISUALIZATION ROW (Fixed at bottom of screen) -->
+        <div id="visualizationRow">
+          <button id="enterVisualizationModeBtn">🎨 Open Fullscreen Visualization</button>
+        </div>
       </div>
+      
+      <!-- FAVORITES SIDEBAR (hidden by default) -->
+      <aside id="favoritesSidebar" class="hidden">
+        <div class="favorites-header">
+          <h3>⭐ Favorites</h3>
+          <button id="closeFavorites" class="close-btn">✕</button>
+        </div>
+        <div id="favoritesList" class="favorites-list">
+          <p class="empty-favorites">No favorites yet. Click ☆ on any panel to add.</p>
+        </div>
+      </aside>
 
       <!-- HELP HISTORY MODAL -->
       <section id="visualizationMode" class="hidden">

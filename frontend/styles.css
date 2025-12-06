@@ -20,6 +20,28 @@ body {
   color: #222;
 }
 
+/* Dark Mode Support */
+body.dark-mode {
+  background: #1a1a1a;
+  color: #e8e8e8;
+}
+
+body.dark-mode #passageInput {
+  background: #2d2d2d;
+  color: #e8e8e8;
+  border-color: #444;
+}
+
+body.dark-mode #passageInput::placeholder {
+  color: #888;
+}
+
+body.dark-mode #passageInput:focus {
+  background: #3a3a3a;
+  border-color: #5a9ff5;
+  box-shadow: 0 0 4px rgba(90, 159, 245, 0.3);
+}
+
 /* =========================================================
    TOP BAR
    =========================================================== */
@@ -184,6 +206,64 @@ body {
 .persona-selector select option {
   background: #333;
   color: white;
+}
+
+/* =========================================================
+   ANALYSIS DEPTH BUTTONS BAR (in persona selector)
+   =========================================================== */
+.analysis-depth-buttons-bar {
+  display: flex;
+  gap: 8px;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(255, 255, 255, 0.3);
+  align-items: center;
+}
+
+.persona-selector .analysis-depth-btn {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.persona-selector .analysis-depth-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: white;
+  transform: translateY(-2px);
+}
+
+.persona-selector .analysis-depth-btn.active {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-bottom: 3px solid white;
+}
+
+/* Persona-specific underline colors */
+.persona-selector[data-persona="devotional"] .analysis-depth-btn.active {
+  border-bottom-color: #ff6b6b;
+}
+
+.persona-selector[data-persona="bible-student"] .analysis-depth-btn.active {
+  border-bottom-color: #4ecdc4;
+}
+
+.persona-selector[data-persona="pastor-teacher"] .analysis-depth-btn.active {
+  border-bottom-color: #ffd93d;
+}
+
+.persona-selector[data-persona="academic"] .analysis-depth-btn.active {
+  border-bottom-color: #a8e6cf;
 }
 
 /* =========================================================
@@ -743,7 +823,15 @@ body {
   border-radius: 3px;
 }
 
-#scriptureContent,
+#scriptureContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0 0 12px;
+}
+
 #analysisContent {
   display: flex;
   flex-direction: column;

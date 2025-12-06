@@ -136,9 +136,23 @@ function attachGlobalEvents() {
     personaSelect.addEventListener('change', (e) => {
       const persona = e.target.value;
       AppState.currentPersona = persona;
+      
+      // Update the persona selector's data attribute for CSS styling
+      const personaSelectorDiv = document.getElementById('personaSelector');
+      if (personaSelectorDiv) {
+        personaSelectorDiv.setAttribute('data-persona', persona);
+      }
+      
       console.log('🎭 Persona changed to:', persona);
       // You can add persona-specific logic here (change analysis depth, prompts, etc.)
     });
+    
+    // Initialize with current persona
+    const initialPersona = personaSelect.value;
+    const personaSelectorDiv = document.getElementById('personaSelector');
+    if (personaSelectorDiv) {
+      personaSelectorDiv.setAttribute('data-persona', initialPersona);
+    }
   }
 
   // Module tab buttons: show subtab modal
@@ -817,8 +831,47 @@ async function initializePassageInput() {
       });
     }
     
+    // AUTO-LOAD Scripture with debounce (load without pressing Enter)
+    let autoLoadDebounceTimer = null;
+    const AUTO_LOAD_DELAY = 1500; // 1.5 seconds after user stops typing
+    
+    passageInput.addEventListener("input", async (e) => {
+      // Clear existing debounce timer
+      if (autoLoadDebounceTimer) {
+        clearTimeout(autoLoadDebounceTimer);
+      }
+      
+      // Only auto-load if passage is reasonably complete (3+ chars and looks like a reference)
+      const passage = e.target.value.trim();
+      const looksLikeReference = /^\w+\s+\d+[:.]?\d*/.test(passage); // e.g., "John 3:16", "Matt 5"
+      
+      if (passage.length >= 3 && looksLikeReference && !suggestionsContainer.classList.contains('hidden')) {
+        // Schedule auto-load
+        autoLoadDebounceTimer = setTimeout(async () => {
+          try {
+            console.log('⏱️ Auto-loading Scripture:', passage);
+            const fullPassageText = document.getElementById('fullPassageText');
+            if (fullPassageText) {
+              const { fetchAndDisplayScripture } = await import('./analysisEngine.js');
+              if (fetchAndDisplayScripture) {
+                await fetchAndDisplayScripture(passage, fullPassageText);
+                console.log('✅ Auto-loaded Scripture successfully');
+              }
+            }
+          } catch (error) {
+            console.error('⚠️ Auto-load failed:', error);
+          }
+        }, AUTO_LOAD_DELAY);
+      }
+    });
+    
     passageInput.addEventListener("keypress", async (e) => {
       try {
+        // Clear debounce timer on explicit Enter key
+        if (autoLoadDebounceTimer) {
+          clearTimeout(autoLoadDebounceTimer);
+          autoLoadDebounceTimer = null;
+        }
         if (e.key === "Enter") {
           // Hide autocomplete suggestions
           if (suggestionsContainer) {
@@ -1034,10 +1087,18 @@ function initializeAnalysisTabs() {
       tabButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       
+      // Map tab names to pane IDs (convert kebab-case to camelCase)
+      const paneIdMap = {
+        'analysis': 'analysisTabContent',
+        'scripture-explorer': 'scriptureExplorerTabContent',
+        'topical-explorer': 'topicalExplorerTabContent'
+      };
+      const paneId = paneIdMap[tabName];
+      
       // Update active pane
       tabPanes.forEach(pane => pane.classList.remove('active'));
-      const activePane = document.getElementById(tabName + 'TabContent');
-      console.log('[Tab Switch] Looking for pane:', tabName + 'TabContent', 'Found:', !!activePane);
+      const activePane = document.getElementById(paneId);
+      console.log('[Tab Switch] Looking for pane:', paneId, 'Found:', !!activePane);
       if (activePane) {
         activePane.classList.add('active');
       }

@@ -138,8 +138,57 @@ body {
 }
 
 /* =========================================================
-   MODULE TABS BAR (6 main modules)
+   PERSONA SELECTOR
    =========================================================== */
+.persona-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  height: 44px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.persona-selector label {
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.persona-selector select {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.persona-selector select:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.persona-selector select:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: white;
+}
+
+.persona-selector select option {
+  background: #333;
+  color: white;
+}
+
+/* =========================================================
+   MODULE TABS BAR (6 main modules)
+   =========================================================== -->
 #moduleTabsBar {
   display: flex;
   justify-content: space-around;

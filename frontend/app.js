@@ -130,6 +130,17 @@ function cacheDom() {
 
 // Attach listeners for module tabs and modal
 function attachGlobalEvents() {
+  // Persona selector
+  const personaSelect = document.getElementById('personaSelect');
+  if (personaSelect) {
+    personaSelect.addEventListener('change', (e) => {
+      const persona = e.target.value;
+      AppState.currentPersona = persona;
+      console.log('🎭 Persona changed to:', persona);
+      // You can add persona-specific logic here (change analysis depth, prompts, etc.)
+    });
+  }
+
   // Module tab buttons: show subtab modal
   mainTabButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -1012,9 +1023,12 @@ function initializeAnalysisTabs() {
   const tabButtons = document.querySelectorAll('.analysis-tab-btn');
   const tabPanes = document.querySelectorAll('.analysis-tab-pane');
 
+  console.log('[initializeAnalysisTabs] Found', tabButtons.length, 'tab buttons and', tabPanes.length, 'panes');
+
   tabButtons.forEach(btn => {
     btn.addEventListener('click', async () => {
       const tabName = btn.dataset.tab;
+      console.log('[Tab Click] Clicked tab:', tabName);
       
       // Update active button
       tabButtons.forEach(b => b.classList.remove('active'));
@@ -1023,15 +1037,18 @@ function initializeAnalysisTabs() {
       // Update active pane
       tabPanes.forEach(pane => pane.classList.remove('active'));
       const activePane = document.getElementById(tabName + 'TabContent');
+      console.log('[Tab Switch] Looking for pane:', tabName + 'TabContent', 'Found:', !!activePane);
       if (activePane) {
         activePane.classList.add('active');
       }
       
       // Initialize explorers on first load
       if (tabName === 'scripture-explorer' && !window.scriptureExplorerInitialized) {
+        console.log('[Init] Starting Scripture Explorer initialization...');
         await initializeScriptureExplorer();
         window.scriptureExplorerInitialized = true;
       } else if (tabName === 'topical-explorer' && !window.topicalExplorerInitialized) {
+        console.log('[Init] Starting Topical Explorer initialization...');
         await initializeTopicalExplorer();
         window.topicalExplorerInitialized = true;
       }
@@ -1041,48 +1058,60 @@ function initializeAnalysisTabs() {
 
 async function initializeScriptureExplorer() {
   try {
+    console.log('[ScriptureExplorer] Starting init...');
     const { default: ScriptureExplorer } = await import('./modules/ScriptureExplorer.js');
     const container = document.getElementById('scriptureExplorerPanel');
-    if (!container) return;
+    if (!container) {
+      console.error('[ScriptureExplorer] Container not found!');
+      return;
+    }
     
-    // Render into the container
+    console.log('[ScriptureExplorer] Container found, rendering...');
     container.innerHTML = ScriptureExplorer.render();
+    console.log('[ScriptureExplorer] HTML rendered, initializing...');
     await ScriptureExplorer.init();
+    console.log('[ScriptureExplorer] ✅ Initialization complete');
   } catch (error) {
     console.error('❌ Error initializing Scripture Explorer:', error);
     const container = document.getElementById('scriptureExplorerPanel');
     if (container) {
-      container.innerHTML = '<p style="color: red;">Error loading Scripture Explorer</p>';
+      container.innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
     }
   }
 }
 
 async function initializeTopicalExplorer() {
   try {
+    console.log('[TopicalExplorer] Starting init...');
     const { OrbitalTopicExplorer } = await import('./modules/OrbitalTopicExplorer.js');
     const container = document.getElementById('topicalExplorerPanel');
-    if (!container) return;
+    if (!container) {
+      console.error('[TopicalExplorer] Container not found!');
+      return;
+    }
     
+    console.log('[TopicalExplorer] Container found, creating explorer...');
     const explorer = new OrbitalTopicExplorer();
     await explorer.init();
     
-    // Instead of using the modal, render directly into container
+    console.log('[TopicalExplorer] Rendering HTML...');
     container.innerHTML = explorer.render();
+    console.log('[TopicalExplorer] Binding events...');
     explorer.bindEvents();
     
     // Load initial topics
     if (explorer.torreyData?.topics?.length) {
+      console.log('[TopicalExplorer] Loading initial topics...');
       explorer.renderTopicGrid(explorer.torreyData.topics.slice(0, 12));
     }
+    console.log('[TopicalExplorer] ✅ Initialization complete');
   } catch (error) {
     console.error('❌ Error initializing Topical Explorer:', error);
     const container = document.getElementById('topicalExplorerPanel');
     if (container) {
-      container.innerHTML = '<p style="color: red;">Error loading Topical Explorer</p>';
+      container.innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
     }
   }
-}
-
 }
 
 function initializeVisualizationMode() {

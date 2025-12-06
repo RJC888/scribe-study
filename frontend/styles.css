@@ -648,25 +648,27 @@ body {
   border: none;
   background: #e5e7eb;
   color: #1f2933;
-  width: 28px;
-  height: 24px;
-  border-radius: 4px;
+  width: 42px;
+  height: 36px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.2s ease, transform 0.1s ease;
+  font-weight: 600;
 }
 
 .analysis-depth-btn:hover {
   background: #d1d5db;
+  transform: scale(1.05);
 }
 
 .analysis-depth-btn.active {
   background: #3d6df6;
   color: white;
-  box-shadow: 0 2px 6px rgba(61, 109, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(61, 109, 246, 0.4);
 }
 
 /* =========================================================
@@ -674,48 +676,57 @@ body {
    =========================================================== */
 .analysis-tabs-bar {
   display: flex;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 2px solid #e5e7eb;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .analysis-tab-btn {
-  padding: 6px 12px;
+  padding: 10px 18px;
   background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  color: #4b5563;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
   transition: all 0.2s ease;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .analysis-tab-btn:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+  background: #f0f1f3;
+  border-color: #3d6df6;
   color: #1f2937;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(61, 109, 246, 0.2);
 }
 
 .analysis-tab-btn.active {
-  background: #3d6df6;
+  background: linear-gradient(135deg, #3d6df6 0%, #2563eb 100%);
   color: white;
-  border-color: #3d6df6;
-  box-shadow: 0 2px 6px rgba(61, 109, 246, 0.3);
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(61, 109, 246, 0.4);
 }
 
 .analysis-tab-pane {
   display: none;
   padding: 12px;
-  height: calc(100% - 100px);
+  flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
 }
 
 .analysis-tab-pane.active {
-  display: block;
+  display: flex;
+  flex-direction: column;
 }
 
 .expandBtn {
@@ -734,10 +745,11 @@ body {
 
 #scriptureContent,
 #analysisContent {
+  display: flex;
+  flex-direction: column;
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 0 0 0 12px;
+  overflow: hidden;
+  padding: 0;
 }
 
 #scriptureContent::-webkit-scrollbar,

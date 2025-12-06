@@ -78,6 +78,246 @@ export class OrbitalTopicExplorer {
           <button class="close-btn" id="closeTopicExplorer">✕</button>
         </header>
 
+  /**
+   * Render inline version for embedding in Analysis tab (no modal/backdrop)
+   */
+  renderInline() {
+    return `
+      <div class="orbital-topic-inline">
+        <!-- Search Bar -->
+        <div class="inline-topic-header">
+          <div class="inline-search-bar">
+            <input 
+              type="text" 
+              id="inlineTopicSearchInput" 
+              placeholder="🔍 Search topics... (Grace, Faith, Prayer)"
+              autocomplete="off"
+            />
+          </div>
+          <div class="category-pills">
+            <button class="category-pill active" data-category="all">All</button>
+            <button class="category-pill" data-category="Doctrines">Doctrines</button>
+            <button class="category-pill" data-category="Persons">Persons</button>
+            <button class="category-pill" data-category="Places">Places</button>
+          </div>
+        </div>
+
+        <!-- Topic Grid - 2 per row -->
+        <div id="inlineTopicGrid" class="inline-topic-grid">
+          <!-- Cards will render here -->
+          <div class="loading-message">Loading topics...</div>
+        </div>
+
+        <!-- Detail Panel (hidden until topic selected) -->
+        <div id="inlineTopicDetail" class="inline-topic-detail hidden">
+          <div class="detail-header">
+            <button class="back-btn" id="inlineBackToGrid">← Back to Topics</button>
+            <h3 id="inlineDetailTitle">Topic Name</h3>
+          </div>
+          <div id="inlineDetailContent" class="detail-content">
+            <!-- Selected topic verses will show here -->
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Initialize inline version with event bindings
+   */
+  initInline(container) {
+    this.container = container;
+    this.isInline = true;
+    
+    // Search input
+    const searchInput = container.querySelector('#inlineTopicSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => this.handleInlineSearch(e.target.value));
+    }
+
+    // Category pills
+    container.querySelectorAll('.category-pill').forEach(pill => {
+      pill.addEventListener('click', (e) => {
+        container.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+        e.target.classList.add('active');
+        this.filterInlineByCategory(e.target.dataset.category);
+      });
+    });
+
+    // Back button
+    const backBtn = container.querySelector('#inlineBackToGrid');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => this.showInlineGrid());
+    }
+
+    // Topic card clicks
+    const grid = container.querySelector('#inlineTopicGrid');
+    if (grid) {
+      grid.addEventListener('click', (e) => {
+        const card = e.target.closest('.orbital-topic-card');
+        if (card) {
+          this.selectInlineTopic(card.dataset.topic);
+        }
+        // Handle View All click
+        const viewAllBtn = e.target.closest('.view-all-btn');
+        if (viewAllBtn) {
+          this.selectInlineTopic(viewAllBtn.dataset.topic);
+        }
+      });
+    }
+
+    // Load initial topics
+    this.showInlinePopularTopics();
+  }
+
+  handleInlineSearch(query) {
+    const lower = query.toLowerCase().trim();
+    if (!lower || lower.length < 2) {
+      this.showInlinePopularTopics();
+      return;
+    }
+
+    const matches = this.torreyData?.topics?.filter(topic => {
+      const name = topic.topic?.toLowerCase() || '';
+      const subtopics = topic.subtopics?.join(' ').toLowerCase() || '';
+      return name.includes(lower) || subtopics.includes(lower);
+    }) || [];
+
+    this.renderInlineGrid(matches.slice(0, 10));
+  }
+
+  filterInlineByCategory(category) {
+    if (category === 'all') {
+      this.showInlinePopularTopics();
+      return;
+    }
+    const matches = this.torreyData?.topics?.filter(t => t.category === category) || [];
+    this.renderInlineGrid(matches.slice(0, 10));
+  }
+
+  showInlinePopularTopics() {
+    const popularNames = ['Grace', 'Faith', 'Love', 'Prayer', 'Salvation', 'Sin', 'Hope', 'Mercy'];
+    const popular = popularNames
+      .map(name => this.torreyData?.topics?.find(t => t.topic === name))
+      .filter(Boolean);
+    
+    if (popular.length === 0 && this.torreyData?.topics?.length) {
+      this.renderInlineGrid(this.torreyData.topics.slice(0, 8));
+    } else {
+      this.renderInlineGrid(popular);
+    }
+  }
+
+  renderInlineGrid(topics) {
+    const grid = this.container?.querySelector('#inlineTopicGrid');
+    if (!grid) return;
+
+    if (!topics.length) {
+      grid.innerHTML = '<div class="empty-state">No topics found. Try a different search.</div>';
+      return;
+    }
+
+    grid.innerHTML = topics.map(topic => this.renderInlineCard(topic)).join('');
+    this.showInlineGrid();
+  }
+
+  renderInlineCard(topic) {
+    const verseCount = topic.verseRefs?.length || 0;
+    const previewVerses = (topic.verseRefs || []).slice(0, 3);
+    
+    return `
+      <article class="orbital-topic-card inline-card" data-topic="${this.escapeHtml(topic.topic)}">
+        <div class="inline-card-header">
+          <div class="orbital-ring-mini">
+            <div class="ring-glow"></div>
+            <span class="ring-icon">🌌</span>
+          </div>
+          <div class="topic-info">
+            <h4 class="topic-name">${this.escapeHtml(topic.topic)}</h4>
+            <span class="verse-count">📖 ${verseCount} verses</span>
+          </div>
+        </div>
+        <div class="inline-card-body">
+          <div class="verse-preview">
+            ${previewVerses.map(v => `<span class="verse-chip" data-ref="${v}">${v}</span>`).join('')}
+          </div>
+          ${verseCount > 3 ? `<button class="view-all-btn" data-topic="${this.escapeHtml(topic.topic)}">View All ${verseCount} →</button>` : ''}
+        </div>
+      </article>
+    `;
+  }
+
+  selectInlineTopic(topicName) {
+    const topic = this.torreyData?.topics?.find(t => t.topic === topicName);
+    if (!topic) return;
+
+    this.currentTopic = topic;
+    this.renderInlineDetail(topic);
+    this.showInlineDetail();
+  }
+
+  renderInlineDetail(topic) {
+    const titleEl = this.container?.querySelector('#inlineDetailTitle');
+    const contentEl = this.container?.querySelector('#inlineDetailContent');
+    
+    if (titleEl) titleEl.textContent = `🌌 ${topic.topic}`;
+    if (!contentEl) return;
+
+    const verses = topic.verseRefs || [];
+    contentEl.innerHTML = `
+      <div class="topic-description">
+        ${topic.description || `Explore ${verses.length} verses about ${topic.topic}.`}
+      </div>
+      <div class="verses-list">
+        <h4>📖 Scripture References (${verses.length})</h4>
+        <div class="verse-buttons">
+          ${verses.map(v => `
+            <button class="verse-ref-btn" data-ref="${v}">${v}</button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    // Bind verse clicks to load scripture
+    contentEl.querySelectorAll('.verse-ref-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.loadVerseInScripturePane(btn.dataset.ref);
+      });
+    });
+  }
+
+  loadVerseInScripturePane(reference) {
+    console.log('📖 Loading verse in Scripture pane:', reference);
+    // Dispatch event to load in Scripture panel
+    document.dispatchEvent(new CustomEvent('topicExplorer:selectVerse', {
+      detail: { reference }
+    }));
+    
+    // Also try to populate the passage input
+    const passageInput = document.getElementById('passageInput');
+    if (passageInput) {
+      passageInput.value = reference;
+      passageInput.dispatchEvent(new Event('input', { bubbles: true }));
+      // Trigger scripture load
+      const enterEvent = new KeyboardEvent('keypress', { key: 'Enter' });
+      passageInput.dispatchEvent(enterEvent);
+    }
+  }
+
+  showInlineGrid() {
+    const grid = this.container?.querySelector('#inlineTopicGrid');
+    const detail = this.container?.querySelector('#inlineTopicDetail');
+    if (grid) grid.classList.remove('hidden');
+    if (detail) detail.classList.add('hidden');
+  }
+
+  showInlineDetail() {
+    const grid = this.container?.querySelector('#inlineTopicGrid');
+    const detail = this.container?.querySelector('#inlineTopicDetail');
+    if (grid) grid.classList.add('hidden');
+    if (detail) detail.classList.remove('hidden');
+  }
+
         <!-- Main Content Area -->
         <main class="orbital-topic-content">
           <!-- Left: Topic Grid with Orbital Cards -->

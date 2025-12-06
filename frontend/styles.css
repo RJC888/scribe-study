@@ -459,32 +459,34 @@ body.dark-mode .favorite-item .fav-title {
 }
 
 .persona-selector .analysis-depth-btn {
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
   display: flex;
   align-items: center;
   gap: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .persona-selector .analysis-depth-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: white;
   border-color: white;
   transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .persona-selector .analysis-depth-btn.active {
-  background: rgba(255, 255, 255, 0.3);
+  background: white;
   border-color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border-bottom: 3px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  border-bottom: 4px solid #ff6b6b;
 }
 
 /* Persona-specific underline colors */
@@ -962,7 +964,8 @@ body.dark-mode .favorite-item .fav-title {
   margin-right: 8px;
 }
 
-.analysis-depth-btn {
+/* Generic analysis-depth-btn - only applies outside persona selector */
+#analysisHeaderControls .analysis-depth-btn {
   border: none;
   background: #e5e7eb;
   color: #1f2933;
@@ -978,12 +981,12 @@ body.dark-mode .favorite-item .fav-title {
   font-weight: 600;
 }
 
-.analysis-depth-btn:hover {
+#analysisHeaderControls .analysis-depth-btn:hover {
   background: #d1d5db;
   transform: scale(1.05);
 }
 
-.analysis-depth-btn.active {
+#analysisHeaderControls .analysis-depth-btn.active {
   background: #3d6df6;
   color: white;
   box-shadow: 0 2px 8px rgba(61, 109, 246, 0.4);

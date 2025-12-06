@@ -295,33 +295,69 @@ export const ScriptureExplorer = {
   },
 
   /**
-   * Load and display scripture
+   * Load and display scripture - both in explorer AND main Scripture panel
    */
   async loadDivisionScripture(ref) {
     const content = document.getElementById('explorerScriptureContent');
-    if (!content) return;
+    if (content) {
+      content.innerHTML = `<div class="loading">Loading ${ref}...</div>`;
+    }
 
-    content.innerHTML = `<div class="loading">Loading ${ref}...</div>`;
-
-    try {
-      // Send to main app to load
+    // Update main app state and trigger Scripture panel load
+    if (window.AppState) {
       window.AppState.currentPassage = ref;
+    }
+    
+    // Populate the main passage input and trigger load
+    const passageInput = document.getElementById('passageInput');
+    if (passageInput) {
+      passageInput.value = ref;
+      passageInput.dispatchEvent(new Event('input', { bubbles: true }));
       
-      // Try to fetch from backend
-      const resp = await fetch(`/api/scripture/${ref}`);
+      // Trigger immediate load via Enter key simulation
+      setTimeout(async () => {
+        const enterEvent = new KeyboardEvent('keypress', { 
+          key: 'Enter', 
+          keyCode: 13,
+          bubbles: true 
+        });
+        passageInput.dispatchEvent(enterEvent);
+      }, 100);
+    }
+
+    // Also display in the explorer's own content area
+    try {
+      const resp = await fetch(`/api/scripture/${encodeURIComponent(ref)}`);
       if (resp.ok) {
         const data = await resp.json();
-        content.innerHTML = `
-          <div class="scripture-display">
-            <h3>${data.ref}</h3>
-            <div class="scripture-text">${data.text}</div>
-          </div>
-        `;
+        if (content) {
+          content.innerHTML = `
+            <div class="scripture-display">
+              <h3>📖 ${data.ref || ref}</h3>
+              <div class="scripture-text">${data.text || 'Loading...'}</div>
+            </div>
+          `;
+        }
       } else {
-        content.innerHTML = `<p>Click "Load Passage" to view: ${ref}</p>`;
+        if (content) {
+          content.innerHTML = `
+            <div class="scripture-display">
+              <h3>📖 ${ref}</h3>
+              <p class="note">Loading in Scripture panel...</p>
+            </div>
+          `;
+        }
       }
     } catch (error) {
-      content.innerHTML = `<p>Error loading scripture. Try using the main search.</p>`;
+      console.log('[ScriptureExplorer] API fetch skipped, using main panel');
+      if (content) {
+        content.innerHTML = `
+          <div class="scripture-display">
+            <h3>📖 ${ref}</h3>
+            <p class="note">View in Scripture panel →</p>
+          </div>
+        `;
+      }
     }
   },
 };

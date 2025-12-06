@@ -684,3 +684,304 @@
       rotate(calc(-1 * var(--angle, 0deg)));
   }
 }
+
+/* ============================================
+   INLINE TOPICAL EXPLORER (in Analysis Tab)
+   ============================================ */
+
+.orbital-topic-inline {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: linear-gradient(145deg, #0d1526 0%, #101a30 100%);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.inline-topic-header {
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(0, 200, 255, 0.2);
+}
+
+.inline-search-bar {
+  margin-bottom: 10px;
+}
+
+.inline-search-bar input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 200, 255, 0.3);
+  border-radius: 8px;
+  color: #e0f0ff;
+  font-size: 13px;
+}
+
+.inline-search-bar input::placeholder {
+  color: rgba(200, 220, 255, 0.5);
+}
+
+.inline-search-bar input:focus {
+  outline: none;
+  border-color: rgba(0, 200, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.category-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.category-pill {
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 200, 255, 0.2);
+  border-radius: 20px;
+  color: rgba(200, 220, 255, 0.8);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.category-pill:hover {
+  background: rgba(0, 200, 255, 0.2);
+  border-color: rgba(0, 200, 255, 0.5);
+}
+
+.category-pill.active {
+  background: rgba(0, 200, 255, 0.3);
+  border-color: rgba(0, 200, 255, 0.7);
+  color: #00d4ff;
+}
+
+/* Inline Topic Grid - 2 cards per row */
+.inline-topic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.inline-topic-grid .loading-message,
+.inline-topic-grid .empty-state {
+  grid-column: span 2;
+  text-align: center;
+  color: rgba(200, 220, 255, 0.6);
+  padding: 40px 20px;
+  font-style: italic;
+}
+
+/* Inline Card Style */
+.orbital-topic-card.inline-card {
+  background: rgba(0, 30, 60, 0.6);
+  border: 1px solid rgba(0, 200, 255, 0.25);
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.orbital-topic-card.inline-card:hover {
+  background: rgba(0, 50, 100, 0.7);
+  border-color: rgba(0, 200, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 150, 255, 0.2);
+}
+
+.inline-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.orbital-ring-mini {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(0, 150, 255, 0.3), rgba(100, 0, 255, 0.3));
+  border: 2px solid rgba(0, 200, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.orbital-ring-mini .ring-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 200, 255, 0.3) 0%, transparent 70%);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.orbital-ring-mini .ring-icon {
+  font-size: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.topic-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.topic-info .topic-name {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e0f0ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topic-info .verse-count {
+  font-size: 11px;
+  color: rgba(0, 200, 255, 0.8);
+}
+
+.inline-card-body {
+  border-top: 1px solid rgba(0, 200, 255, 0.15);
+  padding-top: 10px;
+}
+
+.verse-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.verse-chip {
+  padding: 3px 8px;
+  background: rgba(0, 150, 255, 0.2);
+  border-radius: 4px;
+  font-size: 10px;
+  color: rgba(200, 220, 255, 0.9);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.verse-chip:hover {
+  background: rgba(0, 200, 255, 0.4);
+}
+
+.view-all-btn {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  background: rgba(0, 200, 255, 0.15);
+  border: 1px solid rgba(0, 200, 255, 0.3);
+  border-radius: 6px;
+  color: #00d4ff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.view-all-btn:hover {
+  background: rgba(0, 200, 255, 0.25);
+  border-color: rgba(0, 200, 255, 0.5);
+}
+
+/* Inline Detail Panel */
+.inline-topic-detail {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+}
+
+.inline-topic-detail.hidden {
+  display: none;
+}
+
+.inline-topic-detail .detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 200, 255, 0.2);
+}
+
+.inline-topic-detail .back-btn {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 200, 255, 0.3);
+  border-radius: 6px;
+  color: #00d4ff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.inline-topic-detail .back-btn:hover {
+  background: rgba(0, 200, 255, 0.2);
+}
+
+.inline-topic-detail h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #e0f0ff;
+}
+
+.inline-topic-detail .detail-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.topic-description {
+  color: rgba(200, 220, 255, 0.8);
+  font-size: 13px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.verses-list h4 {
+  color: #00d4ff;
+  font-size: 13px;
+  margin: 0 0 12px 0;
+}
+
+.verse-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.verse-ref-btn {
+  padding: 8px 14px;
+  background: rgba(0, 150, 255, 0.2);
+  border: 1px solid rgba(0, 200, 255, 0.3);
+  border-radius: 6px;
+  color: #e0f0ff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.verse-ref-btn:hover {
+  background: rgba(0, 200, 255, 0.3);
+  border-color: rgba(0, 200, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Dark mode adjustments - already dark themed */
+body.dark-mode .orbital-topic-inline {
+  background: linear-gradient(145deg, #0a0f1a 0%, #0d1526 100%);
+}

@@ -1165,14 +1165,13 @@ async function initializeTopicalExplorer() {
     const explorer = new OrbitalTopicExplorer();
     await explorer.init();
     
-    console.log('[TopicalExplorer] Rendering HTML...');
-    container.innerHTML = explorer.render();
-    console.log('[TopicalExplorer] Binding events...');
-    explorer.bindEvents();
+    console.log('[TopicalExplorer] Rendering inline HTML...');
+    container.innerHTML = explorer.renderInline();
+    console.log('[TopicalExplorer] Initializing inline mode...');
+    explorer.initInline(container);
     
-    // Load initial topics
-    if (explorer.torreyData?.topics?.length) {
-      console.log('[TopicalExplorer] Loading initial topics...');
+    window.topicalExplorer = explorer;
+    console.log('[TopicalExplorer] ✅ Inline initialization complete');
       explorer.renderTopicGrid(explorer.torreyData.topics.slice(0, 12));
     }
     console.log('[TopicalExplorer] ✅ Initialization complete');

@@ -354,6 +354,11 @@ function setupTwoStepFlow(mode) {
     const hasPassage = value.length > 0;
 
     AppState.currentPassage = value;
+    
+    // Dispatch event for other components (like Scripture Explorer) to sync
+    document.dispatchEvent(new CustomEvent('passage:changed', { 
+      detail: { passage: value } 
+    }));
 
     subtabCards.forEach((card) => {
       card.classList.toggle("disabled", !hasPassage);
@@ -1105,11 +1110,15 @@ function initializeAnalysisTabs() {
       };
       const paneId = paneIdMap[tabName];
       
-      // Update active pane
-      tabPanes.forEach(pane => pane.classList.remove('active'));
+      // Update active pane - MUST remove 'hidden' class and add 'active'
+      tabPanes.forEach(pane => {
+        pane.classList.remove('active');
+        pane.classList.add('hidden');
+      });
       const activePane = document.getElementById(paneId);
       console.log('[Tab Switch] Looking for pane:', paneId, 'Found:', !!activePane);
       if (activePane) {
+        activePane.classList.remove('hidden');
         activePane.classList.add('active');
       }
       
@@ -1172,9 +1181,6 @@ async function initializeTopicalExplorer() {
     
     window.topicalExplorer = explorer;
     console.log('[TopicalExplorer] ✅ Inline initialization complete');
-      explorer.renderTopicGrid(explorer.torreyData.topics.slice(0, 12));
-    }
-    console.log('[TopicalExplorer] ✅ Initialization complete');
   } catch (error) {
     console.error('❌ Error initializing Topical Explorer:', error);
     const container = document.getElementById('topicalExplorerPanel');

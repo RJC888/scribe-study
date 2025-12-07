@@ -61,7 +61,24 @@ body.dark-mode #scriptureContent,
 body.dark-mode #analysisContent,
 body.dark-mode #fullPassageText {
   background: #1e1e1e;
+  color: #f0f0f0;
+}
+
+body.dark-mode #fullPassageText strong {
+  color: #ffffff;
+}
+
+body.dark-mode #fullPassageText em {
   color: #d4d4d4;
+}
+
+body.dark-mode #analysisDisplay {
+  color: #f0f0f0;
+}
+
+body.dark-mode #visualizationContainer {
+  background: #2d2d2d;
+  border-color: #444;
 }
 
 body.dark-mode .analysis-tab-btn {
@@ -115,6 +132,27 @@ body.dark-mode .suggestion-item:hover {
   font-size: 15px;
   height: 50px;
   flex-shrink: 0;
+}
+
+#appLogoSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#appLogoSection #darkModeToggle {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+#appLogoSection #darkModeToggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.1);
 }
 
 #appLogo {
@@ -1434,7 +1472,11 @@ body.dark-mode .favorite-item .fav-title {
   padding: 12px;
   background: #f9f9fb;
   border-radius: 4px;
-  min-height: 100px;
+  min-height: 0;
+}
+
+#visualizationContainer:empty {
+  display: none;
 }
 
 /* =========================================================

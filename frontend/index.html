@@ -20,12 +20,14 @@
 <body>
   <!-- TOP BAR: APP NAME + SERVER STATUS + ACCOUNT/AUTH PLACEHOLDER -->
   <header id="topBar">
-    <div id="appLogo">Scribe Study</div>
+    <div id="appLogoSection">
+      <button id="darkModeToggle" class="icon-btn" title="Toggle Dark Mode">🌙</button>
+      <div id="appLogo">Scribe Study</div>
+    </div>
     <div id="serverStatusWidget">
       <span id="serverStatusIndicator" class="status-disconnected" title="Checking server...">⚪ Checking...</span>
     </div>
     <div id="userControls">
-      <button id="darkModeToggle" class="icon-btn" title="Toggle Dark Mode">🌙</button>
       <button id="favoritesToggle" class="icon-btn" title="View Favorites">⭐</button>
       <button id="authButton">Sign in / Account</button>
     </div>

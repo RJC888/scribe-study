@@ -1,103 +1,246 @@
 /**
- * dl-panel.css - Scripture Explorer, Discourse & Literary Analysis Panel Styles
- * 
- * Split-pane layout for side-by-side Discourse (left) and Literary (right) analysis
- * Integrated into the Analysis display area
+ * dl-panel.css - Scripture Explorer & Analysis Panel Styles
  */
 
 /* =========================================================
-   SCRIPTURE EXPLORER PANEL
+   SCRIPTURE EXPLORER - INLINE HORIZONTAL LAYOUT
    =========================================================== */
 
-.scripture-explorer-panel {
-  display: flex;
-  width: 100%;
-  height: 100%;
-}
-
-.scripture-explorer-container {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  gap: 1px;
-}
-
-.scripture-explorer-left {
-  flex: 0 0 35%;
+.scripture-explorer-inline {
   display: flex;
   flex-direction: column;
-  background: #f9fafb;
-  border-right: 1px solid #e5e7eb;
+  height: 100%;
+  background: #f8fafc;
+  border-radius: 8px;
   overflow: hidden;
 }
 
-.scripture-explorer-right {
-  flex: 1;
+/* Context Bar - Shows current book/passage */
+.explorer-context-bar {
   display: flex;
-  flex-direction: column;
-  background: white;
-  overflow: hidden;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+  color: white;
+  font-size: 13px;
 }
 
-.nav-book-selector {
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-  background: white;
+.context-label {
+  opacity: 0.8;
 }
 
-.nav-book-selector label {
-  display: block;
+.context-book {
+  font-weight: 700;
+}
+
+.context-ref {
   font-size: 12px;
+  opacity: 0.9;
+  margin-left: auto;
+}
+
+/* Book/Chapter Selector Row */
+.explorer-book-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.explorer-book-row label {
   font-weight: 600;
   color: #374151;
-  margin-bottom: 6px;
 }
 
-.book-select {
-  width: 100%;
-  padding: 8px;
+.book-select-inline,
+.chapter-select-inline {
+  padding: 6px 10px;
   border: 1px solid #d1d5db;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 13px;
   background: white;
+  cursor: pointer;
 }
 
-.nav-tabs-row {
-  display: flex;
-  gap: 4px;
-  padding: 8px;
-  background: #f3f4f6;
+.book-select-inline {
+  min-width: 140px;
+}
+
+.chapter-select-inline {
+  min-width: 60px;
+}
+
+/* Hierarchy Section */
+.explorer-hierarchy-section {
+  padding: 8px 12px;
   border-bottom: 1px solid #e5e7eb;
+  background: #fafbfc;
 }
 
-.nav-tab-btn {
-  flex: 1;
-  padding: 6px 8px;
+.explorer-hierarchy-section.hidden {
+  display: none;
+}
+
+.hierarchy-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hierarchy-label span {
+  font-weight: 400;
+  color: #9ca3af;
+  text-transform: none;
+}
+
+/* Hierarchy Bar - Horizontal scrollable buttons */
+.hierarchy-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+/* Hierarchy Buttons */
+.hierarchy-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
   background: white;
   border: 1px solid #d1d5db;
-  border-radius: 3px;
-  font-size: 11px;
-  font-weight: 600;
+  border-radius: 6px;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #4b5563;
+  white-space: nowrap;
 }
 
-.nav-tab-btn:hover {
-  background: #f0f1f3;
-  border-color: #9ca3af;
+.hierarchy-btn:hover {
+  background: #f0f4ff;
+  border-color: #4f46e5;
 }
 
-.nav-tab-btn.active {
+.hierarchy-btn.expanded {
   background: #4f46e5;
   border-color: #4f46e5;
   color: white;
 }
 
-.nav-content-area {
+.hierarchy-btn.selected {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.hierarchy-btn .btn-ref {
+  font-weight: 700;
+}
+
+.hierarchy-btn .btn-title {
+  color: #6b7280;
+  font-size: 11px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hierarchy-btn.expanded .btn-title {
+  color: rgba(255,255,255,0.8);
+}
+
+.hierarchy-btn .btn-expand {
+  font-size: 8px;
+  opacity: 0.5;
+  transition: transform 0.2s;
+}
+
+.hierarchy-btn.expanded .btn-expand {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+/* Division buttons */
+.division-btn {
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8efff 100%);
+  border-color: #c7d2fe;
+}
+
+.division-btn:hover {
+  background: linear-gradient(135deg, #e0e7ff 0%, #dbe4ff 100%);
+}
+
+/* Pericope buttons */
+.pericope-btn {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-color: #fcd34d;
+}
+
+.pericope-btn:hover {
+  background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+}
+
+/* Verse buttons */
+.verse-btn {
+  min-width: 36px;
+  justify-content: center;
+  padding: 8px 10px;
+  background: white;
+  font-weight: 600;
+}
+
+.verse-btn:hover {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: white;
+}
+
+.verse-btn.selected {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: white;
+}
+
+/* Explorer Preview Area */
+.explorer-preview {
   flex: 1;
+  padding: 12px;
   overflow-y: auto;
-  padding: 8px;
+  background: white;
+  min-height: 100px;
+}
+
+.explorer-preview .empty-state {
+  text-align: center;
+  color: #9ca3af;
+  padding: 20px;
+  font-style: italic;
+}
+
+.explorer-scripture-preview {
+  font-family: 'Merriweather', serif;
+}
+
+.explorer-scripture-preview .preview-header {
+  font-weight: 700;
+  color: #4f46e5;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.explorer-scripture-preview .preview-text {
+  line-height: 1.8;
+  color: #374151;
+}
   display: flex;
   flex-direction: column;
 }
@@ -878,6 +1021,7 @@
   background: rgba(79, 70, 229, 0.1);
 }
 
+
 .dl-pane-content::-webkit-scrollbar-thumb,
 .dl-verse-sections::-webkit-scrollbar-thumb {
   background: rgba(79, 70, 229, 0.3);
@@ -887,4 +1031,184 @@
 .dl-pane-content::-webkit-scrollbar-thumb:hover,
 .dl-verse-sections::-webkit-scrollbar-thumb:hover {
   background: rgba(79, 70, 229, 0.5);
+}
+
+
+/* =========================================================
+   DARK MODE SUPPORT
+   =========================================================== */
+
+/* Scripture Explorer Inline - Dark Mode */
+body.dark-mode .scripture-explorer-inline {
+  background: #1a1a1a;
+}
+
+body.dark-mode .explorer-context-bar {
+  background: linear-gradient(135deg, #3730a3 0%, #1e40af 100%);
+}
+
+body.dark-mode .explorer-book-row {
+  background: #252525;
+  border-color: #444;
+}
+
+body.dark-mode .explorer-book-row label {
+  color: #e0e0e0;
+}
+
+body.dark-mode .book-select-inline,
+body.dark-mode .chapter-select-inline {
+  background: #333;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+body.dark-mode .explorer-hierarchy-section {
+  background: #1e1e1e;
+  border-color: #444;
+}
+
+body.dark-mode .hierarchy-label {
+  color: #9ca3af;
+}
+
+body.dark-mode .hierarchy-btn {
+  background: #2d2d2d;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+body.dark-mode .hierarchy-btn:hover {
+  background: #3a3a3a;
+  border-color: #4f46e5;
+}
+
+body.dark-mode .hierarchy-btn .btn-title {
+  color: #9ca3af;
+}
+
+body.dark-mode .division-btn {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  border-color: #4338ca;
+}
+
+body.dark-mode .pericope-btn {
+  background: linear-gradient(135deg, #422006 0%, #78350f 100%);
+  border-color: #b45309;
+}
+
+body.dark-mode .verse-btn {
+  background: #333;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+body.dark-mode .verse-btn:hover,
+body.dark-mode .verse-btn.selected {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: white;
+}
+
+body.dark-mode .explorer-preview {
+  background: #1e1e1e;
+}
+
+body.dark-mode .explorer-preview .empty-state {
+  color: #6b7280;
+}
+
+body.dark-mode .explorer-scripture-preview .preview-header {
+  color: #818cf8;
+  border-color: #374151;
+}
+
+body.dark-mode .explorer-scripture-preview .preview-text {
+  color: #f0f0f0;
+}
+
+/* Legacy styles for backward compatibility */
+body.dark-mode .scripture-explorer-left {
+  background: #1e1e1e;
+  border-color: #444;
+}
+
+body.dark-mode .scripture-explorer-right {
+  background: #252525;
+}
+
+body.dark-mode .nav-book-selector {
+  background: #2d2d2d;
+  border-color: #444;
+}
+
+body.dark-mode .nav-book-selector label {
+  color: #e0e0e0;
+}
+
+body.dark-mode .book-select,
+body.dark-mode .chapter-select {
+  background: #333;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+body.dark-mode .nav-tabs-row {
+  background: #2d2d2d;
+  border-color: #444;
+}
+
+body.dark-mode .nav-tab-btn {
+  background: #333;
+  border-color: #555;
+  color: #ccc;
+}
+
+body.dark-mode .nav-tab-btn:hover {
+  background: #444;
+  border-color: #666;
+}
+
+body.dark-mode .nav-tab-btn.active {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: white;
+}
+
+body.dark-mode .nav-content-area {
+  background: #1e1e1e;
+}
+
+body.dark-mode .nav-tab-content {
+  background: transparent;
+}
+
+body.dark-mode .tree-item,
+body.dark-mode .division-item {
+  background: #2d2d2d;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+body.dark-mode .tree-item:hover,
+body.dark-mode .division-item:hover {
+  background: #3a3a3a;
+  border-color: #666;
+}
+
+body.dark-mode .scripture-display-content {
+  background: #1e1e1e;
+  color: #f0f0f0;
+}
+
+body.dark-mode .scripture-display-content .empty-state {
+  color: #888;
+}
+
+body.dark-mode .scripture-display h3 {
+  color: #4f9eff;
+}
+
+body.dark-mode .scripture-display .scripture-text {
+  color: #f0f0f0;
 }

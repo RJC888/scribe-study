@@ -78,6 +78,46 @@ export class OrbitalTopicExplorer {
           <button class="close-btn" id="closeTopicExplorer">✕</button>
         </header>
 
+        <!-- Main Content Area -->
+        <main class="orbital-topic-content">
+          <!-- Left: Topic Grid with Orbital Cards -->
+          <section class="topic-grid-section">
+            <div class="section-header">
+              <h3>📚 Topics</h3>
+              <div class="category-filter">
+                <button class="filter-chip active" data-category="all">All</button>
+                <button class="filter-chip" data-category="Doctrines">Doctrines</button>
+                <button class="filter-chip" data-category="Persons">Persons</button>
+                <button class="filter-chip" data-category="Places">Places</button>
+              </div>
+            </div>
+            <div id="topicGrid" class="topic-grid">
+              <div class="loading-message">Type to search or browse topics...</div>
+            </div>
+          </section>
+
+          <!-- Right: Detail Panel (shown when topic selected) -->
+          <section id="topicDetailPanel" class="topic-detail-section hidden">
+            <div class="detail-header">
+              <button class="back-btn" id="backToGrid">← Back</button>
+              <h3 id="detailTopicTitle">Topic Name</h3>
+            </div>
+            <div id="topicDetailContent" class="detail-content">
+            </div>
+          </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="orbital-topic-footer">
+          <div class="footer-info">
+            <span>💡 Click a topic ring to explore verses</span>
+          </div>
+          <button class="btn-home" id="topicHomeBtn">🏠 Return Home</button>
+        </footer>
+      </div>
+    `;
+  }
+
   /**
    * Render inline version for embedding in Analysis tab (no modal/backdrop)
    */
@@ -178,30 +218,36 @@ export class OrbitalTopicExplorer {
     }
 
     const matches = this.torreyData?.topics?.filter(topic => {
-      const name = topic.topic?.toLowerCase() || '';
-      const subtopics = topic.subtopics?.join(' ').toLowerCase() || '';
-      return name.includes(lower) || subtopics.includes(lower);
+      const name = (topic.name || topic.topic || '').toLowerCase();
+      const description = (topic.description || '').toLowerCase();
+      return name.includes(lower) || description.includes(lower);
     }) || [];
 
+    console.log('[TopicalExplorer] Search results for', query, ':', matches.length);
     this.renderInlineGrid(matches.slice(0, 10));
   }
 
   filterInlineByCategory(category) {
+    console.log('[TopicalExplorer] Filtering by category:', category);
     if (category === 'all') {
       this.showInlinePopularTopics();
       return;
     }
     const matches = this.torreyData?.topics?.filter(t => t.category === category) || [];
+    console.log('[TopicalExplorer] Found', matches.length, 'topics in category', category);
     this.renderInlineGrid(matches.slice(0, 10));
   }
 
   showInlinePopularTopics() {
-    const popularNames = ['Grace', 'Faith', 'Love', 'Prayer', 'Salvation', 'Sin', 'Hope', 'Mercy'];
+    const popularNames = ['Grace', 'Faith', 'Love', 'Prayer', 'Salvation', 'Jesus Christ', 'Hope', 'Mercy'];
     const popular = popularNames
-      .map(name => this.torreyData?.topics?.find(t => t.topic === name))
+      .map(name => this.torreyData?.topics?.find(t => t.name === name))
       .filter(Boolean);
     
+    console.log('[TopicalExplorer] Popular topics found:', popular.length);
+    
     if (popular.length === 0 && this.torreyData?.topics?.length) {
+      console.log('[TopicalExplorer] Using first 8 topics instead');
       this.renderInlineGrid(this.torreyData.topics.slice(0, 8));
     } else {
       this.renderInlineGrid(popular);
@@ -222,35 +268,59 @@ export class OrbitalTopicExplorer {
   }
 
   renderInlineCard(topic) {
-    const verseCount = topic.verseRefs?.length || 0;
-    const previewVerses = (topic.verseRefs || []).slice(0, 3);
+    const topicName = topic.name || topic.topic || 'Unknown';
+    const verseCount = topic.count || topic.verses?.length || topic.verseRefs?.length || 0;
+    const previewVerses = (topic.verses || topic.verseRefs || []).slice(0, 3);
+    const description = topic.description || '';
+    const category = topic.category || 'Doctrines';
+    
+    // Color based on category
+    const categoryColors = {
+      'Doctrines': '#3b82f6',
+      'Persons': '#8b5cf6', 
+      'Places': '#10b981',
+      'default': '#6366f1'
+    };
+    const ringColor = categoryColors[category] || categoryColors.default;
     
     return `
-      <article class="orbital-topic-card inline-card" data-topic="${this.escapeHtml(topic.topic)}">
+      <article class="orbital-topic-card inline-card" data-topic="${this.escapeHtml(topicName)}">
         <div class="inline-card-header">
-          <div class="orbital-ring-mini">
-            <div class="ring-glow"></div>
-            <span class="ring-icon">🌌</span>
+          <div class="orbital-ring-visual" style="--ring-color: ${ringColor};">
+            <div class="ring-outer"></div>
+            <div class="ring-inner"></div>
+            <div class="ring-core">
+              <span class="topic-initial">${topicName.charAt(0)}</span>
+            </div>
+            <div class="orbit-dot dot-1"></div>
+            <div class="orbit-dot dot-2"></div>
+            <div class="orbit-dot dot-3"></div>
           </div>
           <div class="topic-info">
-            <h4 class="topic-name">${this.escapeHtml(topic.topic)}</h4>
+            <h4 class="topic-name">${this.escapeHtml(topicName)}</h4>
             <span class="verse-count">📖 ${verseCount} verses</span>
+            <span class="topic-category">${category}</span>
           </div>
         </div>
+        <p class="topic-description">${this.escapeHtml(description)}</p>
         <div class="inline-card-body">
           <div class="verse-preview">
             ${previewVerses.map(v => `<span class="verse-chip" data-ref="${v}">${v}</span>`).join('')}
           </div>
-          ${verseCount > 3 ? `<button class="view-all-btn" data-topic="${this.escapeHtml(topic.topic)}">View All ${verseCount} →</button>` : ''}
+          ${verseCount > 3 ? `<button class="view-all-btn" data-topic="${this.escapeHtml(topicName)}">View All ${verseCount} →</button>` : ''}
         </div>
       </article>
     `;
   }
 
   selectInlineTopic(topicName) {
-    const topic = this.torreyData?.topics?.find(t => t.topic === topicName);
-    if (!topic) return;
+    const topic = this.torreyData?.topics?.find(t => (t.name || t.topic) === topicName);
+    if (!topic) {
+      console.warn('[TopicalExplorer] Topic not found:', topicName);
+      return;
+    }
 
+    console.log('[TopicalExplorer] Selected topic:', topic);
     this.currentTopic = topic;
     this.renderInlineDetail(topic);
     this.showInlineDetail();
@@ -259,14 +329,16 @@ export class OrbitalTopicExplorer {
   renderInlineDetail(topic) {
     const titleEl = this.container?.querySelector('#inlineDetailTitle');
     const contentEl = this.container?.querySelector('#inlineDetailContent');
+    const topicName = topic.name || topic.topic || 'Topic';
     
-    if (titleEl) titleEl.textContent = `🌌 ${topic.topic}`;
+    if (titleEl) titleEl.textContent = `🌌 ${topicName}`;
     if (!contentEl) return;
 
-    const verses = topic.verseRefs || [];
+    const verses = topic.verses || topic.verseRefs || [];
+    const verseCount = topic.count || verses.length;
     contentEl.innerHTML = `
       <div class="topic-description">
-        ${topic.description || `Explore ${verses.length} verses about ${topic.topic}.`}
+        ${topic.description || `Explore ${verseCount} verses about ${topicName}.`}
       </div>
       <div class="verses-list">
         <h4>📖 Scripture References (${verses.length})</h4>
@@ -288,20 +360,58 @@ export class OrbitalTopicExplorer {
 
   loadVerseInScripturePane(reference) {
     console.log('📖 Loading verse in Scripture pane:', reference);
-    // Dispatch event to load in Scripture panel
-    document.dispatchEvent(new CustomEvent('topicExplorer:selectVerse', {
-      detail: { reference }
-    }));
     
-    // Also try to populate the passage input
+    // Update main app state
+    if (window.AppState) {
+      window.AppState.currentPassage = reference;
+    }
+    
+    // Update passage input
     const passageInput = document.getElementById('passageInput');
     if (passageInput) {
       passageInput.value = reference;
-      passageInput.dispatchEvent(new Event('input', { bubbles: true }));
-      // Trigger scripture load
-      const enterEvent = new KeyboardEvent('keypress', { key: 'Enter' });
-      passageInput.dispatchEvent(enterEvent);
     }
+
+    // Update pinned passage display
+    const pinnedPassageRef = document.getElementById('pinnedPassageRef');
+    if (pinnedPassageRef) {
+      pinnedPassageRef.textContent = reference;
+    }
+
+    // Directly load scripture into the main panel
+    const fullPassageText = document.getElementById('fullPassageText');
+    if (fullPassageText) {
+      fullPassageText.innerHTML = '<div style="padding: 12px; color: #666; font-style: italic;">⏳ Loading Scripture...</div>';
+      
+      // Use async IIFE to load
+      (async () => {
+        try {
+          const { fetchAndDisplayScripture } = await import('../analysisEngine.js');
+          if (fetchAndDisplayScripture) {
+            await fetchAndDisplayScripture(reference, fullPassageText);
+            console.log('[TopicalExplorer] ✅ Scripture loaded:', reference);
+          }
+        } catch (importError) {
+          console.warn('[TopicalExplorer] Could not import analysisEngine, trying API directly');
+          try {
+            const resp = await fetch(`/api/scripture/${encodeURIComponent(reference)}`);
+            if (resp.ok) {
+              const data = await resp.json();
+              fullPassageText.innerHTML = data.text || `<p>${reference}</p>`;
+            } else {
+              fullPassageText.innerHTML = `<p>Could not load ${reference}</p>`;
+            }
+          } catch (e) {
+            fullPassageText.innerHTML = `<p>Error loading scripture: ${e.message}</p>`;
+          }
+        }
+      })();
+    }
+    
+    // Dispatch event for other components
+    document.dispatchEvent(new CustomEvent('topicExplorer:selectVerse', {
+      detail: { reference }
+    }));
   }
 
   showInlineGrid() {
@@ -316,48 +426,6 @@ export class OrbitalTopicExplorer {
     const detail = this.container?.querySelector('#inlineTopicDetail');
     if (grid) grid.classList.add('hidden');
     if (detail) detail.classList.remove('hidden');
-  }
-
-        <!-- Main Content Area -->
-        <main class="orbital-topic-content">
-          <!-- Left: Topic Grid with Orbital Cards -->
-          <section class="topic-grid-section">
-            <div class="section-header">
-              <h3>📚 Topics</h3>
-              <div class="category-filter">
-                <button class="filter-chip active" data-category="all">All</button>
-                <button class="filter-chip" data-category="Doctrines">Doctrines</button>
-                <button class="filter-chip" data-category="Persons">Persons</button>
-                <button class="filter-chip" data-category="Places">Places</button>
-              </div>
-            </div>
-            <div id="topicGrid" class="topic-grid">
-              <!-- Orbital topic cards will be rendered here -->
-              <div class="loading-message">Type to search or browse topics...</div>
-            </div>
-          </section>
-
-          <!-- Right: Detail Panel (shown when topic selected) -->
-          <section id="topicDetailPanel" class="topic-detail-section hidden">
-            <div class="detail-header">
-              <button class="back-btn" id="backToGrid">← Back</button>
-              <h3 id="detailTopicTitle">Topic Name</h3>
-            </div>
-            <div id="topicDetailContent" class="detail-content">
-              <!-- Selected topic details -->
-            </div>
-          </section>
-        </main>
-
-        <!-- Footer -->
-        <footer class="orbital-topic-footer">
-          <div class="footer-info">
-            <span>💡 Click a topic ring to explore verses</span>
-          </div>
-          <button class="btn-home" id="topicHomeBtn">🏠 Return Home</button>
-        </footer>
-      </div>
-    `;
   }
 
   /**

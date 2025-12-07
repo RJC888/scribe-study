@@ -1,86 +1,78 @@
 /**
  * ScriptureExplorer.js - Scripture Hierarchical Navigator
  * 
- * Two-panel layout:
- *   LEFT: Navigation with tabs (Divisions, Pericopes, Verses) + book selector + tree view
- *   RIGHT: Scripture display panel showing selected passage
+ * Horizontal hierarchical layout:
+ *   - Division bar (with dropdown for pericopes)
+ *   - Pericope bar (with dropdown for verses)
+ *   - Verse buttons
  * 
- * User selects a verse range → scripture loads in right panel
+ * Syncs with the current passage from AppState
  */
 
 import ScriptureHierarchy from './ScriptureHierarchy.js';
 
 export const ScriptureExplorer = {
-  currentBook: 'Genesis',
+  currentBook: 'Matthew',
   currentChapter: 1,
   currentDivision: null,
   currentPericope: null,
-  currentTab: 'divisions',
-  expandedDivisions: new Set(),
+  expandedDivision: null,
+  expandedPericope: null,
 
   /**
-   * Create the Scripture Explorer panel HTML
+   * Create the Scripture Explorer panel HTML - Horizontal hierarchical layout
    */
   render() {
     return `
-      <div class="scripture-explorer-panel">
-        <!-- Main Container: Left Navigation + Right Scripture Display -->
-        <div class="scripture-explorer-container">
-          
-          <!-- LEFT PANEL: Navigation -->
-          <div class="scripture-explorer-left">
-            <!-- Book Selector -->
-            <div class="nav-book-selector">
-              <label>📖 Book:</label>
-              <select id="scriptureBookSelect" class="book-select">
-                ${this.getBookOptions()}
-              </select>
-            </div>
+      <div class="scripture-explorer-inline">
+        <!-- Current Context Bar -->
+        <div class="explorer-context-bar">
+          <span class="context-label">📖 Exploring:</span>
+          <span id="explorerCurrentBook" class="context-book">${this.currentBook}</span>
+          <span id="explorerCurrentRef" class="context-ref"></span>
+        </div>
 
-            <!-- Navigation Tabs -->
-            <div class="nav-tabs-row">
-              <button class="nav-tab-btn active" data-tab="divisions">📘 Divisions</button>
-              <button class="nav-tab-btn" data-tab="pericopes">📄 Pericopes</button>
-              <button class="nav-tab-btn" data-tab="verses">📍 Verses</button>
-            </div>
+        <!-- Book Selector Row -->
+        <div class="explorer-book-row">
+          <label>Book:</label>
+          <select id="scriptureBookSelect" class="book-select-inline">
+            ${this.getBookOptions()}
+          </select>
+          <label style="margin-left: 16px;">Chapter:</label>
+          <select id="scriptureChapterSelect" class="chapter-select-inline">
+            <option value="1">1</option>
+          </select>
+        </div>
 
-            <!-- Tab Content Area -->
-            <div class="nav-content-area">
-              <!-- Divisions Tab -->
-              <div class="nav-tab-content active" data-tab="divisions">
-                <div id="divisionsTree" class="nav-tree"></div>
-              </div>
-
-              <!-- Pericopes Tab -->
-              <div class="nav-tab-content" data-tab="pericopes">
-                <div class="pericope-chapter-select">
-                  <label>Chapter:</label>
-                  <select id="pericopeChapterSelect" class="chapter-select"></select>
-                </div>
-                <div id="pericopesTree" class="nav-tree"></div>
-              </div>
-
-              <!-- Verses Tab -->
-              <div class="nav-tab-content" data-tab="verses">
-                <div class="verse-chapter-select">
-                  <label>Chapter:</label>
-                  <select id="verseChapterSelect" class="chapter-select"></select>
-                </div>
-                <div id="versesGrid" class="verses-grid"></div>
-              </div>
-            </div>
+        <!-- Divisions Bar (Horizontal) -->
+        <div class="explorer-hierarchy-section">
+          <div class="hierarchy-label">📘 Major Divisions</div>
+          <div id="divisionsBar" class="hierarchy-bar divisions-bar">
+            <!-- Division buttons render here -->
           </div>
+        </div>
 
-          <!-- RIGHT PANEL: Scripture Display -->
-          <div class="scripture-explorer-right">
-            <div id="explorerScriptureContent" class="scripture-display-content">
-              <div class="empty-state">
-                <span class="empty-icon">📖</span>
-                <p>Click a division, pericope, or verse on the left to view the scripture here.</p>
-              </div>
-            </div>
+        <!-- Pericopes Bar (Shows when division expanded) -->
+        <div id="pericopesSection" class="explorer-hierarchy-section hidden">
+          <div class="hierarchy-label">📄 Pericopes <span id="pericopeDivisionLabel"></span></div>
+          <div id="pericopesBar" class="hierarchy-bar pericopes-bar">
+            <!-- Pericope buttons render here -->
           </div>
+        </div>
 
+        <!-- Verses Bar (Shows when pericope expanded) -->
+        <div id="versesSection" class="explorer-hierarchy-section hidden">
+          <div class="hierarchy-label">📍 Verses <span id="versePericopeLabel"></span></div>
+          <div id="versesBar" class="hierarchy-bar verses-bar">
+            <!-- Verse buttons render here -->
+          </div>
+        </div>
+
+        <!-- Scripture Preview -->
+        <div id="explorerScriptureContent" class="explorer-preview">
+          <div class="empty-state">
+            <p>Select a division, pericope, or verse above to preview</p>
+          </div>
         </div>
       </div>
     `;
@@ -106,257 +98,408 @@ export const ScriptureExplorer = {
       'James', '1 Peter', '2 Peter', '1 John', '2 John', '3 John',
       'Jude', 'Revelation'
     ];
-    return books.map(b => `<option value="${b}">${b}</option>`).join('');
+    return books.map(b => `<option value="${b}" ${b === this.currentBook ? 'selected' : ''}>${b}</option>`).join('');
   },
 
   /**
-   * Initialize all event handlers
+   * Initialize - sync with current passage from AppState
    */
   async init() {
     await ScriptureHierarchy.init();
     
+    // Sync with current passage if available
+    this.syncWithCurrentPassage();
+    
     // Book selector
     const bookSelect = document.getElementById('scriptureBookSelect');
     if (bookSelect) {
+      bookSelect.value = this.currentBook;
       bookSelect.addEventListener('change', (e) => {
         this.currentBook = e.target.value;
         this.currentChapter = 1;
-        this.updateDivisionsTree();
-        this.updateChapterSelects();
+        this.updateChapterSelect();
+        this.renderDivisionsBar();
+        this.hidePericopesSection();
+        this.hideVersesSection();
+        this.updateContextDisplay();
       });
     }
 
-    // Tab switching
-    const tabButtons = document.querySelectorAll('.nav-tab-btn');
-    tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tab = btn.dataset.tab;
-        tabButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        const contents = document.querySelectorAll('.nav-tab-content');
-        contents.forEach(c => c.classList.remove('active'));
-        const activeContent = document.querySelector(`.nav-tab-content[data-tab="${tab}"]`);
-        if (activeContent) activeContent.classList.add('active');
-        
-        this.currentTab = tab;
-        if (tab === 'pericopes') {
-          this.updatePericopesTree();
-        } else if (tab === 'verses') {
-          this.updateVersesGrid();
-        }
+    // Chapter selector
+    const chapterSelect = document.getElementById('scriptureChapterSelect');
+    if (chapterSelect) {
+      chapterSelect.addEventListener('change', (e) => {
+        this.currentChapter = parseInt(e.target.value);
+        this.renderDivisionsBar();
+        this.hidePericopesSection();
+        this.hideVersesSection();
       });
+    }
+
+    // Listen for passage changes from main app
+    document.addEventListener('passage:changed', (e) => {
+      this.syncWithCurrentPassage();
     });
 
-    // Initial load
-    this.updateDivisionsTree();
-    this.updateChapterSelects();
+    // Initial render
+    this.updateChapterSelect();
+    this.renderDivisionsBar();
+    this.updateContextDisplay();
     
-    console.log('[ScriptureExplorer] Initialized');
+    console.log('[ScriptureExplorer] Initialized with book:', this.currentBook);
   },
 
   /**
-   * Update divisions tree
+   * Sync explorer with current passage from AppState
    */
-  updateDivisionsTree() {
-    const container = document.getElementById('divisionsTree');
+  syncWithCurrentPassage() {
+    const passage = window.AppState?.currentPassage;
+    if (!passage) return;
+
+    console.log('[ScriptureExplorer] Syncing with passage:', passage);
+    
+    // Parse the passage to extract book and chapter
+    const parsed = this.parsePassage(passage);
+    if (parsed) {
+      this.currentBook = parsed.book;
+      this.currentChapter = parsed.chapter;
+      
+      // Update UI
+      const bookSelect = document.getElementById('scriptureBookSelect');
+      if (bookSelect) bookSelect.value = this.currentBook;
+      
+      this.updateChapterSelect();
+      this.renderDivisionsBar();
+      this.updateContextDisplay();
+    }
+  },
+
+  /**
+   * Parse passage string to extract book and chapter
+   */
+  parsePassage(passage) {
+    if (!passage) return null;
+    
+    const bookNames = [
+      'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
+      'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
+      '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles',
+      'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs',
+      'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah', 'Lamentations',
+      'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
+      'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk',
+      'Zephaniah', 'Haggai', 'Zechariah', 'Malachi',
+      'Matthew', 'Mark', 'Luke', 'John', 'Acts',
+      'Romans', '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians',
+      'Philippians', 'Colossians', '1 Thessalonians', '2 Thessalonians',
+      '1 Timothy', '2 Timothy', 'Titus', 'Philemon', 'Hebrews',
+      'James', '1 Peter', '2 Peter', '1 John', '2 John', '3 John',
+      'Jude', 'Revelation'
+    ];
+
+    const normalizedPassage = passage.trim();
+    
+    for (const book of bookNames) {
+      if (normalizedPassage.toLowerCase().startsWith(book.toLowerCase())) {
+        const rest = normalizedPassage.slice(book.length).trim();
+        const chapterMatch = rest.match(/^(\d+)/);
+        const chapter = chapterMatch ? parseInt(chapterMatch[1]) : 1;
+        return { book, chapter };
+      }
+    }
+    
+    return null;
+  },
+
+  /**
+   * Update context display bar
+   */
+  updateContextDisplay() {
+    const bookEl = document.getElementById('explorerCurrentBook');
+    const refEl = document.getElementById('explorerCurrentRef');
+    if (bookEl) bookEl.textContent = this.currentBook;
+    if (refEl) refEl.textContent = window.AppState?.currentPassage || '';
+  },
+
+  /**
+   * Update chapter select dropdown
+   */
+  updateChapterSelect() {
+    const select = document.getElementById('scriptureChapterSelect');
+    if (!select) return;
+
+    const chapters = ScriptureHierarchy.getChapterCount(this.currentBook);
+    select.innerHTML = Array.from({length: chapters}, (_, i) => 
+      `<option value="${i+1}" ${i+1 === this.currentChapter ? 'selected' : ''}>${i+1}</option>`
+    ).join('');
+  },
+
+  /**
+   * Render divisions as horizontal bar
+   */
+  renderDivisionsBar() {
+    const container = document.getElementById('divisionsBar');
     if (!container) return;
 
     const divisions = ScriptureHierarchy.getBookDivisions(this.currentBook);
     
     if (!divisions || divisions.length === 0) {
-      container.innerHTML = '<div class="empty-tree">No divisions found</div>';
+      // Show chapter-based divisions if no structured divisions
+      container.innerHTML = this.renderChapterDivisions();
       return;
     }
 
-    container.innerHTML = divisions.map(div => `
-      <div class="tree-item division-item" data-ref="${this.currentBook} ${div.ref}">
-        <span class="tree-ref">${div.ref}</span>
-        <span class="tree-title">${div.title}</span>
-      </div>
+    container.innerHTML = divisions.map((div, idx) => `
+      <button class="hierarchy-btn division-btn ${this.expandedDivision === idx ? 'expanded' : ''}" 
+              data-index="${idx}" data-ref="${this.currentBook} ${div.ref}">
+        <span class="btn-ref">${div.ref}</span>
+        <span class="btn-title">${div.title || ''}</span>
+        <span class="btn-expand">▼</span>
+      </button>
     `).join('');
 
-    container.querySelectorAll('.division-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const ref = item.dataset.ref;
-        this.selectDivision(ref);
+    // Bind click events
+    container.querySelectorAll('.division-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index);
+        const ref = btn.dataset.ref;
+        this.toggleDivision(idx, ref, divisions[idx]);
       });
     });
   },
 
   /**
-   * Select a division and load it
+   * Render chapter-based divisions when no structured data available
    */
-  selectDivision(ref) {
-    this.currentDivision = ref;
-    this.loadDivisionScripture(ref);
+  renderChapterDivisions() {
+    const chapters = ScriptureHierarchy.getChapterCount(this.currentBook);
+    const chapterGroups = [];
+    
+    // Group chapters (e.g., 1-5, 6-10, etc.)
+    const groupSize = Math.max(1, Math.ceil(chapters / 8));
+    for (let i = 1; i <= chapters; i += groupSize) {
+      const end = Math.min(i + groupSize - 1, chapters);
+      chapterGroups.push({ start: i, end, label: i === end ? `Ch ${i}` : `Ch ${i}-${end}` });
+    }
+
+    return chapterGroups.map((group, idx) => `
+      <button class="hierarchy-btn division-btn" data-index="${idx}" data-start="${group.start}" data-end="${group.end}">
+        <span class="btn-ref">${group.label}</span>
+        <span class="btn-expand">▼</span>
+      </button>
+    `).join('');
   },
 
   /**
-   * Update pericopes tree
+   * Toggle division expansion - show/hide pericopes
    */
-  updatePericopesTree() {
-    const container = document.getElementById('pericopesTree');
-    if (!container) return;
+  toggleDivision(idx, ref, division) {
+    if (this.expandedDivision === idx) {
+      this.hidePericopesSection();
+      this.expandedDivision = null;
+    } else {
+      this.expandedDivision = idx;
+      this.showPericopesForDivision(ref, division);
+    }
+    
+    // Update button states
+    document.querySelectorAll('.division-btn').forEach((btn, i) => {
+      btn.classList.toggle('expanded', i === this.expandedDivision);
+    });
+  },
 
-    const chapter = this.currentChapter || 1;
+  /**
+   * Show pericopes section for a division
+   */
+  showPericopesForDivision(ref, division) {
+    const section = document.getElementById('pericopesSection');
+    const bar = document.getElementById('pericopesBar');
+    const label = document.getElementById('pericopeDivisionLabel');
+    
+    if (!section || !bar) return;
+    
+    section.classList.remove('hidden');
+    if (label) label.textContent = `(${ref})`;
+    
+    // Get pericopes for this chapter range
+    const match = ref.match(/(\d+)/);
+    const chapter = match ? parseInt(match[1]) : this.currentChapter;
     const pericopes = ScriptureHierarchy.getChapterPericopesWithTitles(this.currentBook, chapter);
     
     if (!pericopes || pericopes.length === 0) {
-      container.innerHTML = '<div class="empty-tree">No pericope divisions found</div>';
-      return;
+      bar.innerHTML = this.renderChapterVerseButtons(chapter);
+    } else {
+      bar.innerHTML = pericopes.map((p, idx) => `
+        <button class="hierarchy-btn pericope-btn ${this.expandedPericope === idx ? 'expanded' : ''}" 
+                data-index="${idx}" data-ref="${p.ref}">
+          <span class="btn-ref">${p.verseRange || p.ref}</span>
+          <span class="btn-title">${p.title || ''}</span>
+          <span class="btn-expand">▼</span>
+        </button>
+      `).join('');
+
+      bar.querySelectorAll('.pericope-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.index);
+          const pRef = btn.dataset.ref;
+          this.togglePericope(idx, pRef, pericopes[idx]);
+        });
+      });
     }
 
-    const html = pericopes.map(p => `
-      <button class="pericope-btn" data-ref="${p.ref}" data-type="pericope" title="${p.title}">
-        <span class="pericope-range">${p.verseRange}</span>
-        <span class="pericope-title">${p.title}</span>
-      </button>
-    `).join('');
+    this.hideVersesSection();
+  },
 
-    container.innerHTML = html;
+  /**
+   * Render chapter verse buttons
+   */
+  renderChapterVerseButtons(chapter) {
+    const verseCount = 50; // Default max verses
+    const buttons = [];
+    for (let v = 1; v <= verseCount; v++) {
+      buttons.push(`
+        <button class="hierarchy-btn verse-btn" data-ref="${this.currentBook} ${chapter}:${v}">
+          ${v}
+        </button>
+      `);
+    }
+    return buttons.join('');
+  },
 
-    container.querySelectorAll('.pericope-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const ref = btn.dataset.ref;
-        this.selectPericope(ref);
-      });
+  /**
+   * Toggle pericope expansion - show/hide verses
+   */
+  togglePericope(idx, ref, pericope) {
+    if (this.expandedPericope === idx) {
+      this.hideVersesSection();
+      this.expandedPericope = null;
+    } else {
+      this.expandedPericope = idx;
+      this.showVersesForPericope(ref, pericope);
+      // Also load this pericope in the main panel
+      this.loadDivisionScripture(ref);
+    }
+    
+    document.querySelectorAll('.pericope-btn').forEach((btn, i) => {
+      btn.classList.toggle('expanded', i === this.expandedPericope);
     });
   },
 
   /**
-   * Update chapter selects
+   * Show verses section for a pericope
    */
-  updateChapterSelects() {
-    const pericopeSelect = document.getElementById('pericopeChapterSelect');
-    const verseSelect = document.getElementById('verseChapterSelect');
+  showVersesForPericope(ref, pericope) {
+    const section = document.getElementById('versesSection');
+    const bar = document.getElementById('versesBar');
+    const label = document.getElementById('versePericopeLabel');
     
-    const chapters = ScriptureHierarchy.getChapterCount(this.currentBook);
-    const options = Array.from({length: chapters}, (_, i) => 
-      `<option value="${i+1}" ${i+1 === this.currentChapter ? 'selected' : ''}>${i+1}</option>`
-    ).join('');
-
-    if (pericopeSelect) {
-      pericopeSelect.innerHTML = options;
-      pericopeSelect.addEventListener('change', (e) => {
-        this.currentChapter = parseInt(e.target.value);
-        this.updatePericopesTree();
-      });
+    if (!section || !bar) return;
+    
+    section.classList.remove('hidden');
+    if (label) label.textContent = `(${ref})`;
+    
+    // Parse verse range from ref (e.g., "3:1-15" → verses 1-15)
+    const rangeMatch = ref.match(/(\d+):(\d+)(?:-(\d+))?/);
+    let startVerse = 1, endVerse = 30;
+    
+    if (rangeMatch) {
+      startVerse = parseInt(rangeMatch[2]);
+      endVerse = rangeMatch[3] ? parseInt(rangeMatch[3]) : startVerse + 10;
     }
 
-    if (verseSelect) {
-      verseSelect.innerHTML = options;
-      verseSelect.addEventListener('change', (e) => {
-        this.currentChapter = parseInt(e.target.value);
-        this.updateVersesGrid();
-      });
-    }
-  },
-
-  /**
-   * Select a pericope and load it
-   */
-  selectPericope(ref) {
-    this.currentPericope = ref;
-    this.loadDivisionScripture(ref);
-  },
-
-  /**
-   * Update verses grid
-   */
-  updateVersesGrid() {
-    const container = document.getElementById('versesGrid');
-    if (!container) return;
-
-    const chapter = this.currentChapter || 1;
-    const verses = Array.from({length: 150}, (_, i) => i + 1); // Max 150 verses per chapter
+    const chapter = rangeMatch ? rangeMatch[1] : this.currentChapter;
     
-    const html = verses.map(v => `
-      <button class="verse-btn" data-ref="${this.currentBook} ${chapter}:${v}">
-        ${v}
-      </button>
-    `).join('');
+    bar.innerHTML = '';
+    for (let v = startVerse; v <= endVerse; v++) {
+      const verseRef = `${this.currentBook} ${chapter}:${v}`;
+      bar.innerHTML += `
+        <button class="hierarchy-btn verse-btn" data-ref="${verseRef}">
+          ${v}
+        </button>
+      `;
+    }
 
-    container.innerHTML = html;
-
-    container.querySelectorAll('.verse-btn').forEach(btn => {
+    bar.querySelectorAll('.verse-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const ref = btn.dataset.ref;
-        this.selectVerse(ref);
+        this.loadDivisionScripture(btn.dataset.ref);
+        // Highlight selected verse
+        bar.querySelectorAll('.verse-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
       });
     });
   },
 
-  /**
-   * Select a verse and load it
-   */
-  selectVerse(ref) {
-    this.loadDivisionScripture(ref);
+  hidePericopesSection() {
+    const section = document.getElementById('pericopesSection');
+    if (section) section.classList.add('hidden');
+    this.expandedPericope = null;
+    this.hideVersesSection();
+  },
+
+  hideVersesSection() {
+    const section = document.getElementById('versesSection');
+    if (section) section.classList.add('hidden');
   },
 
   /**
    * Load and display scripture - both in explorer AND main Scripture panel
    */
   async loadDivisionScripture(ref) {
+    console.log('[ScriptureExplorer] 📖 Loading:', ref);
+    
     const content = document.getElementById('explorerScriptureContent');
     if (content) {
-      content.innerHTML = `<div class="loading">Loading ${ref}...</div>`;
+      content.innerHTML = `<div class="loading" style="padding: 20px; color: #888;">⏳ Loading ${ref}...</div>`;
     }
 
-    // Update main app state and trigger Scripture panel load
+    // Update main app state
     if (window.AppState) {
       window.AppState.currentPassage = ref;
     }
     
-    // Populate the main passage input and trigger load
+    // Populate the main passage input
     const passageInput = document.getElementById('passageInput');
     if (passageInput) {
       passageInput.value = ref;
-      passageInput.dispatchEvent(new Event('input', { bubbles: true }));
-      
-      // Trigger immediate load via Enter key simulation
-      setTimeout(async () => {
-        const enterEvent = new KeyboardEvent('keypress', { 
-          key: 'Enter', 
-          keyCode: 13,
-          bubbles: true 
-        });
-        passageInput.dispatchEvent(enterEvent);
-      }, 100);
     }
 
-    // Also display in the explorer's own content area
-    try {
-      const resp = await fetch(`/api/scripture/${encodeURIComponent(ref)}`);
-      if (resp.ok) {
-        const data = await resp.json();
-        if (content) {
-          content.innerHTML = `
-            <div class="scripture-display">
-              <h3>📖 ${data.ref || ref}</h3>
-              <div class="scripture-text">${data.text || 'Loading...'}</div>
-            </div>
-          `;
+    // Update pinned passage display
+    const pinnedPassageRef = document.getElementById('pinnedPassageRef');
+    if (pinnedPassageRef) {
+      pinnedPassageRef.textContent = ref;
+    }
+
+    // Update context display
+    this.updateContextDisplay();
+
+    // Directly load scripture into the main panel
+    const fullPassageText = document.getElementById('fullPassageText');
+    
+    if (fullPassageText) {
+      fullPassageText.innerHTML = '<div style="padding: 12px; color: #666; font-style: italic;">⏳ Loading Scripture...</div>';
+      
+      try {
+        const { fetchAndDisplayScripture } = await import('../analysisEngine.js');
+        
+        if (fetchAndDisplayScripture) {
+          await fetchAndDisplayScripture(ref, fullPassageText);
+          console.log('[ScriptureExplorer] ✅ Scripture loaded:', ref);
+          
+          // Also show in explorer preview
+          if (content) {
+            content.innerHTML = `
+              <div class="explorer-scripture-preview">
+                <div class="preview-header">📖 ${ref}</div>
+                <div class="preview-text">${fullPassageText.innerHTML}</div>
+              </div>
+            `;
+          }
         }
-      } else {
+      } catch (importError) {
+        console.error('[ScriptureExplorer] Import error:', importError);
         if (content) {
-          content.innerHTML = `
-            <div class="scripture-display">
-              <h3>📖 ${ref}</h3>
-              <p class="note">Loading in Scripture panel...</p>
-            </div>
-          `;
+          content.innerHTML = `<div class="error-state">Could not load scripture</div>`;
         }
-      }
-    } catch (error) {
-      console.log('[ScriptureExplorer] API fetch skipped, using main panel');
-      if (content) {
-        content.innerHTML = `
-          <div class="scripture-display">
-            <h3>📖 ${ref}</h3>
-            <p class="note">View in Scripture panel →</p>
-          </div>
-        `;
       }
     }
   },

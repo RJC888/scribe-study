@@ -245,7 +245,7 @@ export const ScriptureExplorer = {
     
     if (!divisions || divisions.length === 0) {
       // Show chapter-based divisions if no structured divisions
-      container.innerHTML = this.renderChapterDivisions();
+      this.renderChapterDivisions(container);
       return;
     }
 
@@ -271,7 +271,7 @@ export const ScriptureExplorer = {
   /**
    * Render chapter-based divisions when no structured data available
    */
-  renderChapterDivisions() {
+  renderChapterDivisions(container) {
     const chapters = ScriptureHierarchy.getChapterCount(this.currentBook);
     const chapterGroups = [];
     
@@ -282,12 +282,137 @@ export const ScriptureExplorer = {
       chapterGroups.push({ start: i, end, label: i === end ? `Ch ${i}` : `Ch ${i}-${end}` });
     }
 
-    return chapterGroups.map((group, idx) => `
+    container.innerHTML = chapterGroups.map((group, idx) => `
       <button class="hierarchy-btn division-btn" data-index="${idx}" data-start="${group.start}" data-end="${group.end}">
         <span class="btn-ref">${group.label}</span>
         <span class="btn-expand">▼</span>
       </button>
     `).join('');
+
+    // Bind click events for chapter-based divisions
+    container.querySelectorAll('.division-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index);
+        const start = parseInt(btn.dataset.start);
+        const end = parseInt(btn.dataset.end);
+        this.toggleChapterDivision(idx, start, end);
+      });
+    });
+  },
+
+  /**
+   * Toggle chapter-based division expansion - show pericopes for chapter range
+   */
+  toggleChapterDivision(idx, startChapter, endChapter) {
+    if (this.expandedDivision === idx) {
+      this.hidePericopesSection();
+      this.expandedDivision = null;
+    } else {
+      this.expandedDivision = idx;
+      this.showPericopesForChapterRange(startChapter, endChapter);
+    }
+    
+    // Update button states
+    document.querySelectorAll('.division-btn').forEach((btn, i) => {
+      btn.classList.toggle('expanded', i === this.expandedDivision);
+    });
+  },
+
+  /**
+   * Show pericopes for a range of chapters
+   */
+  showPericopesForChapterRange(startChapter, endChapter) {
+    const section = document.getElementById('pericopesSection');
+    const bar = document.getElementById('pericopesBar');
+    const label = document.getElementById('pericopeDivisionLabel');
+    
+    if (!section || !bar) return;
+    
+    section.classList.remove('hidden');
+    const rangeLabel = startChapter === endChapter ? `Ch ${startChapter}` : `Ch ${startChapter}-${endChapter}`;
+    if (label) label.textContent = `(${rangeLabel})`;
+    
+    // Collect pericopes from all chapters in this range
+    const allPericopes = [];
+    for (let ch = startChapter; ch <= endChapter; ch++) {
+      const pericopes = ScriptureHierarchy.getChapterPericopesWithTitles(this.currentBook, ch);
+      if (pericopes && pericopes.length > 0) {
+        allPericopes.push(...pericopes);
+      }
+    }
+    
+    if (allPericopes.length === 0) {
+      // Show individual chapter buttons if no pericopes
+      bar.innerHTML = '';
+      for (let ch = startChapter; ch <= endChapter; ch++) {
+        bar.innerHTML += `
+          <button class="hierarchy-btn pericope-btn chapter-fallback" data-chapter="${ch}">
+            <span class="btn-ref">Chapter ${ch}</span>
+            <span class="btn-expand">▼</span>
+          </button>
+        `;
+      }
+      
+      bar.querySelectorAll('.chapter-fallback').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const ch = parseInt(btn.dataset.chapter);
+          this.showVersesForChapter(ch);
+        });
+      });
+    } else {
+      bar.innerHTML = allPericopes.map((p, idx) => `
+        <button class="hierarchy-btn pericope-btn ${this.expandedPericope === idx ? 'expanded' : ''}" 
+                data-index="${idx}" data-ref="${p.ref}">
+          <span class="btn-ref">${p.verseRange || p.ref}</span>
+          <span class="btn-title">${p.title || ''}</span>
+          <span class="btn-expand">▼</span>
+        </button>
+      `).join('');
+
+      bar.querySelectorAll('.pericope-btn').forEach((btn, idx) => {
+        btn.addEventListener('click', () => {
+          const pRef = btn.dataset.ref;
+          this.togglePericope(idx, pRef, allPericopes[idx]);
+        });
+      });
+    }
+
+    this.hideVersesSection();
+  },
+
+  /**
+   * Show verses for a specific chapter (fallback when no pericope data)
+   */
+  showVersesForChapter(chapter) {
+    const section = document.getElementById('versesSection');
+    const bar = document.getElementById('versesBar');
+    const label = document.getElementById('versePericopeLabel');
+    
+    if (!section || !bar) return;
+    
+    section.classList.remove('hidden');
+    if (label) label.textContent = `(Chapter ${chapter})`;
+    
+    // Try to get micro-level data or default to 30 verses
+    const verseCount = 30;
+    
+    bar.innerHTML = '';
+    for (let v = 1; v <= verseCount; v++) {
+      const verseRef = `${this.currentBook} ${chapter}:${v}`;
+      bar.innerHTML += `
+        <button class="hierarchy-btn verse-btn" data-ref="${verseRef}">
+          ${v}
+        </button>
+      `;
+    }
+
+    bar.querySelectorAll('.verse-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.loadDivisionScripture(btn.dataset.ref);
+        bar.querySelectorAll('.verse-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+    });
   },
 
   /**

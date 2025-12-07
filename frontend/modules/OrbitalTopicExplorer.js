@@ -194,14 +194,26 @@ export class OrbitalTopicExplorer {
     const grid = container.querySelector('#inlineTopicGrid');
     if (grid) {
       grid.addEventListener('click', (e) => {
+        // Handle View All click - loads ALL verses into Scripture pane
+        const viewAllBtn = e.target.closest('.view-all-btn');
+        if (viewAllBtn) {
+          e.stopPropagation(); // Prevent card click
+          this.loadAllVersesForTopic(viewAllBtn.dataset.topic);
+          return;
+        }
+        
+        // Handle individual verse chip click
+        const verseChip = e.target.closest('.verse-chip');
+        if (verseChip) {
+          e.stopPropagation();
+          this.loadVerseInScripturePane(verseChip.dataset.ref);
+          return;
+        }
+        
+        // Handle card click (topic detail view)
         const card = e.target.closest('.orbital-topic-card');
         if (card) {
           this.selectInlineTopic(card.dataset.topic);
-        }
-        // Handle View All click
-        const viewAllBtn = e.target.closest('.view-all-btn');
-        if (viewAllBtn) {
-          this.selectInlineTopic(viewAllBtn.dataset.topic);
         }
       });
     }
@@ -412,6 +424,169 @@ export class OrbitalTopicExplorer {
     document.dispatchEvent(new CustomEvent('topicExplorer:selectVerse', {
       detail: { reference }
     }));
+  }
+
+  /**
+   * Load ALL verses for a topic into the Scripture Display pane
+   */
+  async loadAllVersesForTopic(topicName) {
+    console.log('📖 Loading ALL verses for topic:', topicName);
+    
+    const topic = this.torreyData?.topics?.find(t => (t.name || t.topic) === topicName);
+    if (!topic) {
+      console.warn('[TopicalExplorer] Topic not found:', topicName);
+      return;
+    }
+
+    const verses = topic.verses || topic.verseRefs || [];
+    const verseCount = verses.length;
+    
+    console.log(`[TopicalExplorer] Loading ${verseCount} verses for "${topicName}"`);
+
+    // Update passage input to show topic name
+    const passageInput = document.getElementById('passageInput');
+    if (passageInput) {
+      passageInput.value = `${topicName} (${verseCount} verses)`;
+    }
+
+    // Update pinned passage display
+    const pinnedPassageRef = document.getElementById('pinnedPassageRef');
+    if (pinnedPassageRef) {
+      pinnedPassageRef.textContent = `Topic: ${topicName}`;
+    }
+
+    // Get the scripture display pane
+    const fullPassageText = document.getElementById('fullPassageText');
+    if (!fullPassageText) {
+      console.error('[TopicalExplorer] Scripture display pane not found');
+      return;
+    }
+
+    // Show loading state with topic header
+    fullPassageText.innerHTML = `
+      <div class="topic-scripture-header">
+        <h3 class="topic-title">📚 ${this.escapeHtml(topicName)}</h3>
+        <p class="topic-subtitle">${verseCount} Scripture References</p>
+        ${topic.description ? `<p class="topic-desc">${this.escapeHtml(topic.description)}</p>` : ''}
+      </div>
+      <div class="topic-verses-list">
+        <div style="padding: 20px; text-align: center; color: #666;">⏳ Loading scriptures...</div>
+      </div>
+    `;
+
+    // Load all verses using the existing fetchAndDisplayScripture
+    await this.loadMultipleVerses(verses, fullPassageText, topicName, topic.description);
+  }
+
+  /**
+   * Batch load multiple verses using existing API
+   */
+  async loadMultipleVerses(verses, container, topicName, topicDescription = '') {
+    try {
+      const { fetchAndDisplayScripture } = await import('../analysisEngine.js');
+      
+      // Create array to hold all results
+      const results = [];
+      const batchSize = 3; // Process 3 at a time
+      
+      // Update UI with verse list first (showing loading states)
+      const renderProgress = (loadedCount) => {
+        container.innerHTML = `
+          <div class="topic-scripture-header">
+            <h3 class="topic-title">📚 ${this.escapeHtml(topicName)}</h3>
+            <p class="topic-subtitle">${verses.length} Scripture References ${loadedCount < verses.length ? `(Loading ${loadedCount}/${verses.length}...)` : '✓ Complete'}</p>
+            ${topicDescription ? `<p class="topic-desc">${this.escapeHtml(topicDescription)}</p>` : ''}
+          </div>
+          <div class="topic-verses-list">
+            ${results.map((v, idx) => `
+              <div class="topic-verse-item ${v.success ? '' : 'verse-not-loaded'}">
+                <span class="verse-number">${idx + 1}</span>
+                <div class="verse-content">
+                  <strong class="verse-ref" data-ref="${v.reference}">${v.reference}</strong>
+                  ${v.text ? `<div class="verse-text">${v.text}</div>` : '<p class="verse-text verse-placeholder">Click reference to load</p>'}
+                </div>
+              </div>
+            `).join('')}
+            ${loadedCount < verses.length ? `
+              <div class="verses-loading-more">
+                <div style="padding: 12px; color: #666; font-style: italic; text-align: center;">
+                  ⏳ Loading verse ${loadedCount + 1} of ${verses.length}...
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        
+        // Re-bind click handlers
+        container.querySelectorAll('.verse-ref').forEach(ref => {
+          ref.addEventListener('click', () => {
+            this.loadVerseInScripturePane(ref.dataset.ref);
+          });
+        });
+      };
+
+      // Process verses in batches
+      for (let i = 0; i < verses.length; i += batchSize) {
+        const batch = verses.slice(i, i + batchSize);
+        
+        // Fetch each verse in the batch
+        const batchPromises = batch.map(async (ref) => {
+          try {
+            // Create temp container to fetch the verse
+            const tempContainer = document.createElement('div');
+            await fetchAndDisplayScripture(ref, tempContainer);
+            
+            // Extract text from temp container
+            const text = tempContainer.innerHTML;
+            return { reference: ref, text: text, success: true };
+          } catch (e) {
+            console.warn(`[TopicalExplorer] Failed to fetch ${ref}:`, e.message);
+            return { reference: ref, text: '', success: false };
+          }
+        });
+        
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
+        
+        // Update display with progress
+        renderProgress(results.length);
+        
+        // Small delay between batches to avoid rate limiting
+        if (i + batchSize < verses.length) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+
+      console.log(`[TopicalExplorer] ✅ Loaded ${results.length} verses for "${topicName}"`);
+      
+    } catch (e) {
+      console.error('[TopicalExplorer] Error loading multiple verses:', e);
+      container.innerHTML = `
+        <div class="topic-scripture-header">
+          <h3 class="topic-title">📚 ${this.escapeHtml(topicName)}</h3>
+          <p class="topic-subtitle">${verses.length} Scripture References</p>
+        </div>
+        <div class="topic-verses-list">
+          <div class="verses-note">⚠️ Error loading verses. Click individual references below to load.</div>
+          ${verses.map((v, idx) => `
+            <div class="topic-verse-item verse-not-loaded">
+              <span class="verse-number">${idx + 1}</span>
+              <div class="verse-content">
+                <strong class="verse-ref" data-ref="${v}">${v}</strong>
+                <p class="verse-text verse-placeholder">Click reference to load</p>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      
+      // Bind click handlers
+      container.querySelectorAll('.verse-ref').forEach(ref => {
+        ref.addEventListener('click', () => {
+          this.loadVerseInScripturePane(ref.dataset.ref);
+        });
+      });
+    }
   }
 
   showInlineGrid() {

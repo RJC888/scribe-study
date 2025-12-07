@@ -1105,3 +1105,185 @@
 body.dark-mode .orbital-topic-inline {
   background: linear-gradient(145deg, #0a0f1a 0%, #0d1526 100%);
 }
+
+/* ============================================
+   TOPIC SCRIPTURE DISPLAY - View All Feature
+   ============================================ */
+
+.topic-scripture-header {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, rgba(0, 150, 255, 0.1), rgba(99, 102, 241, 0.1));
+  border-bottom: 1px solid rgba(0, 200, 255, 0.2);
+  margin-bottom: 16px;
+  border-radius: 12px 12px 0 0;
+}
+
+.topic-scripture-header .topic-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 6px 0;
+}
+
+.topic-scripture-header .topic-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 8px 0;
+}
+
+.topic-scripture-header .topic-desc {
+  font-size: 14px;
+  color: #475569;
+  margin: 8px 0 0 0;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* Dark mode header */
+body.dark-mode .topic-scripture-header {
+  background: linear-gradient(135deg, rgba(0, 150, 255, 0.15), rgba(99, 102, 241, 0.15));
+  border-bottom-color: rgba(0, 200, 255, 0.3);
+}
+
+body.dark-mode .topic-scripture-header .topic-title {
+  color: #f0f4f8;
+}
+
+body.dark-mode .topic-scripture-header .topic-subtitle {
+  color: #94a3b8;
+}
+
+body.dark-mode .topic-scripture-header .topic-desc {
+  color: #a0aec0;
+}
+
+/* Verses List */
+.topic-verses-list {
+  padding: 0 20px 20px;
+}
+
+.topic-verse-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border-left: 4px solid #3b82f6;
+  transition: all 0.2s ease;
+}
+
+.topic-verse-item:hover {
+  background: #f1f5f9;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.topic-verse-item.verse-not-loaded {
+  border-left-color: #94a3b8;
+  opacity: 0.8;
+}
+
+.verse-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.verse-not-loaded .verse-number {
+  background: #94a3b8;
+}
+
+.verse-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.verse-content .verse-ref {
+  display: inline-block;
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 8px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 4px;
+  transition: all 0.2s;
+  margin-bottom: 6px;
+}
+
+.verse-content .verse-ref:hover {
+  background: rgba(59, 130, 246, 0.2);
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.verse-content .verse-text {
+  margin: 0;
+  color: #334155;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.verse-content .verse-placeholder {
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 13px;
+}
+
+.verses-note {
+  margin: 16px 20px;
+  padding: 12px 16px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 8px;
+  color: #b45309;
+  font-size: 13px;
+}
+
+.verses-loading {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+/* Dark mode verses */
+body.dark-mode .topic-verse-item {
+  background: rgba(30, 41, 59, 0.6);
+  border-left-color: #60a5fa;
+}
+
+body.dark-mode .topic-verse-item:hover {
+  background: rgba(30, 41, 59, 0.9);
+}
+
+body.dark-mode .verse-content .verse-ref {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.15);
+}
+
+body.dark-mode .verse-content .verse-ref:hover {
+  background: rgba(96, 165, 250, 0.25);
+  color: #93c5fd;
+}
+
+body.dark-mode .verse-content .verse-text {
+  color: #e2e8f0;
+}
+
+body.dark-mode .verse-content .verse-placeholder {
+  color: #64748b;
+}
+
+body.dark-mode .verses-note {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #fbbf24;
+}
